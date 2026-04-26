@@ -8,8 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Ask Krishna" />
   <meta name="description" content="Ask Krishna – Wisdom of the Bhagavad Gita" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="permissions" content="microphone" />
   <title>Ask Krishna</title>
-  <link rel="manifest" href="/ask-krishna/manifest.json">
+
   <!-- PWA Manifest inline -->
   <script>
     const manifest = {
@@ -119,17 +121,19 @@
 
     #header-sub {
       font-size: 10px;
-      color: #a16207;
+      color: #fde68a;
       letter-spacing: 0.08em;
       margin-top: 2px;
+      text-shadow: 0 0 6px rgba(251,191,36,0.5);
     }
 
     #header-sanskrit {
       margin-left: auto;
       text-align: right;
       font-size: 10px;
-      color: rgba(249,115,22,0.5);
+      color: #ffffff;
       line-height: 1.7;
+      text-shadow: 0 0 8px rgba(251,191,36,0.6);
       flex-shrink: 0;
     }
 
@@ -282,7 +286,7 @@
     /* ── INPUT AREA ── */
     #input-area {
       padding: 12px 16px 20px;
-      background: rgba(15,5,0,0.97);
+      background: rgba(15,5,0,0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid rgba(249,115,22,0.15);
@@ -294,8 +298,8 @@
       display: flex;
       gap: 10px;
       align-items: flex-end;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(249,115,22,0.25);
+      background: rgba(254,215,170,0.15);
+      border: 1px solid rgba(249,115,22,0.4);
       border-radius: 14px;
       padding: 10px 12px;
     }
@@ -309,7 +313,7 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #f3f4f6;
+      color: #fff7ed;
       font-size: 15px;
       font-family: inherit;
       resize: none;
@@ -319,7 +323,7 @@
       overflow-y: auto;
     }
 
-    #msg-input::placeholder { color: rgba(249,115,22,0.35); }
+    #msg-input::placeholder { color: rgba(253,186,116,0.7); }
 
     #send-btn {
       width: 38px; height: 38px;
@@ -333,6 +337,34 @@
       flex-shrink: 0;
       transition: all 0.2s;
       box-shadow: 0 0 14px rgba(249,115,22,0.35);
+    }
+
+    #mic-btn {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: 0 0 14px rgba(34,197,94,0.5);
+    }
+
+    #mic-btn.listening {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 0 18px rgba(239,68,68,0.6);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
     }
 
     #send-btn:disabled {
@@ -369,7 +401,7 @@
     </div>
     <div id="header-sanskrit">
       <div>॥ श्रीमद्भगवद्गीता ॥</div>
-      <div style="color:rgba(251,191,36,0.4)">The Song of God</div>
+      <div style="color:#fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.8); font-style: italic;">The Song of God</div>
     </div>
   </div>
 
@@ -388,7 +420,8 @@
   <!-- Input -->
   <div id="input-area">
     <div id="input-row">
-      <textarea id="msg-input" placeholder="Share your situation or ask about the Gita's teachings…" rows="1"></textarea>
+      <textarea id="msg-input" placeholder="Type or tap 🎤 to speak…" rows="1"></textarea>
+      <button id="mic-btn" title="Speak your question">🎤</button>
       <button id="send-btn" disabled>↑</button>
     </div>
     <div id="verse-footer">॥ कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ॥ — Bhagavad Gita 2.47</div>
@@ -563,6 +596,12 @@ async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text || loading) return;
 
+  // ── Offline Detection ──
+  if (!navigator.onLine) {
+    addMessage('assistant', '🙏 Dear seeker, I am unable to reach you at this moment.\n\nIt seems there is no internet connection. Like a lamp that needs oil, I need a connection to share Lord Krishna\'s wisdom with you.\n\nPlease check your internet or data connection and try again. 🪷');
+    return;
+  }
+
   loading = true;
   inputEl.value = '';
   inputEl.style.height = 'auto';
@@ -578,7 +617,6 @@ async function sendMessage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
         max_tokens: 1000,
         system: SYSTEM_PROMPT,
         messages: apiMessages,
@@ -588,9 +626,13 @@ async function sendMessage() {
     const reply = data.content?.find(b => b.type === 'text')?.text || '🙏 I am here. Please ask again.';
     hideTyping();
     addMessage('assistant', reply);
-  } catch {
+  } catch (err) {
     hideTyping();
-    addMessage('assistant', '🙏 A moment of silence... Please try again, dear seeker.');
+    if (!navigator.onLine) {
+      addMessage('assistant', '🙏 Dear seeker, the connection was lost mid-way.\n\nLike Arjuna separated from Krishna on the battlefield, I am unable to reach you without internet.\n\nPlease reconnect and ask again. 🪷');
+    } else {
+      addMessage('assistant', '🙏 A moment of silence... Something went wrong. Please try again, dear seeker.');
+    }
   } finally {
     loading = false;
     updateSendBtn();
@@ -613,6 +655,80 @@ inputEl.addEventListener('keydown', (e) => {
 
 sendBtn.addEventListener('click', sendMessage);
 
+
+// ── Voice Input ──
+const micBtn = document.getElementById('mic-btn');
+let recognition = null;
+let isListening = false;
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window || 'speechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.speechRecognition;
+  if (!SpeechRecognition) { micBtn.style.display='none'; return; }
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.title = 'Listening... tap to stop';
+    micBtn.textContent = '🔴';
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript)
+      .join('');
+    inputEl.value = transcript;
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+    updateSendBtn();
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.title = 'Speak your question';
+    micBtn.textContent = '🎤';
+    if (inputEl.value.trim()) sendMessage();
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = '🎤';
+    console.error('Speech error:', e.error);
+  };
+
+  micBtn.addEventListener('click', async () => {
+    if (isListening) {
+      recognition.stop();
+    } else {
+      // Request mic permission explicitly for Android WebView/APK
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+      } catch(permErr) {
+        micBtn.textContent = '🚫';
+        setTimeout(() => micBtn.textContent = '🎤', 2000);
+        return;
+      }
+      inputEl.value = '';
+      try {
+        recognition.start();
+      } catch(e) {
+        console.log('Recognition start error:', e);
+      }
+    }
+  });
+} else {
+  micBtn.style.opacity = '0.3';
+  micBtn.title = 'Voice not supported on this browser';
+  micBtn.disabled = true;
+}
+
 // ── Service Worker for offline support ──
 if ('serviceWorker' in navigator) {
   const swCode = `
@@ -627,6 +743,37 @@ if ('serviceWorker' in navigator) {
   const swBlob = new Blob([swCode], { type: 'application/javascript' });
   const swURL = URL.createObjectURL(swBlob);
   navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ── Online / Offline Banner ──
+const offlineBanner = document.createElement('div');
+offlineBanner.id = 'offline-banner';
+offlineBanner.textContent = '🔴 No internet connection';
+offlineBanner.style.cssText = `
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: rgba(239,68,68,0.9);
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+`;
+document.body.appendChild(offlineBanner);
+
+window.addEventListener('offline', () => {
+  offlineBanner.style.display = 'block';
+});
+
+window.addEventListener('online', () => {
+  offlineBanner.style.display = 'none';
+});
+
+// Show on load if already offline
+if (!navigator.onLine) {
+  offlineBanner.style.display = 'block';
 }
 
 init();
