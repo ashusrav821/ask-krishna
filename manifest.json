@@ -9,6 +9,7 @@
   "theme_color": "#0f0500",
   "orientation": "portrait",
   "lang": "en",
+  "permissions": ["microphone"],
   "icons": [
     {
       "src": "https://api.iconify.design/noto:lotus.svg",
