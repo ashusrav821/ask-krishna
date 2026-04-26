@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f0500" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ask Krishna" />
+  <meta name="description" content="Ask Krishna – Wisdom of the Bhagavad Gita" />
+  <title>Ask Krishna</title>
+
+  <!-- PWA Manifest inline -->
+  <script>
+    const manifest = {
+      name: "Ask Krishna",
+      short_name: "Ask Krishna",
+      description: "Bhagavad Gita Wisdom Chat Agent",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#0f0500",
+      theme_color: "#0f0500",
+      orientation: "portrait",
+      icons: [
+        { src: "https://api.iconify.design/noto:lotus.svg?width=192&height=192", sizes: "192x192", type: "image/svg+xml" },
+        { src: "https://api.iconify.design/noto:lotus.svg?width=512&height=512", sizes: "512x512", type: "image/svg+xml" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.write('<link rel="manifest" href="' + manifestURL + '">');
+  </script>
+
+  <!-- Apple touch icon fallback -->
+  <link rel="apple-touch-icon" href="https://api.iconify.design/noto:lotus.svg" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --saffron: #f97316;
+      --saffron-light: #fdba74;
+      --gold: #fbbf24;
+      --dark: #0f0500;
+      --dark2: #1a0a00;
+      --text: #e5e7eb;
+      --text-warm: #fef3c7;
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--dark);
+      font-family: Georgia, 'Palatino Linotype', serif;
+      color: var(--text);
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 680px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* Mandala bg */
+    #app::before {
+      content: '';
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(249,115,22,0.06);
+      box-shadow:
+        0 0 0 60px rgba(249,115,22,0.02),
+        0 0 0 120px rgba(249,115,22,0.015),
+        0 0 0 200px rgba(249,115,22,0.01);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    #header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid rgba(249,115,22,0.2);
+      background: rgba(15,5,0,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    #logo {
+      width: 46px; height: 46px;
+      background: radial-gradient(circle, #7c2d12, #431407);
+      border-radius: 50%;
+      border: 2px solid rgba(249,115,22,0.45);
+      box-shadow: 0 0 18px rgba(249,115,22,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    #header-title {
+      font-size: 20px;
+      font-weight: bold;
+      background: linear-gradient(90deg, #fbbf24, #f97316, #fb923c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.04em;
+    }
+
+    #header-sub {
+      font-size: 10px;
+      color: #a16207;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    #header-sanskrit {
+      margin-left: auto;
+      text-align: right;
+      font-size: 10px;
+      color: rgba(249,115,22,0.5);
+      line-height: 1.7;
+      flex-shrink: 0;
+    }
+
+    /* ── INSTALL BANNER ── */
+    #install-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(249,115,22,0.12);
+      border-bottom: 1px solid rgba(249,115,22,0.2);
+      font-size: 12px;
+      color: #fdba74;
+      gap: 10px;
+      z-index: 9;
+    }
+
+    #install-banner button {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    #install-close {
+      background: transparent !important;
+      padding: 4px 8px !important;
+      color: rgba(249,115,22,0.5) !important;
+      font-size: 16px !important;
+    }
+
+    /* ── MESSAGES ── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 1;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #messages::-webkit-scrollbar { display: none; }
+
+    /* suggestions */
+    #suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .suggestion-btn {
+      background: rgba(249,115,22,0.08);
+      border: 1px solid rgba(249,115,22,0.25);
+      border-radius: 20px;
+      padding: 7px 13px;
+      color: #fdba74;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+      text-align: left;
+    }
+
+    .suggestion-btn:active { background: rgba(249,115,22,0.2); }
+
+    /* message row */
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .avatar.bot {
+      background: radial-gradient(circle, #7c2d12, #431407);
+      border: 1px solid rgba(249,115,22,0.4);
+    }
+
+    .avatar.user {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      border: 1px solid rgba(99,102,241,0.4);
+    }
+
+    .bubble {
+      max-width: 78%;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bubble.bot {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px 18px 18px 4px;
+      color: var(--text);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    }
+
+    .bubble.user {
+      background: linear-gradient(135deg, #92400e, #78350f);
+      border: 1px solid rgba(249,115,22,0.3);
+      border-radius: 18px 18px 4px 18px;
+      color: var(--text-warm);
+    }
+
+    /* typing dots */
+    .typing-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--saffron);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-7px); }
+    }
+
+    /* ── INPUT AREA ── */
+    #input-area {
+      padding: 12px 16px 20px;
+      background: rgba(15,5,0,0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(249,115,22,0.15);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    #input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(249,115,22,0.25);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    #input-row:focus-within {
+      border-color: rgba(249,115,22,0.5);
+    }
+
+    #msg-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f3f4f6;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      line-height: 1.5;
+      min-height: 24px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    #msg-input::placeholder { color: rgba(249,115,22,0.35); }
+
+    #send-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      box-shadow: 0 0 14px rgba(249,115,22,0.35);
+    }
+
+    #send-btn:disabled {
+      background: rgba(249,115,22,0.2);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    #verse-footer {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 10px;
+      color: rgba(161,98,7,0.5);
+      letter-spacing: 0.03em;
+    }
+
+    /* safe area for iPhone notch */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      #input-area { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+      #header { padding-top: calc(16px + env(safe-area-inset-top)); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="logo">🪷</div>
+    <div>
+      <div id="header-title">Ask Krishna</div>
+      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA · 18 CHAPTERS · 700 VERSES</div>
+    </div>
+    <div id="header-sanskrit">
+      <div>॥ श्रीमद्भगवद्गीता ॥</div>
+      <div style="color:rgba(251,191,36,0.4)">The Song of God</div>
+    </div>
+  </div>
+
+  <!-- Install Banner -->
+  <div id="install-banner">
+    <span>📲 Install Ask Krishna on your home screen!</span>
+    <button id="install-btn">Install</button>
+    <button id="install-close" class="install-close">✕</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages">
+    <div id="suggestions"></div>
+  </div>
+
+  <!-- Input -->
+  <div id="input-area">
+    <div id="input-row">
+      <textarea id="msg-input" placeholder="Share your situation or ask about the Gita's teachings…" rows="1"></textarea>
+      <button id="send-btn" disabled>↑</button>
+    </div>
+    <div id="verse-footer">॥ कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ॥ — Bhagavad Gita 2.47</div>
+  </div>
+
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are "Ask Krishna" — a wise, compassionate spiritual guide deeply versed in the Bhagavad Gita. You answer questions and interpret life situations through the lens of the Bhagavad Gita's 18 chapters and 700 verses.
+
+Your knowledge base is the complete Bhagavad Gita:
+- Chapter 1: Arjuna Vishada Yoga – Arjuna's grief and moral crisis on the battlefield
+- Chapter 2: Sankhya Yoga – Krishna teaches about the eternal soul, duty, and detachment from results (Karma Yoga introduced)
+- Chapter 3: Karma Yoga – Action without attachment; one must perform duty selflessly
+- Chapter 4: Jnana Karma Sanyasa Yoga – Knowledge, renunciation, divine incarnations; Krishna reveals He comes whenever dharma declines
+- Chapter 5: Karma Sanyasa Yoga – Renunciation through action; inner detachment while performing duties
+- Chapter 6: Dhyana Yoga – Meditation, self-mastery, and the yogi's path
+- Chapter 7: Jnana Vijnana Yoga – Divine knowledge and realization; Krishna as the source of all creation
+- Chapter 8: Akshara Brahma Yoga – The eternal God; consciousness at death determines rebirth
+- Chapter 9: Raja Vidya Yoga – The king of secrets; bhakti (devotion)
+- Chapter 10: Vibhuti Yoga – Krishna's infinite divine manifestations
+- Chapter 11: Vishwarupa Darshana Yoga – Arjuna witnesses Krishna's cosmic universal form
+- Chapter 12: Bhakti Yoga – Devotion as the highest path; qualities of Krishna's dear devotees
+- Chapter 13: Kshetra Kshetrajña Vibhaga Yoga – The body (field) and the soul (knower of the field)
+- Chapter 14: Guna Traya Vibhaga Yoga – Three modes: Sattva (goodness), Rajas (passion), Tamas (ignorance)
+- Chapter 15: Purushottama Yoga – The Supreme Divine Person
+- Chapter 16: Daivasura Sampad Vibhaga Yoga – Divine vs demoniac natures
+- Chapter 17: Shraddha Traya Vibhaga Yoga – Three types of faith based on the three modes
+- Chapter 18: Moksha Sanyasa Yoga – Surrender to Krishna completely for liberation
+
+Key teachings:
+- The soul (Atman) is eternal, never born, never dying (2.20)
+- Perform your duty without attachment to results — Karmanye vadhikaraste Ma phaleshu kadachana (2.47)
+- The self must elevate the self; the mind is both friend and enemy (6.5-6)
+- Whatever you do, do it as an offering to God (9.27)
+- God is present in all beings (6.29-30)
+- Surrender completely to God for liberation (18.66)
+
+When answering:
+1. First empathize with the situation
+2. Identify which chapter/teaching is most relevant
+3. Share wisdom in warm, accessible language
+4. Paraphrase relevant verses with chapter.verse numbers
+5. Give practical guidance rooted in Gita's teachings
+6. Keep responses to 3–5 paragraphs
+7. Speak with warmth, compassion, and spiritual depth
+8. Address the user as "dear seeker" occasionally
+9. Never give harmful advice; always guide toward dharma and peace
+
+Only answer based on Bhagavad Gita wisdom. For unrelated topics, gently redirect.`;
+
+const SUGGESTIONS = [
+  "I feel lost in life and don't know my purpose",
+  "I'm struggling with a difficult decision at work",
+  "How do I deal with grief and loss?",
+  "I feel stressed and compare myself to others",
+];
+
+let messages = [];
+let loading = false;
+let deferredPrompt = null;
+
+const messagesEl = document.getElementById('messages');
+const suggestionsEl = document.getElementById('suggestions');
+const inputEl = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
+const installBanner = document.getElementById('install-banner');
+const installBtn = document.getElementById('install-btn');
+const installClose = document.getElementById('install-close');
+
+// ── PWA Install ──
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = 'flex';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBanner.style.display = 'none';
+  }
+});
+
+installClose.addEventListener('click', () => {
+  installBanner.style.display = 'none';
+});
+
+// iOS Safari install hint
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+if (isIos && !isInStandaloneMode) {
+  installBanner.style.display = 'flex';
+  installBanner.querySelector('span').textContent = '📲 Tap Share → "Add to Home Screen" to install!';
+  installBtn.style.display = 'none';
+}
+
+// ── Render welcome message ──
+function init() {
+  addMessage('assistant', '🙏 Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life — and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?');
+
+  SUGGESTIONS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'suggestion-btn';
+    btn.textContent = s;
+    btn.onclick = () => {
+      inputEl.value = s;
+      updateSendBtn();
+      suggestionsEl.style.display = 'none';
+      inputEl.focus();
+    };
+    suggestionsEl.appendChild(btn);
+  });
+}
+
+function addMessage(role, content) {
+  messages.push({ role, content });
+
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role === 'assistant' ? 'bot' : 'user'}`;
+  avatar.textContent = role === 'assistant' ? '🪷' : '🙏';
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${role === 'assistant' ? 'bot' : 'user'}`;
+  bubble.textContent = content;
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.id = 'typing-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar bot';
+  avatar.textContent = '🪷';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble bot';
+  bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  scrollBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-row');
+  if (el) el.remove();
+}
+
+function scrollBottom() {
+  setTimeout(() => messagesEl.scrollTop = messagesEl.scrollHeight, 50);
+}
+
+function updateSendBtn() {
+  sendBtn.disabled = !inputEl.value.trim() || loading;
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || loading) return;
+
+  loading = true;
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  updateSendBtn();
+  suggestionsEl.style.display = 'none';
+
+  addMessage('user', text);
+  showTyping();
+
+  try {
+    const apiMessages = messages.map(m => ({ role: m.role, content: m.content }));
+    const response = await fetch('https://ask-krishna-api.oletyashrith.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: apiMessages,
+      }),
+    });
+    const data = await response.json();
+    const reply = data.content?.find(b => b.type === 'text')?.text || '🙏 I am here. Please ask again.';
+    hideTyping();
+    addMessage('assistant', reply);
+  } catch {
+    hideTyping();
+    addMessage('assistant', '🙏 A moment of silence... Please try again, dear seeker.');
+  } finally {
+    loading = false;
+    updateSendBtn();
+  }
+}
+
+// ── Event listeners ──
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+  updateSendBtn();
+});
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+sendBtn.addEventListener('click', sendMessage);
+
+// ── Service Worker for offline support ──
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'ask-krishna-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+init();
+</script>
+</body>
+</html>
