@@ -577,12 +577,6 @@ async function sendMessage() {
     const response = await fetch('https://ask-krishna-api.oletyashrith.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: apiMessages,
-      }),
     });
     const data = await response.json();
     const reply = data.content?.find(b => b.type === 'text')?.text || '🙏 I am here. Please ask again.';
