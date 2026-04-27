@@ -13,133 +13,132 @@
   <title>Ask Krishna</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       height: 100%; width: 100%;
       background: linear-gradient(135deg, #0f0500 0%, #1a0a00 40%, #0d1a0d 100%);
       font-family: Georgia, 'Palatino Linotype', serif;
-      color: #e5e7eb;
-      overflow: hidden;
+      color: #e5e7eb; overflow: hidden;
       -webkit-tap-highlight-color: transparent;
     }
-
-    #app {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      max-width: 680px;
-      margin: 0 auto;
-    }
+    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 680px; margin: 0 auto; }
 
     /* HEADER */
     #header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; gap: 12px;
       padding: 16px 18px 14px;
       border-bottom: 1px solid rgba(249,115,22,0.2);
       background: rgba(15,5,0,0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      z-index: 10;
-      flex-shrink: 0;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      z-index: 10; flex-shrink: 0;
     }
-
     #logo {
       width: 46px; height: 46px;
       background: radial-gradient(circle, #7c2d12, #431407);
-      border-radius: 50%;
-      border: 2px solid rgba(249,115,22,0.45);
+      border-radius: 50%; border: 2px solid rgba(249,115,22,0.45);
       box-shadow: 0 0 18px rgba(249,115,22,0.3);
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; flex-shrink: 0;
     }
-
     #header-title {
       font-size: 20px; font-weight: bold;
       background: linear-gradient(90deg, #fbbf24, #f97316, #fb923c);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 0.04em;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 0.04em;
     }
-
     #header-sub {
       font-size: 10px; color: #fde68a;
       letter-spacing: 0.08em; margin-top: 2px;
       text-shadow: 0 0 6px rgba(251,191,36,0.5);
     }
-
     #header-sanskrit {
       margin-left: auto; text-align: right;
-      font-size: 10px; color: #ffffff;
-      line-height: 1.7; flex-shrink: 0;
+      font-size: 10px; color: #ffffff; line-height: 1.7; flex-shrink: 0;
       text-shadow: 0 0 8px rgba(251,191,36,0.6);
     }
+    #history-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid rgba(249,115,22,0.3);
+      background: rgba(249,115,22,0.1);
+      color: #fdba74; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #history-btn.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border-color: #f97316; color: white;
+      box-shadow: 0 0 12px rgba(249,115,22,0.4);
+    }
 
-    /* OFFLINE BANNER */
+    /* MODAL */
+    #modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8); z-index: 100;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #modal.show { display: flex; }
+    #modal-box {
+      background: #1a0a00; border: 1px solid rgba(249,115,22,0.3);
+      border-radius: 20px; padding: 28px 24px;
+      max-width: 360px; width: 100%; text-align: center;
+    }
+    #modal-box h2 { font-size: 18px; color: #fbbf24; margin-bottom: 12px; }
+    #modal-box p { font-size: 13px; color: #d1d5db; line-height: 1.7; margin-bottom: 8px; }
+    .notice {
+      font-size: 11px; color: #f97316;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: 10px; padding: 8px 12px;
+      margin: 14px 0; line-height: 1.6;
+    }
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .mbtn {
+      flex: 1; padding: 12px; border-radius: 12px; border: none;
+      font-size: 14px; cursor: pointer; font-family: inherit; font-weight: bold;
+    }
+    .mbtn.confirm { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+    .mbtn.cancel { background: rgba(255,255,255,0.07); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); }
+    .mbtn.danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* BANNERS */
     #offline-banner {
-      display: none;
-      justify-content: center; align-items: center;
-      padding: 8px 16px;
-      background: rgba(239,68,68,0.9);
-      color: white; font-size: 13px;
-      flex-shrink: 0; z-index: 9;
+      display: none; justify-content: center; align-items: center;
+      padding: 8px 16px; background: rgba(239,68,68,0.9);
+      color: white; font-size: 13px; flex-shrink: 0;
     }
-
-    /* INSTALL BANNER */
     #install-banner {
-      display: none;
-      align-items: center; justify-content: space-between;
-      padding: 10px 16px;
-      background: rgba(249,115,22,0.12);
+      display: none; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: rgba(249,115,22,0.12);
       border-bottom: 1px solid rgba(249,115,22,0.2);
-      font-size: 12px; color: #fdba74;
-      gap: 10px; flex-shrink: 0; z-index: 9;
+      font-size: 12px; color: #fdba74; gap: 10px; flex-shrink: 0;
     }
-
     #install-btn {
-      background: linear-gradient(135deg, #f97316, #ea580c) !important;
-      border: none; border-radius: 20px;
-      padding: 6px 14px; color: white;
-      font-size: 12px; cursor: pointer;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border: none; border-radius: 20px; padding: 6px 14px;
+      color: white; font-size: 12px; cursor: pointer;
       font-family: inherit; white-space: nowrap; flex-shrink: 0;
     }
-
     #install-close {
-      background: transparent !important;
-      border: none; padding: 4px 8px;
-      color: rgba(249,115,22,0.5);
-      font-size: 16px; cursor: pointer;
+      background: transparent; border: none; padding: 4px 8px;
+      color: rgba(249,115,22,0.5); font-size: 16px; cursor: pointer;
     }
 
     /* MESSAGES */
     #messages {
-      flex: 1; overflow-y: auto;
-      padding: 20px 16px;
-      display: flex; flex-direction: column;
-      gap: 18px; z-index: 1;
+      flex: 1; overflow-y: auto; padding: 20px 16px;
+      display: flex; flex-direction: column; gap: 18px;
       -webkit-overflow-scrolling: touch;
     }
     #messages::-webkit-scrollbar { display: none; }
-
-    #suggestions {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;
-    }
-
+    #suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
     .suggestion-btn {
-      background: rgba(249,115,22,0.08);
-      border: 1px solid rgba(249,115,22,0.25);
-      border-radius: 20px; padding: 7px 13px;
-      color: #fdba74; font-size: 12px;
-      cursor: pointer; font-family: inherit;
-      text-align: left;
+      background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.25);
+      border-radius: 20px; padding: 7px 13px; color: #fdba74;
+      font-size: 12px; cursor: pointer; font-family: inherit; text-align: left;
     }
     .suggestion-btn:active { background: rgba(249,115,22,0.2); }
-
     .msg-row { display: flex; gap: 10px; align-items: flex-start; }
     .msg-row.user { flex-direction: row-reverse; }
-
     .avatar {
       width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
@@ -147,107 +146,54 @@
     }
     .avatar.bot { background: radial-gradient(circle, #7c2d12, #431407); border: 1px solid rgba(249,115,22,0.4); }
     .avatar.user { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); border: 1px solid rgba(99,102,241,0.4); }
-
-    .bubble {
-      max-width: 78%; padding: 12px 16px;
-      font-size: 14px; line-height: 1.75;
-      white-space: pre-wrap; word-break: break-word;
-    }
-    .bubble.bot {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px 18px 18px 4px; color: #e5e7eb;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
-    }
-    .bubble.user {
-      background: linear-gradient(135deg, #92400e, #78350f);
-      border: 1px solid rgba(249,115,22,0.3);
-      border-radius: 18px 18px 4px 18px; color: #fef3c7;
-    }
-
+    .bubble { max-width: 78%; padding: 12px 16px; font-size: 14px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+    .bubble.bot { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px 18px 18px 4px; color: #e5e7eb; box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
+    .bubble.user { background: linear-gradient(135deg, #92400e, #78350f); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px 18px 4px 18px; color: #fef3c7; }
     .typing-dots { display: flex; gap: 5px; align-items: center; padding: 10px 0; }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #f97316;
-      animation: bounce 1.2s ease-in-out infinite;
-    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #f97316; animation: bounce 1.2s ease-in-out infinite; }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce {
-      0%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-7px); }
-    }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }
 
-    /* INPUT AREA */
+    /* INPUT */
     #input-area {
-      padding: 12px 16px 20px;
-      background: rgba(15,5,0,0.97);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(249,115,22,0.15);
-      z-index: 10; flex-shrink: 0;
+      padding: 12px 16px 20px; background: rgba(15,5,0,0.97);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(249,115,22,0.15); z-index: 10; flex-shrink: 0;
     }
-
     #input-row {
       display: flex; gap: 10px; align-items: flex-end;
-      background: rgba(254,215,170,0.15);
-      border: 1px solid rgba(249,115,22,0.4);
+      background: rgba(254,215,170,0.15); border: 1px solid rgba(249,115,22,0.4);
       border-radius: 14px; padding: 10px 12px;
     }
     #input-row:focus-within { border-color: rgba(249,115,22,0.6); }
-
     #msg-input {
-      flex: 1; background: transparent;
-      border: none; outline: none;
-      color: #fff7ed; font-size: 15px;
-      font-family: inherit; resize: none;
-      line-height: 1.5; min-height: 24px; max-height: 100px;
-      overflow-y: auto;
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #fff7ed; font-size: 15px; font-family: inherit; resize: none;
+      line-height: 1.5; min-height: 24px; max-height: 100px; overflow-y: auto;
     }
     #msg-input::placeholder { color: rgba(253,186,116,0.7); }
-
     #mic-btn {
-      width: 42px; height: 42px; border-radius: 50%;
-      border: none;
+      width: 42px; height: 42px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, #22c55e, #16a34a);
       color: white; font-size: 20px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      box-shadow: 0 0 14px rgba(34,197,94,0.5);
+      touch-action: manipulation; box-shadow: 0 0 14px rgba(34,197,94,0.5);
     }
-    #mic-btn.listening {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 0 18px rgba(239,68,68,0.6);
-      animation: pulse 1s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-      50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
-    }
-
+    #mic-btn.listening { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 0 18px rgba(239,68,68,0.6); animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
     #send-btn {
-      width: 42px; height: 42px; border-radius: 50%;
-      border: none;
+      width: 42px; height: 42px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, #f97316, #ea580c);
       color: white; font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s;
+      flex-shrink: 0; transition: all 0.2s; touch-action: manipulation;
       box-shadow: 0 0 14px rgba(249,115,22,0.35);
-      touch-action: manipulation;
     }
-    #send-btn:disabled {
-      background: rgba(249,115,22,0.2);
-      box-shadow: none; cursor: not-allowed;
-    }
-
-    #verse-footer {
-      text-align: center; margin-top: 8px;
-      font-size: 10px; color: rgba(161,98,7,0.5);
-      letter-spacing: 0.03em;
-    }
-
+    #send-btn:disabled { background: rgba(249,115,22,0.2); box-shadow: none; cursor: not-allowed; }
+    #verse-footer { text-align: center; margin-top: 8px; font-size: 10px; color: rgba(161,98,7,0.5); letter-spacing: 0.03em; }
+    #history-status { display: none; text-align: center; font-size: 11px; color: rgba(249,115,22,0.6); margin-top: 4px; }
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       #input-area { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
       #header { padding-top: calc(16px + env(safe-area-inset-top)); }
@@ -256,106 +202,96 @@
 </head>
 <body>
 <div id="app">
-
   <div id="header">
-    <div id="logo">🪷</div>
+    <div id="logo">&#x1FAB7;</div>
     <div>
       <div id="header-title">Ask Krishna</div>
-      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA · 18 CHAPTERS · 700 VERSES</div>
+      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-sanskrit">
-      <div>॥ श्रीमद्भगवद्गीता ॥</div>
+      <div>&#x0964;&#x0964; &#x0936;&#x094D;&#x0930;&#x0940;&#x092E;&#x0926;&#x094D;&#x092D;&#x0917;&#x0935;&#x0926;&#x094D;&#x0917;&#x0940;&#x0924;&#x093E; &#x0964;&#x0964;</div>
       <div style="color:#fbbf24;text-shadow:0 0 8px rgba(251,191,36,0.8);font-style:italic;">The Song of God</div>
+    </div>
+    <button id="history-btn" title="Save history on this device">&#x1F4BE;</button>
+  </div>
+
+  <div id="offline-banner">&#x1F534; No internet connection</div>
+  <div id="install-banner">
+    <span>&#x1F4F2; Install Ask Krishna on your home screen!</span>
+    <button id="install-btn">Install</button>
+    <button id="install-close">&#x2715;</button>
+  </div>
+
+  <div id="modal">
+    <div id="modal-box">
+      <h2>&#x1F4BE; Conversation History</h2>
+      <p id="modal-desc">Would you like Ask Krishna to remember your conversations?</p>
+      <div class="notice">
+        &#x1F512; <strong>Saved only on this device</strong><br/>
+        Your conversations are stored in your phone local storage only &mdash; never uploaded to any cloud or server. No one else can see them.
+      </div>
+      <div id="modal-enable-row" class="btn-row">
+        <button class="mbtn cancel" id="modal-cancel">Cancel</button>
+        <button class="mbtn confirm" id="modal-enable">Enable &#x1F64F;</button>
+      </div>
+      <div id="modal-disable-row" class="btn-row" style="display:none; flex-direction:column; gap:10px;">
+        <button class="mbtn danger" id="modal-clear">&#x1F5D1; Clear History &amp; Disable</button>
+        <button class="mbtn cancel" id="modal-keep">Keep Saving &mdash; Close</button>
+      </div>
     </div>
   </div>
 
-  <div id="offline-banner">🔴 No internet connection</div>
-  <div id="install-banner">
-    <span>📲 Install Ask Krishna on your home screen!</span>
-    <button id="install-btn">Install</button>
-    <button id="install-close">✕</button>
-  </div>
-
-  <div id="messages">
-    <div id="suggestions"></div>
-  </div>
+  <div id="messages"><div id="suggestions"></div></div>
 
   <div id="input-area">
     <div id="input-row">
-      <textarea id="msg-input" placeholder="Type or tap 🎤 to speak…" rows="1"></textarea>
-      <button id="mic-btn" title="Speak your question">🎤</button>
-      <button id="send-btn" disabled>↑</button>
+      <textarea id="msg-input" placeholder="Type or tap the mic to speak..." rows="1"></textarea>
+      <button id="mic-btn" title="Speak your question">&#x1F3A4;</button>
+      <button id="send-btn" disabled>&#x2191;</button>
     </div>
-    <div id="verse-footer">॥ कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ॥ — Bhagavad Gita 2.47</div>
+    <div id="verse-footer">&#x0964;&#x0964; कर्मण्येवाधिकारस्ते मा फलेषु कदाचन &#x0964;&#x0964; &mdash; Bhagavad Gita 2.47</div>
+    <div id="history-status">&#x1F4BE; Saving to device storage</div>
   </div>
-
 </div>
+
 <script>
-const WORKER_URL = 'https://ask-krishna-api.oletyashrith.workers.dev/';
+var WORKER_URL = 'https://ask-krishna-api.oletyashrith.workers.dev/';
+var HISTORY_KEY = 'ask_krishna_history';
+var HISTORY_ENABLED_KEY = 'ask_krishna_enabled';
 
-const SYSTEM_PROMPT = `You are "Ask Krishna" — a wise, compassionate spiritual guide deeply versed in the Bhagavad Gita. You answer questions and interpret life situations through the lens of the Bhagavad Gita's 18 chapters and 700 verses.
+var SYSTEM_PROMPT = 'You are "Ask Krishna" — a wise, compassionate spiritual guide deeply versed in the Bhagavad Gita. You answer questions and interpret life situations through the lens of the Bhagavad Gita\'s 18 chapters and 700 verses.\n\nYour knowledge base:\n- Chapter 1: Arjuna Vishada Yoga - Arjuna grief and moral crisis on the battlefield\n- Chapter 2: Sankhya Yoga - Krishna teaches about the eternal soul, duty, and detachment from results\n- Chapter 3: Karma Yoga - Action without attachment; one must perform duty selflessly\n- Chapter 4: Jnana Karma Sanyasa Yoga - Knowledge, renunciation, divine incarnations\n- Chapter 5: Karma Sanyasa Yoga - Renunciation through action; inner detachment\n- Chapter 6: Dhyana Yoga - Meditation, self-mastery, and the yogi path\n- Chapter 7: Jnana Vijnana Yoga - Divine knowledge; Krishna as source of all creation\n- Chapter 8: Akshara Brahma Yoga - The eternal God; consciousness at death determines rebirth\n- Chapter 9: Raja Vidya Yoga - The king of secrets; bhakti devotion\n- Chapter 10: Vibhuti Yoga - Krishna infinite divine manifestations\n- Chapter 11: Vishwarupa Darshana Yoga - Arjuna witnesses Krishna cosmic universal form\n- Chapter 12: Bhakti Yoga - Devotion as the highest path\n- Chapter 13: Kshetra Kshetrajnya Vibhaga Yoga - The body and the soul\n- Chapter 14: Guna Traya Vibhaga Yoga - Three modes Sattva Rajas Tamas\n- Chapter 15: Purushottama Yoga - The Supreme Divine Person\n- Chapter 16: Daivasura Sampad Vibhaga Yoga - Divine vs demoniac natures\n- Chapter 17: Shraddha Traya Vibhaga Yoga - Three types of faith\n- Chapter 18: Moksha Sanyasa Yoga - Surrender to Krishna completely for liberation\n\nKey teachings:\n- The soul is eternal, never born, never dying (2.20)\n- Perform duty without attachment to results (2.47)\n- The mind is both friend and enemy (6.5-6)\n- Whatever you do, do it as an offering to God (9.27)\n- God is present in all beings (6.29-30)\n- Surrender completely to God for liberation (18.66)\n\nWhen answering: empathize first, identify the most relevant chapter and teaching, share wisdom in warm accessible language, paraphrase relevant verses with chapter.verse numbers, give practical guidance, keep to 3-5 paragraphs, speak with warmth and compassion, occasionally call the user "dear seeker". Never give harmful advice. Only answer based on Bhagavad Gita wisdom.';
 
-Your knowledge base is the complete Bhagavad Gita:
-- Chapter 1: Arjuna Vishada Yoga - Arjuna's grief and moral crisis on the battlefield
-- Chapter 2: Sankhya Yoga - Krishna teaches about the eternal soul, duty, and detachment from results
-- Chapter 3: Karma Yoga - Action without attachment; one must perform duty selflessly
-- Chapter 4: Jnana Karma Sanyasa Yoga - Knowledge, renunciation, divine incarnations
-- Chapter 5: Karma Sanyasa Yoga - Renunciation through action; inner detachment
-- Chapter 6: Dhyana Yoga - Meditation, self-mastery, and the yogi's path
-- Chapter 7: Jnana Vijnana Yoga - Divine knowledge; Krishna as the source of all creation
-- Chapter 8: Akshara Brahma Yoga - The eternal God; consciousness at death determines rebirth
-- Chapter 9: Raja Vidya Yoga - The king of secrets; bhakti (devotion)
-- Chapter 10: Vibhuti Yoga - Krishna's infinite divine manifestations
-- Chapter 11: Vishwarupa Darshana Yoga - Arjuna witnesses Krishna's cosmic universal form
-- Chapter 12: Bhakti Yoga - Devotion as the highest path
-- Chapter 13: Kshetra Kshetrajnya Vibhaga Yoga - The body and the soul
-- Chapter 14: Guna Traya Vibhaga Yoga - Three modes: Sattva, Rajas, Tamas
-- Chapter 15: Purushottama Yoga - The Supreme Divine Person
-- Chapter 16: Daivasura Sampad Vibhaga Yoga - Divine vs demoniac natures
-- Chapter 17: Shraddha Traya Vibhaga Yoga - Three types of faith
-- Chapter 18: Moksha Sanyasa Yoga - Surrender to Krishna completely for liberation
-
-Key teachings:
-- The soul is eternal, never born, never dying (2.20)
-- Perform duty without attachment to results (2.47)
-- The mind is both friend and enemy (6.5-6)
-- Whatever you do, do it as an offering to God (9.27)
-- God is present in all beings (6.29-30)
-- Surrender completely to God for liberation (18.66)
-
-When answering:
-1. Empathize with the situation first
-2. Identify the most relevant chapter and teaching
-3. Share wisdom in warm, accessible language
-4. Paraphrase relevant verses with chapter.verse numbers
-5. Give practical guidance rooted in Gita's teachings
-6. Keep responses to 3-5 paragraphs
-7. Speak with warmth, compassion, and spiritual depth
-8. Occasionally address the user as "dear seeker"
-9. Never give harmful advice; always guide toward dharma and peace
-Only answer based on Bhagavad Gita wisdom.`;
-
-const SUGGESTIONS = [
+var SUGGESTIONS = [
   "I feel lost in life and don't know my purpose",
   "I'm struggling with a difficult decision at work",
   "How do I deal with grief and loss?",
-  "I feel stressed and compare myself to others",
+  "I feel stressed and compare myself to others"
 ];
 
-let messages = [];
-let loading = false;
-let isListening = false;
-let deferredPrompt = null;
+var messages = [];
+var loading = false;
+var isListening = false;
+var historyEnabled = localStorage.getItem(HISTORY_ENABLED_KEY) === 'true';
 
-const messagesEl    = document.getElementById('messages');
-const suggestionsEl = document.getElementById('suggestions');
-const inputEl       = document.getElementById('msg-input');
-const sendBtn       = document.getElementById('send-btn');
-const micBtn        = document.getElementById('mic-btn');
-const offlineBanner = document.getElementById('offline-banner');
-const installBanner = document.getElementById('install-banner');
-const installBtn    = document.getElementById('install-btn');
-const installClose  = document.getElementById('install-close');
+var messagesEl    = document.getElementById('messages');
+var suggestionsEl = document.getElementById('suggestions');
+var inputEl       = document.getElementById('msg-input');
+var sendBtn       = document.getElementById('send-btn');
+var micBtn        = document.getElementById('mic-btn');
+var offlineBanner = document.getElementById('offline-banner');
+var installBanner = document.getElementById('install-banner');
+var installBtn2   = document.getElementById('install-btn');
+var installClose  = document.getElementById('install-close');
+var historyBtn    = document.getElementById('history-btn');
+var modal         = document.getElementById('modal');
+var modalDesc     = document.getElementById('modal-desc');
+var modalEnableRow  = document.getElementById('modal-enable-row');
+var modalDisableRow = document.getElementById('modal-disable-row');
+var modalCancel   = document.getElementById('modal-cancel');
+var modalEnable   = document.getElementById('modal-enable');
+var modalClear    = document.getElementById('modal-clear');
+var modalKeep     = document.getElementById('modal-keep');
+var historyStatus = document.getElementById('history-status');
 
 // Offline
 function checkOnline() {
@@ -366,191 +302,215 @@ window.addEventListener('offline', checkOnline);
 checkOnline();
 
 // PWA install
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault(); deferredPrompt = e;
   installBanner.style.display = 'flex';
 });
-installBtn.addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    installBanner.style.display = 'none';
-  }
+installBtn2.addEventListener('click', function() {
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; installBanner.style.display = 'none'; }
 });
-installClose.addEventListener('click', () => {
-  installBanner.style.display = 'none';
-});
+installClose.addEventListener('click', function() { installBanner.style.display = 'none'; });
 if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) {
   installBanner.style.display = 'flex';
-  installBanner.querySelector('span').textContent = 'Tap Share then "Add to Home Screen" to install!';
-  installBtn.style.display = 'none';
+  installBanner.querySelector('span').textContent = 'Tap Share then Add to Home Screen to install!';
+  installBtn2.style.display = 'none';
 }
 
 // Helpers
-function scrollBottom() {
-  setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 60);
-}
-
-function updateSendBtn() {
-  sendBtn.disabled = !inputEl.value.trim() || loading;
-}
+function scrollBottom() { setTimeout(function() { messagesEl.scrollTop = messagesEl.scrollHeight; }, 60); }
+function updateSendBtn() { sendBtn.disabled = !inputEl.value.trim() || loading; }
 
 function addMessage(role, content) {
-  messages.push({ role, content });
-  const row = document.createElement('div');
+  messages.push({ role: role, content: content });
+  var row = document.createElement('div');
   row.className = 'msg-row ' + role;
-  const avatar = document.createElement('div');
+  var avatar = document.createElement('div');
   avatar.className = 'avatar ' + (role === 'assistant' ? 'bot' : 'user');
-  avatar.textContent = role === 'assistant' ? '🪷' : '🙏';
-  const bubble = document.createElement('div');
+  avatar.textContent = role === 'assistant' ? '\uD83E\uDEB7' : '\uD83D\uDE4F';
+  var bubble = document.createElement('div');
   bubble.className = 'bubble ' + (role === 'assistant' ? 'bot' : 'user');
   bubble.textContent = content;
-  row.appendChild(avatar);
-  row.appendChild(bubble);
-  messagesEl.appendChild(row);
-  scrollBottom();
-}
-
-function showTyping() {
-  const row = document.createElement('div');
-  row.className = 'msg-row'; row.id = 'typing-row';
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar bot'; avatar.textContent = '🪷';
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble bot';
-  bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   row.appendChild(avatar); row.appendChild(bubble);
   messagesEl.appendChild(row);
   scrollBottom();
+  saveHistory();
 }
 
-function hideTyping() {
-  const el = document.getElementById('typing-row');
-  if (el) el.remove();
+function showTyping() {
+  var row = document.createElement('div');
+  row.className = 'msg-row'; row.id = 'typing-row';
+  var avatar = document.createElement('div');
+  avatar.className = 'avatar bot'; avatar.textContent = '\uD83E\uDEB7';
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble bot';
+  bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  row.appendChild(avatar); row.appendChild(bubble);
+  messagesEl.appendChild(row); scrollBottom();
 }
+function hideTyping() { var el = document.getElementById('typing-row'); if (el) el.remove(); }
+
+// History
+function updateHistoryBtn() {
+  if (historyEnabled) {
+    historyBtn.classList.add('active');
+    historyStatus.style.display = 'block';
+  } else {
+    historyBtn.classList.remove('active');
+    historyStatus.style.display = 'none';
+  }
+}
+
+function saveHistory() {
+  if (!historyEnabled) return;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(messages)); } catch(e) {}
+}
+
+function loadHistory() {
+  try { var s = localStorage.getItem(HISTORY_KEY); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+}
+
+historyBtn.addEventListener('click', function() {
+  if (historyEnabled) {
+    modalDesc.textContent = 'History saving is ON. Your chats are saved on this device only — not in any cloud or server.';
+    modalEnableRow.style.display = 'none';
+    modalDisableRow.style.display = 'flex';
+    modalDisableRow.style.flexDirection = 'column';
+  } else {
+    modalDesc.textContent = 'Enable to save your conversations on this device. Your chats will never be uploaded to any cloud or server.';
+    modalEnableRow.style.display = 'flex';
+    modalDisableRow.style.display = 'none';
+  }
+  modal.classList.add('show');
+});
+
+modalCancel.addEventListener('click', function() { modal.classList.remove('show'); });
+modalKeep.addEventListener('click',   function() { modal.classList.remove('show'); });
+modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('show'); });
+
+modalEnable.addEventListener('click', function() {
+  historyEnabled = true;
+  localStorage.setItem(HISTORY_ENABLED_KEY, 'true');
+  saveHistory();
+  updateHistoryBtn();
+  modal.classList.remove('show');
+  addMessage('assistant', 'Your conversations will now be saved on this device only. They are stored in your phone local storage and never uploaded to any cloud or server. May Krishna wisdom guide you whenever you return.');
+});
+
+modalClear.addEventListener('click', function() {
+  historyEnabled = false;
+  localStorage.removeItem(HISTORY_ENABLED_KEY);
+  localStorage.removeItem(HISTORY_KEY);
+  updateHistoryBtn();
+  modal.classList.remove('show');
+  addMessage('assistant', 'Your conversation history has been cleared from this device. History saving is now disabled. Each new session begins fresh, like a new dawn.');
+});
+
+updateHistoryBtn();
 
 // Send message
-async function sendMessage() {
-  const text = inputEl.value.trim();
+function sendMessage() {
+  var text = inputEl.value.trim();
   if (!text || loading) return;
-
   if (!navigator.onLine) {
-    addMessage('assistant', '🙏 Dear seeker, I am unable to reach you at this moment.\n\nLike a lamp that needs oil, I need an internet connection to share Lord Krishna\'s wisdom with you.\n\nPlease check your connection and try again. 🪷');
+    addMessage('assistant', 'Dear seeker, I am unable to reach you at this moment. Like a lamp that needs oil, I need an internet connection to share Lord Krishna wisdom with you. Please check your connection and try again.');
     return;
   }
-
   loading = true;
-  inputEl.value = '';
-  inputEl.style.height = 'auto';
+  inputEl.value = ''; inputEl.style.height = 'auto';
   updateSendBtn();
   suggestionsEl.style.display = 'none';
   addMessage('user', text);
   showTyping();
 
-  try {
-    const apiMessages = messages.map(m => ({ role: m.role, content: m.content }));
-    const response = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ max_tokens: 1000, system: SYSTEM_PROMPT, messages: apiMessages }),
-    });
-    const data = await response.json();
-    const reply = data.content && data.content.find(b => b.type === 'text')
-      ? data.content.find(b => b.type === 'text').text
-      : '🙏 I am here. Please ask again.';
+  var apiMessages = messages.map(function(m) { return { role: m.role, content: m.content }; });
+  fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ max_tokens: 1000, system: SYSTEM_PROMPT, messages: apiMessages })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
     hideTyping();
-    addMessage('assistant', reply);
-  } catch (err) {
-    hideTyping();
-    if (!navigator.onLine) {
-      addMessage('assistant', '🙏 Like Arjuna separated from Krishna on the battlefield, I am unable to reach you without internet.\n\nPlease reconnect and ask again. 🪷');
-    } else {
-      addMessage('assistant', '🙏 A moment of silence... Something went wrong. Please try again, dear seeker.');
+    var reply = 'I am here. Please ask again.';
+    if (data.content) {
+      for (var i = 0; i < data.content.length; i++) {
+        if (data.content[i].type === 'text') { reply = data.content[i].text; break; }
+      }
     }
-  } finally {
-    loading = false;
-    updateSendBtn();
-  }
+    addMessage('assistant', reply);
+  })
+  .catch(function() {
+    hideTyping();
+    addMessage('assistant', navigator.onLine
+      ? 'A moment of silence... Something went wrong. Please try again, dear seeker.'
+      : 'Like Arjuna separated from Krishna on the battlefield, I am unable to reach you without internet. Please reconnect and ask again.');
+  })
+  .finally(function() { loading = false; updateSendBtn(); });
 }
 
-// Input events
-inputEl.addEventListener('input', () => {
+inputEl.addEventListener('input', function() {
   inputEl.style.height = 'auto';
   inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
   updateSendBtn();
 });
-inputEl.addEventListener('keydown', (e) => {
+inputEl.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 sendBtn.addEventListener('click', sendMessage);
 
-// Voice input
+// Voice
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SR();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-
-  recognition.onstart = () => {
-    isListening = true;
-    micBtn.classList.add('listening');
-    micBtn.textContent = '🔴';
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognition = new SR();
+  recognition.continuous = false; recognition.interimResults = true; recognition.lang = 'en-US';
+  recognition.onstart = function() { isListening = true; micBtn.classList.add('listening'); micBtn.textContent = '\uD83D\uDD34'; };
+  recognition.onresult = function(e) {
+    var t = Array.from(e.results).map(function(r) { return r[0].transcript; }).join('');
+    inputEl.value = t; inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px'; updateSendBtn();
   };
-  recognition.onresult = (e) => {
-    const t = Array.from(e.results).map(r => r[0].transcript).join('');
-    inputEl.value = t;
-    inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
-    updateSendBtn();
-  };
-  recognition.onend = () => {
-    isListening = false;
-    micBtn.classList.remove('listening');
-    micBtn.textContent = '🎤';
+  recognition.onend = function() {
+    isListening = false; micBtn.classList.remove('listening'); micBtn.textContent = '\uD83C\uDFA4';
     if (inputEl.value.trim()) sendMessage();
   };
-  recognition.onerror = () => {
-    isListening = false;
-    micBtn.classList.remove('listening');
-    micBtn.textContent = '🎤';
-  };
-  micBtn.addEventListener('click', async () => {
-    if (isListening) {
-      recognition.stop();
-    } else {
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-        }
-        inputEl.value = '';
-        recognition.start();
-      } catch (e) {
-        micBtn.textContent = '🚫';
-        setTimeout(() => { micBtn.textContent = '🎤'; }, 2000);
-      }
-    }
+  recognition.onerror = function() { isListening = false; micBtn.classList.remove('listening'); micBtn.textContent = '\uD83C\uDFA4'; };
+  micBtn.addEventListener('click', function() {
+    if (isListening) { recognition.stop(); return; }
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function() {
+        inputEl.value = ''; recognition.start();
+      }).catch(function() { micBtn.textContent = '\uD83D\uDEAB'; setTimeout(function() { micBtn.textContent = '\uD83C\uDFA4'; }, 2000); });
+    } else { inputEl.value = ''; recognition.start(); }
   });
+} else { micBtn.style.opacity = '0.3'; micBtn.disabled = true; }
+
+// Init
+var savedHistory = historyEnabled ? loadHistory() : null;
+if (savedHistory && savedHistory.length > 0) {
+  savedHistory.forEach(function(m) {
+    messages.push(m);
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + m.role;
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar ' + (m.role === 'assistant' ? 'bot' : 'user');
+    avatar.textContent = m.role === 'assistant' ? '\uD83E\uDEB7' : '\uD83D\uDE4F';
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble ' + (m.role === 'assistant' ? 'bot' : 'user');
+    bubble.textContent = m.content;
+    row.appendChild(avatar); row.appendChild(bubble);
+    messagesEl.appendChild(row);
+  });
+  scrollBottom();
+  addMessage('assistant', 'Welcome back, dear seeker. Your previous conversation has been restored from this device storage. How may Krishna guide you today?');
 } else {
-  micBtn.style.opacity = '0.3';
-  micBtn.disabled = true;
+  addMessage('assistant', 'Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life and I will illuminate it through Lord Krishna divine teachings.\n\nWhat weighs on your heart today, dear seeker?');
 }
 
-// Init — show welcome message
-addMessage('assistant', '🙏 Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life — and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?');
-
 SUGGESTIONS.forEach(function(s) {
-  const btn = document.createElement('button');
-  btn.className = 'suggestion-btn';
-  btn.textContent = s;
-  btn.onclick = function() {
-    inputEl.value = s;
-    updateSendBtn();
-    suggestionsEl.style.display = 'none';
-    inputEl.focus();
-  };
+  var btn = document.createElement('button');
+  btn.className = 'suggestion-btn'; btn.textContent = s;
+  btn.onclick = function() { inputEl.value = s; updateSendBtn(); suggestionsEl.style.display = 'none'; inputEl.focus(); };
   suggestionsEl.appendChild(btn);
 });
 </script>
