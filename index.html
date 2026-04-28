@@ -327,7 +327,7 @@ function addMessage(role, content) {
   row.className = 'msg-row ' + role;
   var avatar = document.createElement('div');
   avatar.className = 'avatar ' + (role === 'assistant' ? 'bot' : 'user');
-  avatar.textContent = role === 'assistant' ? '\uD83E\uDEB7' : '\uD83D\uDE4F';
+  avatar.textContent = role === 'assistant' ? '\uD83E\uDD9A' : '\uD83D\uDE4F';
   var bubble = document.createElement('div');
   bubble.className = 'bubble ' + (role === 'assistant' ? 'bot' : 'user');
   bubble.textContent = content;
@@ -341,7 +341,7 @@ function showTyping() {
   var row = document.createElement('div');
   row.className = 'msg-row'; row.id = 'typing-row';
   var avatar = document.createElement('div');
-  avatar.className = 'avatar bot'; avatar.textContent = '\uD83E\uDEB7';
+  avatar.className = 'avatar bot'; avatar.textContent = '\uD83E\uDD9A';
   var bubble = document.createElement('div');
   bubble.className = 'bubble bot';
   bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
@@ -494,7 +494,7 @@ if (savedHistory && savedHistory.length > 0) {
     row.className = 'msg-row ' + m.role;
     var avatar = document.createElement('div');
     avatar.className = 'avatar ' + (m.role === 'assistant' ? 'bot' : 'user');
-    avatar.textContent = m.role === 'assistant' ? '\uD83E\uDEB7' : '\uD83D\uDE4F';
+    avatar.textContent = m.role === 'assistant' ? '\uD83E\uDD9A' : '\uD83D\uDE4F';
     var bubble = document.createElement('div');
     bubble.className = 'bubble ' + (m.role === 'assistant' ? 'bot' : 'user');
     bubble.textContent = m.content;
