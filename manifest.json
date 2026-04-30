@@ -1,0 +1,27 @@
+{
+  "name": "Ask Krishna",
+  "short_name": "Ask Krishna",
+  "description": "Wisdom of the Bhagavad Gita - Chat Agent",
+  "start_url": "/ask-krishna/",
+  "scope": "/ask-krishna/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#0f0500",
+  "orientation": "portrait",
+  "lang": "en",
+  "permissions": ["microphone"],
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
