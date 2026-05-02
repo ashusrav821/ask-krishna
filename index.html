@@ -463,27 +463,107 @@ sendBtn.addEventListener('click', sendMessage);
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var recognition = new SR();
-  recognition.continuous = false; recognition.interimResults = true; recognition.lang = 'en-US';
-  recognition.onstart = function() { isListening = true; micBtn.classList.add('listening'); micBtn.textContent = '\uD83D\uDD34'; };
-  recognition.onresult = function(e) {
-    var t = Array.from(e.results).map(function(r) { return r[0].transcript; }).join('');
-    inputEl.value = t; inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px'; updateSendBtn();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = function() {
+    isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.textContent = '\uD83D\uDD34';
+    micBtn.title = 'Listening... tap to stop';
   };
+
+  recognition.onspeechstart = function() {
+    // Speech detected
+    micBtn.style.transform = 'scale(1.1)';
+  };
+
+  recognition.onspeechend = function() {
+    micBtn.style.transform = 'scale(1)';
+  };
+
+  recognition.onresult = function(e) {
+    var t = '';
+    for (var i = 0; i < e.results.length; i++) {
+      t += e.results[i][0].transcript;
+    }
+    inputEl.value = t;
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+    updateSendBtn();
+  };
+
   recognition.onend = function() {
-    isListening = false; micBtn.classList.remove('listening'); micBtn.textContent = '\uD83C\uDFA4';
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = '\uD83C\uDFA4';
+    micBtn.title = 'Speak your question';
+    micBtn.style.transform = 'scale(1)';
     if (inputEl.value.trim()) sendMessage();
   };
-  recognition.onerror = function() { isListening = false; micBtn.classList.remove('listening'); micBtn.textContent = '\uD83C\uDFA4'; };
+
+  recognition.onerror = function(e) {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.style.transform = 'scale(1)';
+    // Show specific error to user
+    if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+      micBtn.textContent = '\uD83D\uDEAB';
+      addMessage('assistant', 'Microphone permission was denied. Please go to your browser settings and allow microphone access for this site, then try again.');
+    } else if (e.error === 'no-speech') {
+      micBtn.textContent = '\uD83C\uDFA4';
+      // No speech detected - just reset silently
+    } else if (e.error === 'network') {
+      micBtn.textContent = '\uD83C\uDFA4';
+      addMessage('assistant', 'Voice recognition needs internet to work. Please check your connection and try again.');
+    } else if (e.error === 'audio-capture') {
+      micBtn.textContent = '\uD83D\uDEAB';
+      addMessage('assistant', 'No microphone found. Please make sure your microphone is connected and try again.');
+    } else {
+      micBtn.textContent = '\uD83C\uDFA4';
+    }
+    setTimeout(function() { micBtn.textContent = '\uD83C\uDFA4'; }, 3000);
+  };
+
   micBtn.addEventListener('click', function() {
-    if (isListening) { recognition.stop(); return; }
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+    // Request mic permission explicitly first
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function() {
-        inputEl.value = ''; recognition.start();
-      }).catch(function() { micBtn.textContent = '\uD83D\uDEAB'; setTimeout(function() { micBtn.textContent = '\uD83C\uDFA4'; }, 2000); });
-    } else { inputEl.value = ''; recognition.start(); }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+          // Stop the stream immediately - we just needed permission
+          stream.getTracks().forEach(function(t) { t.stop(); });
+          inputEl.value = '';
+          try {
+            recognition.start();
+          } catch(err) {
+            // Recognition already started or other error - retry
+            setTimeout(function() {
+              try { recognition.start(); } catch(e2) {}
+            }, 300);
+          }
+        })
+        .catch(function(err) {
+          micBtn.textContent = '\uD83D\uDEAB';
+          addMessage('assistant', 'Microphone access was blocked. Please tap the lock icon in your browser address bar, allow microphone, then try again.');
+          setTimeout(function() { micBtn.textContent = '\uD83C\uDFA4'; }, 3000);
+        });
+    } else {
+      inputEl.value = '';
+      try { recognition.start(); } catch(e) {}
+    }
   });
-} else { micBtn.style.opacity = '0.3'; micBtn.disabled = true; }
+
+} else {
+  // Speech not supported - hide mic button
+  micBtn.style.display = 'none';
+  document.getElementById('msg-input').placeholder = 'Type your question here...';
+}
 
 // Init
 var savedHistory = historyEnabled ? loadHistory() : null;
