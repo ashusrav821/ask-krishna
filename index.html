@@ -11,255 +11,90 @@
   <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="noindex, nosnippet, noarchive" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src https://ask-krishna-api.oletyashrith.workers.dev;" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%; width: 100%;
-      background: linear-gradient(135deg, #0f0500 0%, #1a0a00 40%, #0d1a0d 100%);
-      font-family: Georgia, 'Palatino Linotype', serif;
-      color: #e5e7eb; overflow: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 680px; margin: 0 auto; }
-
-    /* HEADER */
-    #header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid rgba(249,115,22,0.2);
-      background: rgba(15,5,0,0.95);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      z-index: 10; flex-shrink: 0;
-    }
-    #logo {
-      width: 44px; height: 44px;
-      background: radial-gradient(circle, #7c2d12, #431407);
-      border-radius: 50%; border: 2px solid rgba(249,115,22,0.45);
-      box-shadow: 0 0 18px rgba(249,115,22,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; flex-shrink: 0;
-    }
-    #header-text { flex: 1; min-width: 0; }
-    #header-title {
-      font-size: 18.5px; font-weight: bold;
-      background: linear-gradient(90deg, #fbbf24, #f97316, #fb923c);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; letter-spacing: 0.04em;
-    }
-    #header-sub {
-      font-size: 9.5px; color: #fde68a;
-      letter-spacing: 0.06em; margin-top: 2px;
-      text-shadow: 0 0 6px rgba(251,191,36,0.5);
-    }
-    #header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .hdr-btn {
-      width: 34px; height: 34px; border-radius: 50%;
-      border: 1px solid rgba(249,115,22,0.3);
-      background: rgba(249,115,22,0.1);
-      color: #fdba74; font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .hdr-btn.active {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      border-color: #f97316; color: white;
-      box-shadow: 0 0 10px rgba(249,115,22,0.4);
-    }
-
-    /* MODALS */
-    .modal {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8); z-index: 100;
-      align-items: center; justify-content: center; padding: 20px;
-    }
-    .modal.show { display: flex; }
-    .modal-box {
-      background: #1a0a00; border: 1px solid rgba(249,115,22,0.3);
-      border-radius: 20px; padding: 26px 22px;
-      max-width: 360px; width: 100%; text-align: center;
-    }
-    .modal-box h2 { font-size: 17.5px; color: #fbbf24; margin-bottom: 10px; }
-    .modal-box p { font-size: 13.5px; color: #d1d5db; line-height: 1.7; margin-bottom: 8px; }
-    .notice {
-      font-size: 11.5px; color: #f97316;
-      background: rgba(249,115,22,0.1);
-      border: 1px solid rgba(249,115,22,0.2);
-      border-radius: 10px; padding: 8px 12px;
-      margin: 12px 0; line-height: 1.6;
-    }
-    .btn-row { display: flex; gap: 10px; margin-top: 16px; }
-    .mbtn {
-      flex: 1; padding: 11px; border-radius: 12px; border: none;
-      font-size: 14.5px; cursor: pointer; font-family: inherit; font-weight: bold;
-    }
-    .mbtn.confirm { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
-    .mbtn.cancel { background: rgba(255,255,255,0.07); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); }
-    .mbtn.danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
-
-    /* LANGUAGE OPTIONS */
-    .lang-options { display: flex; gap: 10px; margin: 14px 0; justify-content: center; }
-    .lang-opt {
-      flex: 1; padding: 11px 6px; border-radius: 12px;
-      border: 1px solid rgba(249,115,22,0.25);
-      background: rgba(249,115,22,0.05);
-      color: #ffffff; font-size: 13px; cursor: pointer;
-      font-family: inherit; transition: all 0.2s; text-align: center;
-    }
-    .lang-opt.selected {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      border-color: #f97316; color: white;
-      box-shadow: 0 0 10px rgba(249,115,22,0.3);
-    }
-
-    /* BANNERS */
-    #offline-banner {
-      display: none; justify-content: center; align-items: center;
-      padding: 7px 16px; background: rgba(239,68,68,0.9);
-      color: white; font-size: 13.5px; flex-shrink: 0;
-    }
-    #install-banner {
-      display: none; align-items: center; justify-content: space-between;
-      padding: 9px 14px; background: rgba(249,115,22,0.12);
-      border-bottom: 1px solid rgba(249,115,22,0.2);
-      font-size: 12.5px; color: #fdba74; gap: 10px; flex-shrink: 0;
-    }
-    #install-btn {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      border: none; border-radius: 20px; padding: 5px 12px;
-      color: white; font-size: 12.5px; cursor: pointer;
-      font-family: inherit; white-space: nowrap; flex-shrink: 0;
-    }
-    #install-close {
-      background: transparent; border: none; padding: 4px 8px;
-      color: rgba(249,115,22,0.5); font-size: 16px; cursor: pointer;
-    }
-
-    /* MESSAGES */
-    #messages {
-      flex: 1; overflow-y: auto; padding: 18px 14px;
-      display: flex; flex-direction: column; gap: 16px;
-      -webkit-overflow-scrolling: touch;
-    }
-    #messages::-webkit-scrollbar { display: none; }
-    #suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-    .suggestion-btn {
-      background: rgba(249,115,22,0.08);
-      border: 1px solid rgba(249,115,22,0.25);
-      border-radius: 20px; padding: 7px 13px;
-      color: #ffffff; font-size: 12.5px;
-      cursor: pointer; font-family: inherit; text-align: left;
-    }
-    .suggestion-btn:active { background: rgba(249,115,22,0.2); }
-    .msg-row { display: flex; gap: 10px; align-items: flex-start; }
-    .msg-row.user { flex-direction: row-reverse; }
-    .avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; flex-shrink: 0; margin-top: 2px;
-    }
-    .avatar.bot { background: radial-gradient(circle, #7c2d12, #431407); border: 1px solid rgba(249,115,22,0.4); }
-    .avatar.user { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); border: 1px solid rgba(99,102,241,0.4); }
-    .bubble {
-      max-width: 78%; padding: 12px 16px;
-      font-size: 14.5px; line-height: 1.75;
-      white-space: pre-wrap; word-break: break-word;
-    }
-    .bubble.bot {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px 18px 18px 4px; color: #e5e7eb;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
-    }
-    .bubble.user {
-      background: linear-gradient(135deg, #92400e, #78350f);
-      border: 1px solid rgba(249,115,22,0.3);
-      border-radius: 18px 18px 4px 18px; color: #fef3c7;
-    }
-    .typing-dots { display: flex; gap: 5px; align-items: center; padding: 10px 0; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: #f97316; animation: bounce 1.2s ease-in-out infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
-
-    /* INPUT */
-    #input-area {
-      padding: 11px 14px 18px;
-      background: rgba(15,5,0,0.97);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(249,115,22,0.15);
-      z-index: 10; flex-shrink: 0;
-    }
-    #input-row {
-      display: flex; gap: 8px; align-items: flex-end;
-      background: rgba(254,215,170,0.15);
-      border: 1px solid rgba(249,115,22,0.4);
-      border-radius: 14px; padding: 9px 11px;
-    }
-    #input-row:focus-within { border-color: rgba(249,115,22,0.6); }
-    #msg-input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #fff7ed; font-size: 15.5px; font-family: inherit;
-      resize: none; line-height: 1.5; min-height: 24px; max-height: 100px; overflow-y: auto;
-    }
-    #msg-input::placeholder { color: rgba(255,255,255,0.8); }
-    #mic-btn {
-      width: 40px; height: 40px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white; font-size: 18.5px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s;
-      touch-action: manipulation; box-shadow: 0 0 12px rgba(34,197,94,0.5);
-    }
-    #mic-btn.listening {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 0 16px rgba(239,68,68,0.6);
-      animation: pulse 1s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
-    #send-btn {
-      width: 40px; height: 40px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      color: white; font-size: 18.5px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s; touch-action: manipulation;
-      box-shadow: 0 0 12px rgba(249,115,22,0.35);
-    }
-    #send-btn:disabled { background: rgba(249,115,22,0.2); box-shadow: none; cursor: not-allowed; }
-    #verse-footer { text-align: center; margin-top: 7px; font-size: 10.5px; color: rgba(161,98,7,0.5); letter-spacing: 0.03em; }
-    #history-status { display: none; text-align: center; font-size: 11.5px; color: rgba(249,115,22,0.6); margin-top: 3px; }
-    #lang-indicator { text-align: center; font-size: 10.5px; color: rgba(251,191,36,0.6); margin-top: 2px; }
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-      #input-area { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
-      #header { padding-top: calc(14px + env(safe-area-inset-top)); }
-    }
-
-    /* TIPS OVERLAY */
-    #tips-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;width:100%;background:linear-gradient(135deg,#0f0500 0%,#1a0a00 40%,#0d1a0d 100%);font-family:Georgia,'Palatino Linotype',serif;color:#e5e7eb;overflow:hidden;-webkit-tap-highlight-color:transparent}
+    #app{display:flex;flex-direction:column;height:100dvh;max-width:680px;margin:0 auto}
+    #header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;border-bottom:1px solid rgba(249,115,22,0.2);background:rgba(15,5,0,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:10;flex-shrink:0}
+    #logo{width:44px;height:44px;background:radial-gradient(circle,#7c2d12,#431407);border-radius:50%;border:2px solid rgba(249,115,22,0.45);box-shadow:0 0 18px rgba(249,115,22,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    #header-text{flex:1;min-width:0}
+    #header-title{font-size:18.5px;font-weight:bold;background:linear-gradient(90deg,#fbbf24,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.04em}
+    #header-sub{font-size:9.5px;color:#fde68a;letter-spacing:0.06em;margin-top:2px;text-shadow:0 0 6px rgba(251,191,36,0.5)}
+    #header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .hdr-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);color:#fdba74;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+    .hdr-btn.active{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.4)}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .modal-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:26px 22px;max-width:360px;width:100%;text-align:center;max-height:88vh;overflow-y:auto}
+    .modal-box h2{font-size:17.5px;color:#fbbf24;margin-bottom:10px}
+    .modal-box p{font-size:13.5px;color:#d1d5db;line-height:1.7;margin-bottom:8px}
+    .notice{font-size:11.5px;color:#f97316;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:8px 12px;margin:12px 0;line-height:1.6}
+    .btn-row{display:flex;gap:10px;margin-top:16px}
+    .mbtn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14.5px;cursor:pointer;font-family:inherit;font-weight:bold}
+    .mbtn.confirm{background:linear-gradient(135deg,#f97316,#ea580c);color:white}
+    .mbtn.cancel{background:rgba(255,255,255,0.07);color:#d1d5db;border:1px solid rgba(255,255,255,0.1)}
+    .mbtn.danger{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+    .lang-options{display:flex;gap:10px;margin:14px 0;justify-content:center}
+    .lang-opt{flex:1;padding:11px 6px;border-radius:12px;border:1px solid rgba(249,115,22,0.25);background:rgba(249,115,22,0.05);color:#ffffff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center}
+    .lang-opt.selected{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.3)}
+    #tips-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;padding:20px}
     #tips-overlay.show{display:flex}
     #tips-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.4);border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
-    #tips-box h2{font-size:18px;color:#fbbf24;margin-bottom:6px}
-    #tips-box .tips-sub{font-size:12px;color:rgba(249,115,22,0.6);margin-bottom:16px}
-    .tip-card{background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:14px;padding:13px 14px;margin-bottom:10px;text-align:left;transition:background 0.2s}
-    .tip-card:hover{background:rgba(249,115,22,0.12)}
-    .tip-icon{font-size:22px;margin-bottom:6px}
-    .tip-title{font-size:13.5px;color:#fbbf24;font-weight:bold;margin-bottom:4px}
-    .tip-desc{font-size:12.5px;color:#d1d5db;line-height:1.6}
-    .tip-steps{font-size:11.5px;color:rgba(249,115,22,0.7);margin-top:5px;line-height:1.7}
+    #tips-box h2{font-size:18px;color:#fbbf24;margin-bottom:4px}
+    .tips-sub{font-size:12px;color:rgba(249,115,22,0.6);margin-bottom:16px}
+    .tip-card{background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:14px;padding:14px;text-align:left;min-height:160px}
+    .tip-icon{font-size:28px;margin-bottom:8px}
+    .tip-title{font-size:14px;color:#fbbf24;font-weight:bold;margin-bottom:6px}
+    .tip-desc{font-size:13px;color:#e5e7eb;line-height:1.6;margin-bottom:8px}
+    .tip-steps{font-size:12px;color:rgba(249,115,22,0.8);line-height:1.8;border-top:1px solid rgba(249,115,22,0.1);padding-top:8px}
     #tips-progress{display:flex;justify-content:center;gap:6px;margin:14px 0 10px}
-    .tip-dot{width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,0.25);transition:all 0.3s;cursor:pointer}
+    .tip-dot{width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,0.25);transition:all 0.3s;cursor:pointer;border:none}
     .tip-dot.active{background:#f97316;transform:scale(1.3)}
-    #tips-nav{display:flex;gap:10px;margin-top:14px}
-    #tips-skip{font-size:12px;color:rgba(249,115,22,0.5);background:none;border:none;cursor:pointer;font-family:inherit;margin-top:8px;text-decoration:underline;display:block;width:100%}
+    #tips-nav{display:flex;gap:10px;margin-top:12px}
+    #tips-skip-btn{font-size:12.5px;color:rgba(249,115,22,0.5);background:none;border:none;cursor:pointer;font-family:inherit;margin-top:10px;text-decoration:underline;display:block;width:100%;text-align:center}
+    #offline-banner{display:none;justify-content:center;align-items:center;padding:7px 16px;background:rgba(239,68,68,0.9);color:white;font-size:13.5px;flex-shrink:0}
+    #install-banner{display:none;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(249,115,22,0.12);border-bottom:1px solid rgba(249,115,22,0.2);font-size:12.5px;color:#fdba74;gap:10px;flex-shrink:0}
+    #install-btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:20px;padding:5px 12px;color:white;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+    #install-close{background:transparent;border:none;padding:4px 8px;color:rgba(249,115,22,0.5);font-size:16px;cursor:pointer}
+    #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+    #messages::-webkit-scrollbar{display:none}
+    #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+    .suggestion-btn{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:20px;padding:7px 13px;color:#ffffff;font-size:12.5px;cursor:pointer;font-family:inherit;text-align:left}
+    .suggestion-btn:active{background:rgba(249,115,22,0.2)}
+    .msg-row{display:flex;gap:10px;align-items:flex-start}
+    .msg-row.user{flex-direction:row-reverse}
+    .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px}
+    .avatar.bot{background:radial-gradient(circle,#7c2d12,#431407);border:1px solid rgba(249,115,22,0.4)}
+    .avatar.user{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);border:1px solid rgba(99,102,241,0.4)}
+    .bubble{max-width:78%;padding:12px 16px;font-size:14.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+    .bubble.bot{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px 18px 18px 4px;color:#e5e7eb;box-shadow:0 2px 16px rgba(0,0,0,0.3)}
+    .bubble.user{background:linear-gradient(135deg,#92400e,#78350f);border:1px solid rgba(249,115,22,0.3);border-radius:18px 18px 4px 18px;color:#fef3c7}
+    .typing-dots{display:flex;gap:5px;align-items:center;padding:10px 0}
+    .dot{width:7px;height:7px;border-radius:50%;background:#f97316;animation:bounce 1.2s ease-in-out infinite}
+    .dot:nth-child(2){animation-delay:0.2s}
+    .dot:nth-child(3){animation-delay:0.4s}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+    #input-area{padding:11px 14px 18px;background:rgba(15,5,0,0.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(249,115,22,0.15);z-index:10;flex-shrink:0}
+    #input-row{display:flex;gap:8px;align-items:flex-end;background:rgba(254,215,170,0.15);border:1px solid rgba(249,115,22,0.4);border-radius:14px;padding:9px 11px}
+    #input-row:focus-within{border-color:rgba(249,115,22,0.6)}
+    #msg-input{flex:1;background:transparent;border:none;outline:none;color:#fff7ed;font-size:15.5px;font-family:inherit;resize:none;line-height:1.5;min-height:24px;max-height:100px;overflow-y:auto}
+    #msg-input::placeholder{color:rgba(255,255,255,0.8)}
+    #mic-btn{width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;font-size:18.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;touch-action:manipulation;box-shadow:0 0 12px rgba(34,197,94,0.5)}
+    #mic-btn.listening{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 0 16px rgba(239,68,68,0.6);animation:pulse 1s ease-in-out infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+    #send-btn{width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,#f97316,#ea580c);color:white;font-size:18.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;touch-action:manipulation;box-shadow:0 0 12px rgba(249,115,22,0.35)}
+    #send-btn:disabled{background:rgba(249,115,22,0.2);box-shadow:none;cursor:not-allowed}
+    #verse-footer{text-align:center;margin-top:7px;font-size:10.5px;color:rgba(161,98,7,0.5);letter-spacing:0.03em}
+    #history-status{display:none;text-align:center;font-size:11.5px;color:rgba(249,115,22,0.6);margin-top:3px}
+    #lang-indicator{text-align:center;font-size:10.5px;color:rgba(251,191,36,0.6);margin-top:2px}
+    @supports(padding-bottom:env(safe-area-inset-bottom)){#input-area{padding-bottom:calc(14px + env(safe-area-inset-bottom))}#header{padding-top:calc(14px + env(safe-area-inset-top))}}
   </style>
 </head>
 <body oncontextmenu="return false">
 <div id="app">
 
-  <!-- Header -->
   <div id="header">
     <div id="logo">&#x1F99A;</div>
     <div id="header-text">
@@ -267,20 +102,32 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-actions">
-      <button class="hdr-btn" id="tips-btn" title="Help & Tips">&#x2139;&#xFE0F;</button>
+      <button class="hdr-btn" id="tips-btn" title="Help and Tips">&#x2139;&#xFE0F;</button>
       <button class="hdr-btn" id="lang-btn" title="Change Language">&#x1F310;</button>
       <button class="hdr-btn" id="history-btn" title="Save History">&#x1F4BE;</button>
     </div>
   </div>
 
-  <!-- Offline Banner -->
   <div id="offline-banner">&#x1F534; No internet connection</div>
-
-  <!-- Install Banner -->
   <div id="install-banner">
     <span>&#x1F4F2; Install Ask Krishna on your home screen!</span>
     <button id="install-btn">Install</button>
     <button id="install-close">&#x2715;</button>
+  </div>
+
+  <!-- Tips Overlay -->
+  <div id="tips-overlay">
+    <div id="tips-box">
+      <h2>&#x1F4A1; Quick Guide</h2>
+      <p class="tips-sub">Learn all features in 60 seconds</p>
+      <div id="tips-content"></div>
+      <div id="tips-progress"></div>
+      <div id="tips-nav">
+        <button class="mbtn cancel" id="tips-prev">&#x2190; Back</button>
+        <button class="mbtn confirm" id="tips-next">Next &#x2192;</button>
+      </div>
+      <button id="tips-skip-btn">Skip and Start Chatting</button>
+    </div>
   </div>
 
   <!-- Language Modal -->
@@ -305,43 +152,20 @@
     <div class="modal-box">
       <h2>&#x1F4BE; Conversation History</h2>
       <p id="history-desc">Would you like Ask Krishna to remember your conversations?</p>
-      <div class="notice">
-        &#x1F512; <strong>Saved only on this device</strong><br/>
-        Your conversations are stored in your phone local storage only &mdash; never uploaded to any cloud or server.
-      </div>
+      <div class="notice">&#x1F512; <strong>Saved only on this device</strong><br/>Your conversations are stored in your phone local storage only &mdash; never uploaded to any cloud or server.</div>
       <div id="modal-enable-row" class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('history-modal')">Cancel</button>
         <button class="mbtn confirm" onclick="enableHistory()">Enable &#x1F64F;</button>
       </div>
-      <div id="modal-disable-row" class="btn-row" style="display:none; flex-direction:column; gap:10px;">
+      <div id="modal-disable-row" class="btn-row" style="display:none;flex-direction:column;gap:10px">
         <button class="mbtn danger" onclick="clearHistory()">&#x1F5D1; Clear History &amp; Disable</button>
         <button class="mbtn cancel" onclick="closeModal('history-modal')">Keep Saving &mdash; Close</button>
       </div>
     </div>
   </div>
 
+  <div id="messages"><div id="suggestions"></div></div>
 
-  <!-- Tips Overlay -->
-  <div id="tips-overlay">
-    <div id="tips-box">
-      <h2>&#x1F4A1; Quick Guide</h2>
-      <p class="tips-sub">Swipe through to learn all features</p>
-      <div id="tips-content"></div>
-      <div id="tips-progress"></div>
-      <div id="tips-nav">
-        <button class="mbtn cancel" id="tips-prev">&#x2190; Back</button>
-        <button class="mbtn confirm" id="tips-next">Next &#x2192;</button>
-      </div>
-      <button id="tips-skip" onclick="closeTips()">Skip &amp; Start Chatting</button>
-    </div>
-  </div>
-
-  <!-- Messages -->
-  <div id="messages">
-    <div id="suggestions"></div>
-  </div>
-
-  <!-- Input Area -->
   <div id="input-area">
     <div id="input-row">
       <textarea id="msg-input" placeholder="Type or tap mic to speak..." rows="1"></textarea>
@@ -352,313 +176,267 @@
     <div id="history-status">&#x1F4BE; Saving to device storage</div>
     <div id="lang-indicator"></div>
   </div>
-
 </div>
-<script>var WORKER_URL='https://ask-krishna-api.oletyashrith.workers.dev/';
-var HISTORY_KEY='ask_krishna_history';
-var HISTORY_ENABLED_KEY='ask_krishna_enabled';
-var LANG_KEY='ask_krishna_lang';
-var LANG_CONFIG={
-en:{
-name:'English',
-indicator:'',
-placeholder:'Type or tap mic to speak...',
-welcome:'Namaste!I am Ask Krishna,your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation,challenge,or question you are facing in life and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today,dear seeker?',
-switched:'Switched to English. How can I help you today?',
-systemSuffix:'Respond in English. IMPORTANT:At the end of every response always ask ONE natural follow-up question based on what the person shared. Make it conversational and relevant like a caring friend wanting to understand more. Format it on a new line starting with a relevant emoji. Also maintain full context of the conversation and refer back to what the person said earlier when relevant.'
-},
-te:{
-name:'Telugu',
-indicator:'&#x1F1EE;&#x1F1F3;Telugu mode active',
-placeholder:'తెలుగులో టైప్ చేయండి లేదా మాట్లాడండి...',
-welcome:'నమస్తే!నేను Ask Krishna-భగవద్గీత యొక్క శాశ్వతమైన జ్ఞానానికి మీ మార్గదర్శి.\n\nమీరు జీవితంలో ఎదుర్కొంటున్న ఏ సమస్య గురించైనా నన్ను అడగండి.\n\nఈ రోజు మీ మనసులో ఏముంది,ప్రియమైన సాధకుడా?',
-switched:'తెలుగుకు మారాము. నేను మీకు ఏవిధంగా సహాయపడగలను?',
-systemSuffix:'IMPORTANT:You must respond entirely in Telugu language using Telugu script. Keep the same practical friendly tone but in Telugu. At the end of every response ask ONE natural follow-up question in Telugu. Maintain full context of the conversation.'
-},
-ta:{
-name:'Tamil',
-indicator:'&#x1F1EE;&#x1F1F3;Tamil mode active',
-placeholder:'தமிழில் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்...',
-welcome:'வணக்கம்!நான் Ask Krishna-பகவத் கீதையின் நித்திய ஞானத்திற்கு உங்கள் வழிகாட்டி.\n\nவாழ்க்கையில் நீங்கள் எதிர்கொள்ளும் எந்த சவாலையும் என்னிடம் கேளுங்கள்.\n\nஇன்று உங்கள் மனதில் என்ன உள்ளது,அன்பான சாதகரே?',
-switched:'தமிழுக்கு மாறினோம். நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?',
-systemSuffix:'IMPORTANT:You must respond entirely in Tamil language using Tamil script. Keep the same practical friendly tone but in Tamil. At the end of every response ask ONE natural follow-up question in Tamil. Maintain full context of the conversation.'
-}
+
+<script>
+var W='https://ask-krishna-api.oletyashrith.workers.dev/';
+var HK='ask_krishna_history';
+var HEK='ask_krishna_enabled';
+var LK='ask_krishna_lang';
+var TK='ask_krishna_tips_seen';
+
+var LC={
+  en:{name:'English',ind:'',ph:'Type or tap mic to speak...',
+    welcome:'Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?',
+    sw:'Switched to English. How can I help you today?',
+    sys:'Respond in English. IMPORTANT: At the end of every response always ask ONE natural follow-up question based on what the person shared. Make it conversational and caring — like a friend wanting to understand more. Format it on a new line starting with a relevant emoji. Maintain full context of the entire conversation and refer back to what the person said earlier when relevant.'},
+  te:{name:'Telugu',ind:'&#x1F1EE;&#x1F1F3; Telugu mode active',ph:'తెలుగులో టైప్ చేయండి లేదా మాట్లాడండి...',
+    welcome:'నమస్తే! నేను Ask Krishna - భగవద్గీత జ్ఞానానికి మీ మార్గదర్శి.\n\nమీరు జీవితంలో ఎదుర్కొంటున్న ఏ సమస్య గురించైనా నన్ను అడగండి.\n\nఈ రోజు మీ మనసులో ఏముంది, ప్రియమైన సాధకుడా?',
+    sw:'తెలుగుకు మారాము. నేను మీకు ఏవిధంగా సహాయపడగలను?',
+    sys:'IMPORTANT: Respond entirely in Telugu script. Keep practical friendly tone. At the end ask ONE follow-up question in Telugu. Maintain full conversation context.'},
+  ta:{name:'Tamil',ind:'&#x1F1EE;&#x1F1F3; Tamil mode active',ph:'தமிழில் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்...',
+    welcome:'வணக்கம்! நான் Ask Krishna - பகவத் கீதை ஞானத்திற்கு உங்கள் வழிகாட்டி.\n\nவாழ்க்கையில் நீங்கள் எதிர்கொள்ளும் எந்த சவாலையும் என்னிடம் கேளுங்கள்.\n\nஇன்று உங்கள் மனதில் என்ன உள்ளது, அன்பான சாதகரே?',
+    sw:'தமிழுக்கு மாறினோம். நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?',
+    sys:'IMPORTANT: Respond entirely in Tamil script. Keep practical friendly tone. At the end ask ONE follow-up question in Tamil. Maintain full conversation context.'}
 };
-var BASE_SYSTEM='You are Ask Krishna — a wise,caring friend who knows the Bhagavad Gita deeply and helps people apply its wisdom to real everyday life situations.\n\nYour knowledge base covers all 18 chapters:\n-Chapter 1:Arjuna crisis and overwhelming anxiety on the battlefield\n-Chapter 2:The eternal soul,doing your duty,and not obsessing over results(verse 2.47 is key)\n-Chapter 3:Taking action without being attached to whether it works out\n-Chapter 4:Knowledge,letting go,and why God shows up when things go wrong\n-Chapter 5:Finding peace while still being active in the world\n-Chapter 6:Training your mind — it is your best friend or worst enemy(6.5)\n-Chapter 7:Seeing the divine in everything around you\n-Chapter 8:What you focus on shapes who you become\n-Chapter 9:Devotion and offering everything you do to something greater\n-Chapter 10:God shows up as the best version of everything\n-Chapter 11:The big picture — everything is connected and purposeful\n-Chapter 12:Love and devotion as a path — qualities of a truly good person\n-Chapter 13:The difference between your body and the real you\n-Chapter 14:Three energy states — motivated,restless,or stuck — and how to shift them\n-Chapter 15:Letting go of what does not serve you\n-Chapter 16:The difference between fear-based and love-based choices\n-Chapter 17:How your beliefs shape your actions and your life\n-Chapter 18:Full surrender — trusting the process completely(18.66)\n\nTONE AND LANGUAGE RULES:\n-Write like a wise friend talking over coffee — not like a priest giving a sermon\n-Use everyday words. Say your mind not the inner self. Say stop worrying about the result not renounce the fruits of action\n-Never use vague spiritual phrases without explaining them plainly\n-Be specific and concrete\n-Relate to real modern life — work stress,relationships,self-doubt,fear of failure\n-A 16-year-old AND a 60-year-old should both immediately understand your response\n\nHOW TO INCLUDE VERSE REFERENCES:\n-Mention verses casually:Krishna actually said something really practical about this in Chapter 2 verse 47\n-Always explain what the verse means in plain words right after\n-Tie the verse back to the person situation\n\nRESPONSE STRUCTURE:\n1. Start with 1-2 sentences showing you genuinely get what they are going through\n2. Explain what Krishna taught in plain everyday language\n3. Give a concrete real-world analogy\n4. Mention 1-2 relevant Gita verses casually and explain in simple words\n5. End with 1-2 specific action steps the person can do today\n\nKeep to 4-5 short paragraphs. Short sentences. Easy to read on a phone. Never give harmful advice.';
-var SUGGESTIONS=[
-"I feel lost in life and don't know my purpose",
-"I feel stressed and compare myself to others",
-"How do I deal with grief and loss?",
-"I have a difficult decision to make"
-];
-var messages=[];
-var loading=false;
-var isListening=false;
-var deferredPrompt=null;
-var historyEnabled=localStorage.getItem(HISTORY_ENABLED_KEY)==='true';
-var currentLang=localStorage.getItem(LANG_KEY)||'en';
-var pendingLang=currentLang;
+
+var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply and helps people apply its wisdom to real everyday life situations.\n\nKnowledge base — all 18 chapters:\n- Chapter 1: Arjuna crisis and overwhelming anxiety\n- Chapter 2: Eternal soul, duty, not obsessing over results (2.47 key)\n- Chapter 3: Action without attachment to outcome\n- Chapter 4: Knowledge, letting go, God appears when things go wrong\n- Chapter 5: Finding peace while staying active\n- Chapter 6: Training your mind — best friend or worst enemy (6.5)\n- Chapter 7: Seeing the divine in everything\n- Chapter 8: What you focus on shapes who you become\n- Chapter 9: Devotion, offering everything to something greater\n- Chapter 10: God as the best version of everything\n- Chapter 11: Everything is connected and purposeful\n- Chapter 12: Love and devotion, qualities of a good person\n- Chapter 13: Difference between body and the real you\n- Chapter 14: Three energy states — motivated, restless, stuck\n- Chapter 15: Letting go of what does not serve you\n- Chapter 16: Fear-based vs love-based choices\n- Chapter 17: Beliefs shape actions and life\n- Chapter 18: Full surrender — trust the process (18.66)\n\nTONE RULES:\n- Write like a wise friend over coffee — not a priest giving sermon\n- Use everyday words. Say your mind not inner self. Say stop worrying about results not renounce fruits of action\n- Never use vague phrases like inner stillness or fog will lift without plain explanation\n- Be specific and concrete\n- Relate to modern life — work stress, relationships, self-doubt, fear of failure\n- A 16-year-old AND a 60-year-old should both immediately understand\n\nVERSE REFERENCES:\n- Mention casually: Krishna said something practical about this in Chapter 2 verse 47\n- Always explain in plain words right after\n- Tie verse back to person situation\n\nSTRUCTURE:\n1. Show you genuinely understand what they are going through\n2. Explain Krishna teaching in plain language\n3. Give concrete real-world analogy\n4. Mention 1-2 Gita verses casually with plain explanation\n5. End with 1-2 specific action steps for today\n\nKeep to 4-5 short paragraphs. Easy to read on phone. Never give harmful advice.';
+
+var msgs=[],loading=false,isListening=false,deferredPrompt=null;
+var histEn=localStorage.getItem(HEK)==='true';
+var curLang=localStorage.getItem(LK)||'en';
+var pendLang=curLang;
+
 var messagesEl=document.getElementById('messages');
-var suggestionsEl=document.getElementById('suggestions');
+var suggestEl=document.getElementById('suggestions');
 var inputEl=document.getElementById('msg-input');
 var sendBtn=document.getElementById('send-btn');
 var micBtn=document.getElementById('mic-btn');
-var offlineBanner=document.getElementById('offline-banner');
-var installBanner=document.getElementById('install-banner');
-var historyBtn=document.getElementById('history-btn');
+var offBanner=document.getElementById('offline-banner');
+var instBanner=document.getElementById('install-banner');
+var histBtn=document.getElementById('history-btn');
 var langBtn=document.getElementById('lang-btn');
-var historyStatus=document.getElementById('history-status');
-var langIndicator=document.getElementById('lang-indicator');
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-function openModal(id){document.getElementById(id).classList.add('show');}
-function scrollBottom(){setTimeout(function(){messagesEl.scrollTop=messagesEl.scrollHeight;},60);}
-function updateSendBtn(){sendBtn.disabled=!inputEl.value.trim()||loading;}
-function getSystemPrompt(){return BASE_SYSTEM+'\n\n'+LANG_CONFIG[currentLang].systemSuffix;}
-function checkOnline(){offlineBanner.style.display=navigator.onLine?'none':'flex';}
+var tipsBtn=document.getElementById('tips-btn');
+var histStatus=document.getElementById('history-status');
+var langInd=document.getElementById('lang-indicator');
+
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openModal(id){document.getElementById(id).classList.add('show')}
+function scrollBottom(){setTimeout(function(){messagesEl.scrollTop=messagesEl.scrollHeight;},60)}
+function updateSend(){sendBtn.disabled=!inputEl.value.trim()||loading}
+function getSys(){return BS+'\n\n'+LC[curLang].sys}
+
+function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);
 window.addEventListener('offline',checkOnline);
 checkOnline();
+
 ['lang-modal','history-modal'].forEach(function(id){
-document.getElementById(id).addEventListener('click',function(e){
-if(e.target===this)closeModal(id);
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)});
 });
-});
-window.addEventListener('beforeinstallprompt',function(e){
-e.preventDefault();deferredPrompt=e;
-installBanner.style.display='flex';
-});
-document.getElementById('install-btn').addEventListener('click',function(){
-if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;installBanner.style.display='none';}
-});
-document.getElementById('install-close').addEventListener('click',function(){
-installBanner.style.display='none';
-});
-if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode:standalone)').matches){
-installBanner.style.display='flex';
-installBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';
-document.getElementById('install-btn').style.display='none';
+
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
+document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
+document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches){
+  instBanner.style.display='flex';
+  instBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';
+  document.getElementById('install-btn').style.display='none';
 }
+
 function selectLang(lang){
-pendingLang=lang;
-document.getElementById('lang-en').classList.toggle('selected',lang==='en');
-document.getElementById('lang-te').classList.toggle('selected',lang==='te');
-document.getElementById('lang-ta').classList.toggle('selected',lang==='ta');
+  pendLang=lang;
+  document.getElementById('lang-en').classList.toggle('selected',lang==='en');
+  document.getElementById('lang-te').classList.toggle('selected',lang==='te');
+  document.getElementById('lang-ta').classList.toggle('selected',lang==='ta');
 }
 function confirmLang(){
-currentLang=pendingLang;
-localStorage.setItem(LANG_KEY,currentLang);
-var cfg=LANG_CONFIG[currentLang];
-langIndicator.innerHTML=cfg.indicator;
-inputEl.placeholder=cfg.placeholder;
-if(currentLang==='en'){langBtn.classList.remove('active');}
-else{langBtn.classList.add('active');}
-closeModal('lang-modal');
-addMessage('assistant',cfg.switched);
+  curLang=pendLang;
+  localStorage.setItem(LK,curLang);
+  var c=LC[curLang];
+  langInd.innerHTML=c.ind;
+  inputEl.placeholder=c.ph;
+  if(curLang==='en'){langBtn.classList.remove('active')}else{langBtn.classList.add('active')}
+  closeModal('lang-modal');
+  addMsg('assistant',c.sw);
 }
 langBtn.addEventListener('click',function(){
-pendingLang=currentLang;
-document.getElementById('lang-en').classList.toggle('selected',currentLang==='en');
-document.getElementById('lang-te').classList.toggle('selected',currentLang==='te');
-document.getElementById('lang-ta').classList.toggle('selected',currentLang==='ta');
-openModal('lang-modal');
+  pendLang=curLang;
+  document.getElementById('lang-en').classList.toggle('selected',curLang==='en');
+  document.getElementById('lang-te').classList.toggle('selected',curLang==='te');
+  document.getElementById('lang-ta').classList.toggle('selected',curLang==='ta');
+  openModal('lang-modal');
 });
-function updateHistoryBtn(){
-if(historyEnabled){historyBtn.classList.add('active');historyStatus.style.display='block';}
-else{historyBtn.classList.remove('active');historyStatus.style.display='none';}
+
+function updateHistBtn(){
+  if(histEn){histBtn.classList.add('active');histStatus.style.display='block'}
+  else{histBtn.classList.remove('active');histStatus.style.display='none'}
 }
-function saveHistory(){
-if(!historyEnabled)return;
-try{localStorage.setItem(HISTORY_KEY,JSON.stringify(messages));}catch(e){}
-}
-function loadHistory(){
-try{var s=localStorage.getItem(HISTORY_KEY);return s?JSON.parse(s):null;}catch(e){return null;}
-}
-function enableHistory(){
-historyEnabled=true;
-localStorage.setItem(HISTORY_ENABLED_KEY,'true');
-saveHistory();updateHistoryBtn();closeModal('history-modal');
-addMessage('assistant','Your conversations will now be saved on this device only — never in any cloud. May Krishna\'s wisdom guide you whenever you return.');
-}
-function clearHistory(){
-historyEnabled=false;
-localStorage.removeItem(HISTORY_ENABLED_KEY);
-localStorage.removeItem(HISTORY_KEY);
-updateHistoryBtn();closeModal('history-modal');
-addMessage('assistant','History cleared from this device. Each session starts fresh,like a new dawn.');
-}
-historyBtn.addEventListener('click',function(){
-var desc=document.getElementById('history-desc');
-var enRow=document.getElementById('modal-enable-row');
-var disRow=document.getElementById('modal-disable-row');
-if(historyEnabled){
-desc.textContent='History saving is ON. Chats are saved on this device only.';
-enRow.style.display='none';
-disRow.style.display='flex';disRow.style.flexDirection='column';
-}else{
-desc.textContent='Enable to save your conversations on this device only.';
-enRow.style.display='flex';
-disRow.style.display='none';
-}
-openModal('history-modal');
+function saveHist(){if(!histEn)return;try{localStorage.setItem(HK,JSON.stringify(msgs))}catch(e){}}
+function loadHist(){try{var s=localStorage.getItem(HK);return s?JSON.parse(s):null}catch(e){return null}}
+function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist();updateHistBtn();closeModal('history-modal');addMsg('assistant','Your conversations will now be saved on this device only — never in any cloud. May Krishna\'s wisdom guide you whenever you return.')}
+function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared from this device. Each session starts fresh, like a new dawn.')}
+histBtn.addEventListener('click',function(){
+  var desc=document.getElementById('history-desc');
+  var enR=document.getElementById('modal-enable-row');
+  var disR=document.getElementById('modal-disable-row');
+  if(histEn){desc.textContent='History saving is ON. Chats saved on this device only.';enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column'}
+  else{desc.textContent='Enable to save your conversations on this device only.';enR.style.display='flex';disR.style.display='none'}
+  openModal('history-modal');
 });
-updateHistoryBtn();
-function addMessage(role,content){
-messages.push({role:role,content:content});
-var row=document.createElement('div');row.className='msg-row '+role;
-var avatar=document.createElement('div');
-avatar.className='avatar '+(role==='assistant'?'bot':'user');
-avatar.textContent=role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';
-var bubble=document.createElement('div');
-bubble.className='bubble '+(role==='assistant'?'bot':'user');
-bubble.textContent=content;
-row.appendChild(avatar);row.appendChild(bubble);
-messagesEl.appendChild(row);scrollBottom();saveHistory();
+updateHistBtn();
+
+function addMsg(role,content){
+  msgs.push({role:role,content:content});
+  var row=document.createElement('div');row.className='msg-row '+role;
+  var av=document.createElement('div');av.className='avatar '+(role==='assistant'?'bot':'user');
+  av.textContent=role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';
+  var bub=document.createElement('div');bub.className='bubble '+(role==='assistant'?'bot':'user');
+  bub.textContent=content;
+  row.appendChild(av);row.appendChild(bub);
+  messagesEl.appendChild(row);scrollBottom();saveHist();
 }
 function showTyping(){
-var row=document.createElement('div');row.className='msg-row';row.id='typing-row';
-var avatar=document.createElement('div');avatar.className='avatar bot';avatar.textContent='\uD83E\uDD9A';
-var bubble=document.createElement('div');bubble.className='bubble bot';
-bubble.innerHTML='<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-row.appendChild(avatar);row.appendChild(bubble);
-messagesEl.appendChild(row);scrollBottom();
+  var row=document.createElement('div');row.className='msg-row';row.id='typing-row';
+  var av=document.createElement('div');av.className='avatar bot';av.textContent='\uD83E\uDD9A';
+  var bub=document.createElement('div');bub.className='bubble bot';
+  bub.innerHTML='<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  row.appendChild(av);row.appendChild(bub);messagesEl.appendChild(row);scrollBottom();
 }
-function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove();}
+function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
+
 function sendMessage(){
-var text=inputEl.value.trim();
-if(!text||loading)return;
-if(!navigator.onLine){
-addMessage('assistant','Dear seeker,I need an internet connection to share Krishna\'s wisdom with you. Please check your connection and try again.');
-return;
+  var text=inputEl.value.trim();
+  if(!text||loading)return;
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need an internet connection to share Krishna\'s wisdom. Please check your connection and try again.');return}
+  loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';
+  addMsg('user',text);showTyping();
+  var apiMsgs=msgs.map(function(m){return{role:m.role,content:m.content}});
+  fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1000,system:getSys(),messages:apiMsgs})})
+  .then(function(r){return r.json()})
+  .then(function(data){
+    hideTyping();
+    var reply='I am here. Please ask again.';
+    if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}
+    addMsg('assistant',reply);
+  })
+  .catch(function(){hideTyping();addMsg('assistant',navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect and try again.')})
+  .finally(function(){loading=false;updateSend()});
 }
-loading=true;
-inputEl.value='';inputEl.style.height='auto';
-updateSendBtn();suggestionsEl.style.display='none';
-addMessage('user',text);showTyping();
-var apiMessages=messages.map(function(m){return{role:m.role,content:m.content};});
-fetch(WORKER_URL,{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({max_tokens:1000,system:getSystemPrompt(),messages:apiMessages})
-})
-.then(function(r){return r.json();})
-.then(function(data){
-hideTyping();
-var reply='I am here. Please ask again.';
-if(data.content){
-for(var i=0;i<data.content.length;i++){
-if(data.content[i].type==='text'){reply=data.content[i].text;break;}
-}
-}
-addMessage('assistant',reply);
-})
-.catch(function(){
-hideTyping();
-addMessage('assistant',navigator.onLine
-?'A moment of silence... Something went wrong. Please try again,dear seeker.'
-:'Like Arjuna separated from Krishna,I cannot reach you without internet. Please reconnect and try again.');
-})
-.finally(function(){loading=false;updateSendBtn();});
-}
-inputEl.addEventListener('input',function(){
-inputEl.style.height='auto';
-inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';
-updateSendBtn();
-});
-inputEl.addEventListener('keydown',function(e){
-if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
-});
+inputEl.addEventListener('input',function(){inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()});
+inputEl.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 sendBtn.addEventListener('click',sendMessage);
+
 if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var recognition=new SR();
-recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
-function getLangCode(){
-return currentLang==='te'?'te-IN':currentLang==='ta'?'ta-IN':'en-US';
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var rec=new SR();
+  rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;
+  function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':'en-US'}
+  rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.textContent='\uD83D\uDD34'};
+  rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};
+  rec.onspeechend=function(){micBtn.style.transform='scale(1)'};
+  rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};
+  rec.onend=function(){isListening=false;micBtn.classList.remove('listening');micBtn.textContent='\uD83C\uDFA4';micBtn.style.transform='scale(1)';if(inputEl.value.trim())sendMessage()};
+  rec.onerror=function(e){
+    isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';micBtn.textContent='\uD83C\uDFA4';
+    if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please go to browser settings, allow microphone access, then try again.')}
+    else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet. Please check your connection.')}
+    else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone is connected.')}
+  };
+  micBtn.addEventListener('click',function(){
+    if(isListening){rec.stop();return}
+    rec.lang=getLangCode();
+    if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        stream.getTracks().forEach(function(t){t.stop()});
+        inputEl.value='';
+        try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}
+      }).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings and try again.')});
+    }else{inputEl.value='';try{rec.start()}catch(e){}}
+  });
+}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
+
+// Tips
+var TIPS=[
+  {icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your personal guide to the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or green mic button to get started.'},
+  {icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question instead of typing. Supports English, Telugu and Tamil voice input.',steps:'1. Tap the green mic button\n2. Speak your question clearly\n3. Krishna responds automatically after you stop'},
+  {icon:'\uD83C\uDF10',title:'3 Languages Supported',desc:'Ask Krishna responds in English, Telugu or Tamil — your choice!',steps:'1. Tap the globe button in the top right\n2. Select your preferred language\n3. Tap OK to confirm'},
+  {icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up question to understand your situation better. The more you share the more personal the guidance gets.',steps:'Simply answer the follow-up to continue the conversation deeper.'},
+  {icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared in this session. The conversation builds naturally and refers to earlier topics automatically.',steps:'Say "going back to what I said about work" and Krishna will remember the full context.'},
+  {icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Optionally save your conversations on this device only. Never uploaded to any cloud or server — completely private.',steps:'1. Tap the save button in the top right\n2. Choose Enable\n3. Chats are saved locally on this device only'},
+  {icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install Ask Krishna on your home screen for quick daily access — works just like a native app on both Android and iPhone.',steps:'Android: Tap the install banner or browser menu then Add to Home Screen\niPhone: Tap Share then Add to Home Screen'},
+  {icon:'\uD83D\uDCA1',title:'Try These Questions',desc:'Not sure what to ask? Here are some great starting points that others find helpful:',steps:'I feel lost and do not know my purpose\nI am stressed at work and comparing myself to others\nHow do I deal with anger and forgiveness?\nI have a big decision and I am scared to make it'}
+];
+var tipIdx=0;
+
+function renderTip(){
+  var t=TIPS[tipIdx];
+  var c=document.getElementById('tips-content');
+  if(!c)return;
+  c.innerHTML='<div class="tip-card"><div class="tip-icon">'+t.icon+'</div><div class="tip-title">'+t.title+'</div><div class="tip-desc">'+t.desc+'</div><div class="tip-steps">'+t.steps.replace(/\n/g,'<br>')+'</div></div>';
+  var prog=document.getElementById('tips-progress');
+  if(prog){
+    prog.innerHTML='';
+    TIPS.forEach(function(_,i){
+      var d=document.createElement('button');
+      d.className='tip-dot'+(i===tipIdx?' active':'');
+      d.onclick=function(){tipIdx=i;renderTip()};
+      prog.appendChild(d);
+    });
+  }
+  var p=document.getElementById('tips-prev');
+  var n=document.getElementById('tips-next');
+  if(p)p.style.display=tipIdx===0?'none':'flex';
+  if(n)n.textContent=tipIdx===TIPS.length-1?'Get Started':'Next';
 }
-recognition.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.textContent='\uD83D\uDD34';};
-recognition.onspeechstart=function(){micBtn.style.transform='scale(1.1)';};
-recognition.onspeechend=function(){micBtn.style.transform='scale(1)';};
-recognition.onresult=function(e){
-var t='';
-for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript;}
-inputEl.value=t;inputEl.style.height='auto';
-inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSendBtn();
-};
-recognition.onend=function(){
-isListening=false;micBtn.classList.remove('listening');
-micBtn.textContent='\uD83C\uDFA4';micBtn.style.transform='scale(1)';
-if(inputEl.value.trim())sendMessage();
-};
-recognition.onerror=function(e){
-isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';
-if(e.error==='not-allowed'||e.error==='permission-denied'){
-addMessage('assistant','Microphone permission denied. Please go to browser settings,allow microphone access for this site,then try again.');
-}else if(e.error==='network'){
-addMessage('assistant','Voice recognition needs internet. Please check your connection.');
-}else if(e.error==='audio-capture'){
-addMessage('assistant','No microphone found. Please check your microphone is connected.');
+
+function closeTips(){
+  var o=document.getElementById('tips-overlay');
+  if(o)o.classList.remove('show');
+  localStorage.setItem(TK,'true');
 }
-micBtn.textContent='\uD83C\uDFA4';
-};
-micBtn.addEventListener('click',function(){
-if(isListening){recognition.stop();return;}
-recognition.lang=getLangCode();
-if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-navigator.mediaDevices.getUserMedia({audio:true})
-.then(function(stream){
-stream.getTracks().forEach(function(t){t.stop();});
-inputEl.value='';
-try{recognition.start();}catch(err){
-setTimeout(function(){try{recognition.start();}catch(e2){}},300);
+
+function openTips(){
+  tipIdx=0;
+  renderTip();
+  var o=document.getElementById('tips-overlay');
+  if(o)o.classList.add('show');
 }
-})
-.catch(function(){
-addMessage('assistant','Microphone access blocked. Please allow microphone in browser settings and try again.');
-});
+
+tipsBtn.addEventListener('click',function(){openTips()});
+document.getElementById('tips-next').addEventListener('click',function(){if(tipIdx===TIPS.length-1){closeTips()}else{tipIdx++;renderTip()}});
+document.getElementById('tips-prev').addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
+document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
+document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){})}
+
+var saved=histEn?loadHist():null;
+if(saved&&saved.length>0){
+  saved.forEach(function(m){
+    msgs.push(m);
+    var row=document.createElement('div');row.className='msg-row '+m.role;
+    var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+    av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';
+    var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+    bub.textContent=m.content;
+    row.appendChild(av);row.appendChild(bub);messagesEl.appendChild(row);
+  });
+  scrollBottom();
+  addMsg('assistant','Welcome back! Your previous conversation has been restored from this device. How may Krishna guide you today?');
 }else{
-inputEl.value='';
-try{recognition.start();}catch(e){}
+  addMsg('assistant',LC[curLang].welcome);
 }
+if(curLang!=='en'){langBtn.classList.add('active');langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
+
+var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
+SUGG.forEach(function(s){
+  var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;
+  btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';inputEl.focus()};
+  suggestEl.appendChild(btn);
 });
-}else{
-micBtn.style.display='none';
-inputEl.placeholder='Type your question here...';
-}
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){});
-}
-var savedHistory=historyEnabled?loadHistory():null;
-if(savedHistory&&savedHistory.length>0){
-savedHistory.forEach(function(m){
-messages.push(m);
-var row=document.createElement('div');row.className='msg-row '+m.role;
-var avatar=document.createElement('div');
-avatar.className='avatar '+(m.role==='assistant'?'bot':'user');
-avatar.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';
-var bubble=document.createElement('div');
-bubble.className='bubble '+(m.role==='assistant'?'bot':'user');
-bubble.textContent=m.content;
-row.appendChild(avatar);row.appendChild(bubble);
-messagesEl.appendChild(row);
-});
-scrollBottom();
-addMessage('assistant','Welcome back!Your previous conversation has been restored from this device. How may Krishna guide you today?');
-}else{
-addMessage('assistant',LANG_CONFIG[currentLang].welcome);
-}
-if(currentLang!=='en'){
-langBtn.classList.add('active');
-langIndicator.innerHTML=LANG_CONFIG[currentLang].indicator;
-inputEl.placeholder=LANG_CONFIG[currentLang].placeholder;
-}
-SUGGESTIONS.forEach(function(s){
-var btn=document.createElement('button');
-btn.className='suggestion-btn';btn.textContent=s;
-btn.onclick=function(){
-inputEl.value=s;updateSendBtn();
-suggestionsEl.style.display='none';inputEl.focus();
-};
-suggestionsEl.appendChild(btn);
-});</script>
+
+if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
+</script>
 </body>
 </html>
