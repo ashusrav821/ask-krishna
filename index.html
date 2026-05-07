@@ -36,8 +36,8 @@
     .mbtn.confirm{background:linear-gradient(135deg,#f97316,#ea580c);color:white}
     .mbtn.cancel{background:rgba(255,255,255,0.07);color:#d1d5db;border:1px solid rgba(255,255,255,0.1)}
     .mbtn.danger{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
-    .lang-options{display:flex;gap:10px;margin:14px 0;justify-content:center}
-    .lang-opt{flex:1;padding:11px 6px;border-radius:12px;border:1px solid rgba(249,115,22,0.25);background:rgba(249,115,22,0.05);color:#ffffff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center}
+    .lang-options{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;justify-content:center}
+    .lang-opt{flex:1;min-width:calc(50% - 4px);padding:10px 6px;border-radius:12px;border:1px solid rgba(249,115,22,0.25);background:rgba(249,115,22,0.05);color:#ffffff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center}
     .lang-opt.selected{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.3)}
     #tips-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;padding:20px}
     #tips-overlay.show{display:flex}
@@ -139,6 +139,7 @@
         <button class="lang-opt" id="lang-en" onclick="selectLang('en')">&#x1F1FA;&#x1F1F8; English</button>
         <button class="lang-opt" id="lang-te" onclick="selectLang('te')">&#x1F1EE;&#x1F1F3; Telugu</button>
         <button class="lang-opt" id="lang-ta" onclick="selectLang('ta')">&#x1F1EE;&#x1F1F3; Tamil</button>
+        <button class="lang-opt" id="lang-hi" onclick="selectLang('hi')">&#x1F1EE;&#x1F1F3; Hindi</button>
       </div>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('lang-modal')">Cancel</button>
@@ -197,7 +198,11 @@ var LC={
   ta:{name:'Tamil',ind:'&#x1F1EE;&#x1F1F3; Tamil mode active',ph:'தமிழில் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்...',
     welcome:'வணக்கம்! நான் Ask Krishna - பகவத் கீதை ஞானத்திற்கு உங்கள் வழிகாட்டி.\n\nவாழ்க்கையில் நீங்கள் எதிர்கொள்ளும் எந்த சவாலையும் என்னிடம் கேளுங்கள்.\n\nஇன்று உங்கள் மனதில் என்ன உள்ளது, அன்பான சாதகரே?',
     sw:'தமிழுக்கு மாறினோம். நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?',
-    sys:'Respond entirely in Tamil script. Same practical friendly tone. End with ONE follow-up question in Tamil. Maintain full conversation context.'}
+    sys:'Respond entirely in Tamil script. Same practical friendly tone. End with ONE follow-up question in Tamil. Maintain full conversation context.'},
+  hi:{name:'Hindi',ind:'&#x1F1EE;&#x1F1F3; Hindi mode active',ph:'हिंदी में टाइप करें या माइक से बोलें...',
+    welcome:'नमस्ते! मैं Ask Krishna हूँ — भगवद्गीता के शाश्वत ज्ञान का आपका मार्गदर्शक।\n\nजीवन में आप जो भी समस्या, चुनौती या प्रश्न का सामना कर रहे हैं — उसे मेरे साथ साझा करें। मैं भगवान श्रीकृष्ण की दिव्य शिक्षाओं के माध्यम से आपका मार्ग प्रशस्त करूंगा।\n\nआज आपके मन में क्या है, प्रिय साधक?',
+    sw:'हिंदी में बदल गए। आज मैं आपकी कैसे सहायता कर सकता हूँ?',
+    sys:'Respond entirely in Hindi using Devanagari script. Same practical friendly tone. End with ONE follow-up question in Hindi. Maintain full conversation context.'}
 };
 
 var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply. Help people apply Gita wisdom to real everyday situations.\n\nGita chapters:\nCh1: Arjuna crisis/anxiety. Ch2: Eternal soul, duty, detachment from results (2.47 key). Ch3: Selfless action. Ch4: Knowledge, letting go. Ch5: Peace while active. Ch6: Mind as friend or enemy (6.5). Ch7: Divine in everything. Ch8: Focus shapes you. Ch9: Devotion and offering. Ch10: God as best of everything. Ch11: Everything connected. Ch12: Love and devotion path. Ch13: Body vs real self. Ch14: Three energy states. Ch15: Let go of what harms. Ch16: Fear vs love-based choices. Ch17: Beliefs shape life. Ch18: Full surrender, trust the process (18.66).\n\nTONE: Talk like a wise friend over coffee — never preach. Use plain everyday words. No jargon like inner self, renounce fruits, inner stillness without plain explanation. Be specific and concrete. Relate to modern life. A 16-year-old and a 60-year-old should both understand immediately.\n\nVERSES: Mention casually (Krishna said something practical in Chapter 2 verse 47). Always explain the verse in plain words. Connect it to the person situation.\n\nSTRUCTURE: 1) Show you understand their situation 2) Explain Krishna teaching plainly 3) Give real-world analogy 4) Cite 1-2 verses casually with plain explanation 5) End with 1-2 action steps for today.\n\nKeep to 4-5 short paragraphs. Easy on phone. Never give harmful advice. Maintain full conversation context throughout.';
@@ -249,6 +254,7 @@ function selectLang(lang){
   document.getElementById('lang-en').classList.toggle('selected',lang==='en');
   document.getElementById('lang-te').classList.toggle('selected',lang==='te');
   document.getElementById('lang-ta').classList.toggle('selected',lang==='ta');
+  document.getElementById('lang-hi').classList.toggle('selected',lang==='hi');
 }
 function confirmLang(){
   curLang=pendLang;
@@ -265,6 +271,7 @@ langBtn.addEventListener('click',function(){
   document.getElementById('lang-en').classList.toggle('selected',curLang==='en');
   document.getElementById('lang-te').classList.toggle('selected',curLang==='te');
   document.getElementById('lang-ta').classList.toggle('selected',curLang==='ta');
+  document.getElementById('lang-hi').classList.toggle('selected',curLang==='hi');
   openModal('lang-modal');
 });
 
@@ -334,7 +341,7 @@ if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   var rec=new SR();
   rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;
-  function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':'en-US'}
+  function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}
   rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.textContent='\uD83D\uDD34'};
   rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};
   rec.onspeechend=function(){micBtn.style.transform='scale(1)'};
