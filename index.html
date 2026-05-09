@@ -10,6 +10,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="noindex, nosnippet, noarchive" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev; media-src *;" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
@@ -90,6 +91,22 @@
     #history-status{display:none;text-align:center;font-size:11.5px;color:rgba(249,115,22,0.6);margin-top:3px}
     #lang-indicator{text-align:center;font-size:10.5px;color:rgba(251,191,36,0.6);margin-top:2px}
     @supports(padding-bottom:env(safe-area-inset-bottom)){#input-area{padding-bottom:calc(14px + env(safe-area-inset-bottom))}#header{padding-top:calc(14px + env(safe-area-inset-top))}}
+
+    #tips-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;padding:20px}
+    #tips-overlay.show{display:flex}
+    #tips-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.4);border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
+    #tips-box h2{font-size:18px;color:#fbbf24;margin-bottom:4px}
+    .tips-sub{font-size:12px;color:rgba(249,115,22,0.6);margin-bottom:16px}
+    .tip-card{background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:14px;padding:14px;text-align:left;min-height:160px}
+    .tip-icon{font-size:28px;margin-bottom:8px}
+    .tip-title{font-size:14px;color:#fbbf24;font-weight:bold;margin-bottom:6px}
+    .tip-desc{font-size:13px;color:#e5e7eb;line-height:1.6;margin-bottom:8px}
+    .tip-steps{font-size:12px;color:rgba(249,115,22,0.8);line-height:1.8;border-top:1px solid rgba(249,115,22,0.1);padding-top:8px}
+    #tips-progress{display:flex;justify-content:center;gap:6px;margin:14px 0 10px}
+    .tip-dot{width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,0.25);transition:all 0.3s;cursor:pointer;border:none}
+    .tip-dot.active{background:#f97316;transform:scale(1.3)}
+    #tips-nav{display:flex;gap:10px;margin-top:12px}
+    #tips-skip-btn{font-size:12.5px;color:rgba(249,115,22,0.5);background:none;border:none;cursor:pointer;font-family:inherit;margin-top:10px;text-decoration:underline;display:block;width:100%;text-align:center}
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -102,6 +119,7 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-actions">
+      <button class="hdr-btn" id="tips-btn" title="Help and Tips">&#x2139;&#xFE0F;</button>
       <button class="hdr-btn" id="tips-btn" title="Help and Tips">&#x2139;&#xFE0F;</button>
       <button class="hdr-btn" id="lang-btn" title="Change Language">&#x1F310;</button>
       <button class="hdr-btn" id="history-btn" title="Save History">&#x1F4BE;</button>
@@ -190,22 +208,22 @@ var LC={
   en:{name:'English',ind:'',ph:'Type or tap mic to speak...',
     welcome:'Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?',
     sw:'Switched to English. How can I help you today?',
-    sys:'Respond in English. End every response with ONE natural follow-up question on a new line starting with an emoji. Maintain full conversation context and refer back to earlier points when relevant.'},
+    sys:'Respond in English. End every response with ONE natural follow-up question on a new line starting with an emoji. Maintain full conversation context.'},
   te:{name:'Telugu',ind:'&#x1F1EE;&#x1F1F3; Telugu mode active',ph:'తెలుగులో టైప్ చేయండి లేదా మాట్లాడండి...',
     welcome:'నమస్తే! నేను Ask Krishna - భగవద్గీత జ్ఞానానికి మీ మార్గదర్శి.\n\nమీరు జీవితంలో ఎదుర్కొంటున్న ఏ సమస్య గురించైనా నన్ను అడగండి.\n\nఈ రోజు మీ మనసులో ఏముంది, ప్రియమైన సాధకుడా?',
     sw:'తెలుగుకు మారాము. నేను మీకు ఏవిధంగా సహాయపడగలను?',
-    sys:'Respond entirely in Telugu script. Same practical friendly tone. End with ONE follow-up question in Telugu. Maintain full conversation context.'},
+    sys:'IMPORTANT: Respond entirely in Telugu script. Keep practical friendly tone. At the end ask ONE follow-up question in Telugu. Maintain full conversation context.'},
   ta:{name:'Tamil',ind:'&#x1F1EE;&#x1F1F3; Tamil mode active',ph:'தமிழில் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்...',
     welcome:'வணக்கம்! நான் Ask Krishna - பகவத் கீதை ஞானத்திற்கு உங்கள் வழிகாட்டி.\n\nவாழ்க்கையில் நீங்கள் எதிர்கொள்ளும் எந்த சவாலையும் என்னிடம் கேளுங்கள்.\n\nஇன்று உங்கள் மனதில் என்ன உள்ளது, அன்பான சாதகரே?',
     sw:'தமிழுக்கு மாறினோம். நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?',
-    sys:'Respond entirely in Tamil script. Same practical friendly tone. End with ONE follow-up question in Tamil. Maintain full conversation context.'},
-  hi:{name:'Hindi',ind:'&#x1F1EE;&#x1F1F3; Hindi mode active',ph:'हिंदी में टाइप करें या माइक से बोलें...',
-    welcome:'नमस्ते! मैं Ask Krishna हूँ — भगवद्गीता के शाश्वत ज्ञान का आपका मार्गदर्शक।\n\nजीवन में आप जो भी समस्या, चुनौती या प्रश्न का सामना कर रहे हैं — उसे मेरे साथ साझा करें। मैं भगवान श्रीकृष्ण की दिव्य शिक्षाओं के माध्यम से आपका मार्ग प्रशस्त करूंगा।\n\nआज आपके मन में क्या है, प्रिय साधक?',
+    sys:'IMPORTANT: Respond entirely in Tamil script. Keep practical friendly tone. At the end ask ONE follow-up question in Tamil. Maintain full conversation context.'},
+  hi:{name:'Hindi',ind:'&#x1F1EE;&#x1F1F3; Hindi mode active',ph:'हिंदी में लिखें या माइक से बोलें...',
+    welcome:'नमस्ते! मैं Ask Krishna हूँ — भगवद्गीता के ज्ञान का आपका मार्गदर्शक।\n\nजीवन में जो भी समस्या हो — काम का तनाव, रिश्ते, भ्रम या दुख — सब कुछ मेरे साथ साझा करें।\n\nआज आपके मन में क्या है, प्रिय साधक?',
     sw:'हिंदी में बदल गए। आज मैं आपकी कैसे सहायता कर सकता हूँ?',
-    sys:'Respond entirely in Hindi using Devanagari script. Same practical friendly tone. End with ONE follow-up question in Hindi. Maintain full conversation context.'}
+    sys:'IMPORTANT: Respond entirely in Hindi using Devanagari script. Keep practical friendly tone. End with ONE follow-up question in Hindi. Maintain full conversation context.'}
 };
 
-var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply. Help people apply Gita wisdom to real everyday situations.\n\nGita chapters:\nCh1: Arjuna crisis/anxiety. Ch2: Eternal soul, duty, detachment from results (2.47 key). Ch3: Selfless action. Ch4: Knowledge, letting go. Ch5: Peace while active. Ch6: Mind as friend or enemy (6.5). Ch7: Divine in everything. Ch8: Focus shapes you. Ch9: Devotion and offering. Ch10: God as best of everything. Ch11: Everything connected. Ch12: Love and devotion path. Ch13: Body vs real self. Ch14: Three energy states. Ch15: Let go of what harms. Ch16: Fear vs love-based choices. Ch17: Beliefs shape life. Ch18: Full surrender, trust the process (18.66).\n\nTONE: Talk like a wise friend over coffee — never preach. Use plain everyday words. No jargon like inner self, renounce fruits, inner stillness without plain explanation. Be specific and concrete. Relate to modern life. A 16-year-old and a 60-year-old should both understand immediately.\n\nVERSES: Mention casually (Krishna said something practical in Chapter 2 verse 47). Always explain the verse in plain words. Connect it to the person situation.\n\nSTRUCTURE: 1) Show you understand their situation 2) Explain Krishna teaching plainly 3) Give real-world analogy 4) Cite 1-2 verses casually with plain explanation 5) End with 1-2 action steps for today.\n\nKeep to 4-5 short paragraphs. Easy on phone. Never give harmful advice. Maintain full conversation context throughout.';
+var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply. Help people apply Gita wisdom to real everyday situations.\n\nGita chapters: Ch1: Arjuna crisis/anxiety. Ch2: Eternal soul, duty, detachment from results (2.47 key). Ch3: Selfless action. Ch4: Knowledge, letting go. Ch5: Peace while active. Ch6: Mind as friend or enemy (6.5). Ch7: Divine in everything. Ch8: Focus shapes you. Ch9: Devotion and offering. Ch10: God as best of everything. Ch11: Everything connected. Ch12: Love and devotion path. Ch13: Body vs real self. Ch14: Three energy states. Ch15: Let go of what harms. Ch16: Fear vs love-based choices. Ch17: Beliefs shape life. Ch18: Full surrender, trust the process (18.66).\n\nTONE: Talk like a wise friend over coffee — never preach. Use plain everyday words. No jargon without plain explanation. Be specific and concrete. Relate to modern life. A 16-year-old and 60-year-old should both understand immediately.\n\nVERSES: Mention casually. Always explain in plain words. Connect to person situation.\n\nSTRUCTURE: 1) Understand their situation 2) Explain Krishna teaching plainly 3) Real-world analogy 4) Cite 1-2 verses with plain explanation 5) 1-2 action steps for today.\n\nKeep to 4-5 short paragraphs. Easy on phone. Maintain full conversation context.\n\nGUARDRAILS — always follow these:\n- NEVER use abusive, offensive, vulgar or disrespectful language under any circumstances\n- NEVER respond with anger, sarcasm or contempt even if the user is rude or uses bad language\n- If user uses abusive or bad language respond with calm compassion and gently redirect them\n- NEVER produce content that demeans any person, religion, caste, gender or community\n- If asked for harmful, violent, sexual or illegal content politely decline and offer Krishna wisdom instead\n- Always respond with dignity, respect and spiritual grace regardless of how the question is phrased\n- If a question is inappropriate gently bring conversation back to Gita wisdom';
 
 var msgs=[],loading=false,isListening=false,deferredPrompt=null;
 var histEn=localStorage.getItem(HEK)==='true';
@@ -254,7 +272,7 @@ function selectLang(lang){
   document.getElementById('lang-en').classList.toggle('selected',lang==='en');
   document.getElementById('lang-te').classList.toggle('selected',lang==='te');
   document.getElementById('lang-ta').classList.toggle('selected',lang==='ta');
-  document.getElementById('lang-hi').classList.toggle('selected',lang==='hi');
+  var hi=document.getElementById('lang-hi');if(hi)hi.classList.toggle('selected',lang==='hi');
 }
 function confirmLang(){
   curLang=pendLang;
@@ -271,7 +289,7 @@ langBtn.addEventListener('click',function(){
   document.getElementById('lang-en').classList.toggle('selected',curLang==='en');
   document.getElementById('lang-te').classList.toggle('selected',curLang==='te');
   document.getElementById('lang-ta').classList.toggle('selected',curLang==='ta');
-  document.getElementById('lang-hi').classList.toggle('selected',curLang==='hi');
+  var hi=document.getElementById('lang-hi');if(hi)hi.classList.toggle('selected',curLang==='hi');
   openModal('lang-modal');
 });
 
@@ -312,16 +330,16 @@ function showTyping(){
 }
 function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
 
+var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','nigger','slut'];
+function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
 function sendMessage(){
   var text=inputEl.value.trim();
   if(!text||loading)return;
   if(!navigator.onLine){addMsg('assistant','Dear seeker, I need an internet connection to share Krishna\'s wisdom. Please check your connection and try again.');return}
+  if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully and I will help you find the wisdom you need. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}
   loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';
   addMsg('user',text);showTyping();
-  // Keep last 8 messages for context + always include first assistant message for continuity
-var recentMsgs=msgs.slice(-8);
-if(msgs.length>8&&msgs[0].role==='assistant'){recentMsgs=[msgs[0]].concat(msgs.slice(-7));}
-var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});
+  var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});
   fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1000,system:getSys(),messages:apiMsgs})})
   .then(function(r){return r.json()})
   .then(function(data){
@@ -418,6 +436,43 @@ document.getElementById('tips-next').addEventListener('click',function(){if(tipI
 document.getElementById('tips-prev').addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
 document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
+
+
+var TIPS=[
+  {icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to Bhagavad Gita wisdom. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or green mic button to get started.'},
+  {icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question instead of typing. Supports English, Telugu, Tamil and Hindi voice input.',steps:'1. Tap the green mic button\n2. Speak your question clearly\n3. Krishna responds automatically after you stop'},
+  {icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi — your choice!',steps:'1. Tap the globe button top right\n2. Select your language\n3. Tap OK to confirm'},
+  {icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand your situation better.',steps:'Answer the follow-up to go deeper into the conversation.'},
+  {icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared in this session and refers back naturally.',steps:'Say "going back to what I said about work" and Krishna will remember.'},
+  {icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Save conversations on this device only. Never uploaded to any cloud or server.',steps:'1. Tap the save button top right\n2. Choose Enable\n3. Chats saved locally on this device only'},
+  {icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install Ask Krishna on your home screen for quick daily access.',steps:'Android: Browser menu then Add to Home Screen\niPhone: Tap Share then Add to Home Screen'},
+  {icon:'\uD83D\uDEE1\uFE0F',title:'Safe and Respectful Space',desc:'Ask Krishna always responds with dignity and compassion. This is a judgment-free space for you to seek guidance.',steps:'Feel free to share whatever is on your mind. Krishna meets you with kindness always.'}
+];
+var tipIdx=0;
+function renderTip(){
+  var t=TIPS[tipIdx];
+  var c=document.getElementById('tips-content');
+  if(!c)return;
+  c.innerHTML='<div class="tip-card"><div class="tip-icon">'+t.icon+'</div><div class="tip-title">'+t.title+'</div><div class="tip-desc">'+t.desc+'</div><div class="tip-steps">'+t.steps.replace(/\n/g,'<br>')+'</div></div>';
+  var prog=document.getElementById('tips-progress');
+  if(prog){prog.innerHTML='';TIPS.forEach(function(_,i){var d=document.createElement('button');d.className='tip-dot'+(i===tipIdx?' active':'');d.onclick=function(){tipIdx=i;renderTip()};prog.appendChild(d)});}
+  var p=document.getElementById('tips-prev');var n=document.getElementById('tips-next');
+  if(p)p.style.display=tipIdx===0?'none':'flex';
+  if(n)n.textContent=tipIdx===TIPS.length-1?'Get Started':'Next';
+}
+function closeTips(){var o=document.getElementById('tips-overlay');if(o)o.classList.remove('show');localStorage.setItem('ask_krishna_tips_seen','true')}
+function openTips(){tipIdx=0;renderTip();var o=document.getElementById('tips-overlay');if(o)o.classList.add('show')}
+var tipsBtn=document.getElementById('tips-btn');
+if(tipsBtn)tipsBtn.addEventListener('click',function(){openTips()});
+var tipsNext=document.getElementById('tips-next');
+if(tipsNext)tipsNext.addEventListener('click',function(){if(tipIdx===TIPS.length-1){closeTips()}else{tipIdx++;renderTip()}});
+var tipsPrev=document.getElementById('tips-prev');
+if(tipsPrev)tipsPrev.addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
+var tipsSkip=document.getElementById('tips-skip-btn');
+if(tipsSkip)tipsSkip.addEventListener('click',function(){closeTips()});
+var tipsOverlay=document.getElementById('tips-overlay');
+if(tipsOverlay)tipsOverlay.addEventListener('click',function(e){if(e.target===this)closeTips()});
+if(!localStorage.getItem('ask_krishna_tips_seen')){setTimeout(function(){openTips()},1500)}
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){})}
 
