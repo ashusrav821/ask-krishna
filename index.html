@@ -120,7 +120,6 @@
     </div>
     <div id="header-actions">
       <button class="hdr-btn" id="tips-btn" title="Help and Tips">&#x2139;&#xFE0F;</button>
-      <button class="hdr-btn" id="tips-btn" title="Help and Tips">&#x2139;&#xFE0F;</button>
       <button class="hdr-btn" id="lang-btn" title="Change Language">&#x1F310;</button>
       <button class="hdr-btn" id="history-btn" title="Save History">&#x1F4BE;</button>
     </div>
@@ -462,7 +461,6 @@ function renderTip(){
 }
 function closeTips(){var o=document.getElementById('tips-overlay');if(o)o.classList.remove('show');localStorage.setItem('ask_krishna_tips_seen','true')}
 function openTips(){tipIdx=0;renderTip();var o=document.getElementById('tips-overlay');if(o)o.classList.add('show')}
-var tipsBtn=document.getElementById('tips-btn');
 if(tipsBtn)tipsBtn.addEventListener('click',function(){openTips()});
 var tipsNext=document.getElementById('tips-next');
 if(tipsNext)tipsNext.addEventListener('click',function(){if(tipIdx===TIPS.length-1){closeTips()}else{tipIdx++;renderTip()}});
