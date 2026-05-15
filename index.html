@@ -326,6 +326,7 @@ var pendLang=curLang;
 var ttsEnabled=localStorage.getItem(TTSK)==='true';
 var ttsSpeaking=false;
 var omAudio=null,omPlaying=false;
+var VK='ask_krishna_voice';
 var messagesEl=document.getElementById('messages');
 var suggestEl=document.getElementById('suggestions');
 var inputEl=document.getElementById('msg-input');
@@ -333,11 +334,6 @@ var sendBtn=document.getElementById('send-btn');
 var micBtn=document.getElementById('mic-btn');
 var offBanner=document.getElementById('offline-banner');
 var instBanner=document.getElementById('install-banner');
-var histBtn=document.getElementById('history-btn')||{classList:{add:function(){},remove:function(){}}};
-var langBtn=document.getElementById('lang-btn')||{classList:{add:function(){},remove:function(){}}};
-var tipsBtn=document.getElementById('tips-btn');
-var ttsBtn=document.getElementById('tts-btn')||{classList:{add:function(){},remove:function(){}}};
-var omBtn=document.getElementById('om-btn')||{classList:{add:function(){},remove:function(){}}}
 var histStatus=document.getElementById('history-status');
 var langInd=document.getElementById('lang-indicator');
 function closeModal(id){document.getElementById(id).classList.remove('show')}
@@ -463,8 +459,7 @@ document.getElementById('install-btn').addEventListener('click',function(){if(de
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
 if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches){instBanner.style.display='flex';instBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';document.getElementById('install-btn').style.display='none';}
 function selectLang(lang){pendLang=lang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===lang)})}
-function confirmLang(){curLang=pendLang;localStorage.setItem(LK,curLang);var c=LC[curLang];langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;if(curLang==='en'){langBtn.classList.remove('active')}else{langBtn.classList.add('active')}closeModal('lang-modal');addMsg('assistant',c.sw)}
-if(langBtn&&langBtn.addEventListener)langBtn.addEventListener('click',function(){pendLang=curLang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===curLang)});openModal('lang-modal')});
+function confirmLang(){curLang=pendLang;localStorage.setItem(LK,curLang);var c=LC[curLang];langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;closeModal('lang-modal');addMsg('assistant',c.sw);updateHamburgerState();}
 function updateHistBtn(){
   var hb=document.getElementById('history-btn');
   if(hb){if(histEn){hb.classList.add('active')}else{hb.classList.remove('active')}}
@@ -474,8 +469,6 @@ function saveHist(){if(!histEn)return;try{localStorage.setItem(HK,JSON.stringify
 function loadHist(){try{var s=localStorage.getItem(HK);return s?JSON.parse(s):null}catch(e){return null}}
 function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist();updateHistBtn();closeModal('history-modal');addMsg('assistant','Your conversations will now be saved on this device only — never in any cloud.')}
 function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared. Each session starts fresh, like a new dawn.')}
-if(histBtn&&histBtn.addEventListener)histBtn.addEventListener('click',function(){var desc=document.getElementById('history-desc');var enR=document.getElementById('modal-enable-row');var disR=document.getElementById('modal-disable-row');if(histEn){desc.textContent='History saving is ON. Chats saved on this device only.';enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column'}else{desc.textContent='Enable to save your conversations on this device only.';enR.style.display='flex';disR.style.display='none'}openModal('history-modal')});
-updateHistBtn();
 updateHistBtn();
 function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
 function sendMessage(){var text=inputEl.value.trim();if(!text||loading)return;if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs})}).then(function(r){return r.json()}).then(function(data){hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(){hideTyping();addMsg('assistant',navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
@@ -512,27 +505,22 @@ function closeHamburger(){
   hamburgerOverlay.classList.remove('show');
 }
 function updateHamburgerState(){
-  // Om toggle
-  var omT=document.getElementById('hm-om-toggle');
-  var omS=document.getElementById('hm-om-sub');
-  if(omPlaying){omT.classList.add('on');omS.textContent='Playing — tap to stop';}
-  else{omT.classList.remove('on');omS.textContent='Tap to play calming Om';}
   // TTS toggle
-  var ttsT=document.getElementById('hm-tts-toggle');
-  var ttsS=document.getElementById('hm-tts-sub');
-  if(ttsEnabled){ttsT.classList.add('on');ttsS.textContent='On — Krishna speaks answers';}
-  else{ttsT.classList.remove('on');ttsS.textContent='Off — tap to enable';}
+  var ttsT=document.getElementById('hm-tts-toggle'),ttsS=document.getElementById('hm-tts-sub');
+  if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
+  if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
   // Language label
   var langNames={en:'English',te:'Telugu',ta:'Tamil',hi:'Hindi'};
-  var langSub=document.getElementById('hm-lang-sub');if(langSub)langSub.textContent=langNames[curLang]||'English';
+  var langSub=document.getElementById('hm-lang-sub');
+  if(langSub)langSub.textContent=langNames[curLang]||'English';
 }
 
 function toggleTtsFromMenu(){
   ttsEnabled=!ttsEnabled;
   localStorage.setItem(TTSK,ttsEnabled?'true':'false');
   updateTtsBtn();
-  if(ttsEnabled)speakText('Voice responses are now enabled.');
   updateHamburgerState();
+  if(ttsEnabled)speakText('Voice responses are now enabled.');
 }
 function openLangFromMenu(){
   closeHamburger();
@@ -572,49 +560,50 @@ hamburgerSheet.addEventListener('touchend',function(e){if(e.changedTouches[0].cl
 // Om Sound
 var audioUnlocked=false;
 function unlockAudio(){
-  if(audioUnlocked)return;
-  audioUnlocked=true;
-  try{
-    var ctx=new(window.AudioContext||window.webkitAudioContext)();
-    var buf=ctx.createBuffer(1,1,22050);
-    var src=ctx.createBufferSource();
-    src.buffer=buf;src.connect(ctx.destination);src.start(0);ctx.resume();
-  }catch(e){}
-  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();
-    omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is in the repository.');});
-  }
+  if(audioUnlocked)return;audioUnlocked=true;
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var buf=ctx.createBuffer(1,1,22050);var src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);src.start(0);ctx.resume();}catch(e){}
+  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is in the repository.');});}
 }
 document.addEventListener('touchstart',unlockAudio,{passive:true});
 document.addEventListener('mousedown',unlockAudio);
-function stopOm(){if(omAudio){omAudio.pause();omAudio.currentTime=0;}omPlaying=false;var b=document.getElementById('om-btn');if(b)b.classList.remove('active');}
+function stopOm(){
+  if(omAudio){omAudio.pause();omAudio.currentTime=0;}
+  omPlaying=false;
+  var b=document.getElementById('om-btn');if(b)b.classList.remove('active');
+}
 function playOm(){
   if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();}
-  omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');}).catch(function(){
+  omAudio.play().then(function(){
+    omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');
+  }).catch(function(){
     omAudio.load();
     setTimeout(function(){
-      omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');}).catch(function(){
-        addMsg('assistant','Om sound could not play. Please make sure om.mp3 is uploaded and try once more.');
-      });
-    },150);
+      omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');})
+      .catch(function(){addMsg('assistant','Om sound could not play. Please make sure om.mp3 is uploaded and try again.');});
+    },200);
   });
 }
-function toggleOmHeader(){if(omPlaying){stopOm()}else{playOm()}}
-if(omBtn&&omBtn.addEventListener)omBtn.addEventListener('click',function(){if(omPlaying){stopOm()}else{playOm()}});
+// Single click handler on Om button — no duplicate
+document.getElementById('om-btn').addEventListener('click',function(){
+  if(omPlaying){stopOm();}else{playOm();}
+});
+function toggleOmHeader(){if(omPlaying){stopOm();}else{playOm();}}
 // TTS - Warm Male Indian Voice
 var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
 var MALE_PREF=['Ravi','Hemant','Mohan','Arjun','Karan','Google Hindi','Microsoft Heera','en-IN','Neural2-B','Neural2-C','Wavenet-B','Wavenet-C'];
 function getBestVoice(lang){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!voices||voices.length===0)return null;var saved=localStorage.getItem(VK);if(saved){var sf=voices.find(function(v){return v.name===saved});if(sf)return sf;}if(lang!=='en'){var lc=ttsLangMap[lang]||'en-IN';var lv=voices.find(function(v){return v.lang===lc});if(!lv)lv=voices.find(function(v){return v.lang.startsWith(lc.split('-')[0])});return lv||null;}for(var i=0;i<MALE_PREF.length;i++){var p=MALE_PREF[i];var pv=voices.find(function(v){return v.name.toLowerCase().indexOf(p.toLowerCase())!==-1});if(pv)return pv;}var mIN=voices.find(function(v){return v.lang==='en-IN'});if(mIN)return mIN;var mEN=voices.find(function(v){return v.lang.startsWith('en')&&v.name.toLowerCase().indexOf('male')!==-1});if(mEN)return mEN;return voices.find(function(v){return v.lang.startsWith('en')})||voices[0]}
 function speakText(text){if(!ttsEnabled||!window.speechSynthesis)return;window.speechSynthesis.cancel();ttsSpeaking=true;var clean=text.replace(/[*_#]/g,'').replace(/\n+/g,'. ').replace(/\.{2,}/g,'.').trim();var utt=new SpeechSynthesisUtterance(clean);utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;var v=getBestVoice(curLang);if(v){utt.voice=v;utt.lang=v.lang;}else{utt.lang=ttsLangMap[curLang]||'en-IN';}utt.onend=function(){ttsSpeaking=false};utt.onerror=function(){ttsSpeaking=false};window.speechSynthesis.speak(utt)}
-function updateTtsBtn(){if(ttsEnabled){ttsBtn.classList.add('active');ttsBtn.title='Voice ON — tap to turn off | hold to pick voice';}else{ttsBtn.classList.remove('active');ttsBtn.title='Tap: toggle voice | Hold: pick voice';if(window.speechSynthesis)window.speechSynthesis.cancel();}}
+function updateTtsBtn(){
+  // TTS toggle is only in hamburger now — update it there
+  var ttsT=document.getElementById('hm-tts-toggle');
+  var ttsS=document.getElementById('hm-tts-sub');
+  if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
+  if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
+  if(!ttsEnabled&&window.speechSynthesis)window.speechSynthesis.cancel();
+}
 function openVoicePicker(){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];var list=document.getElementById('voice-list');list.innerHTML='';var useful=voices.filter(function(v){return v.lang.startsWith('en')||v.lang.startsWith('hi')||v.lang.startsWith('te')||v.lang.startsWith('ta')});if(useful.length===0){list.innerHTML='<p style="color:#d1d5db;font-size:13px;text-align:center;padding:10px">No voices found. Try on your phone browser.</p>';openModal('voice-modal');return;}var saved=localStorage.getItem(VK);useful.forEach(function(v){var btn=document.createElement('button');btn.className='voice-item'+(saved===v.name?' selected':'');btn.innerHTML='<span>'+v.name+'</span><span style="font-size:11px;color:rgba(249,115,22,0.5)">'+v.lang+'</span>';btn.onclick=function(){window.speechSynthesis.cancel();var utt=new SpeechSynthesisUtterance('Namaste. I am Ask Krishna. May wisdom and peace guide you always.');utt.voice=v;utt.lang=v.lang;utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;window.speechSynthesis.speak(utt);localStorage.setItem(VK,v.name);list.querySelectorAll('.voice-item').forEach(function(b){b.classList.remove('selected')});btn.classList.add('selected')};list.appendChild(btn)});openModal('voice-modal')}
 var ttsPressTimer=null;
-if(ttsBtn&&ttsBtn.addEventListener){ttsBtn.addEventListener('click',function(){ttsEnabled=!ttsEnabled;localStorage.setItem(TTSK,ttsEnabled?'true':'false');updateTtsBtn();if(ttsEnabled)speakText('Voice responses are now enabled. Ask Krishna will speak every response.')});
-ttsBtn.addEventListener('mousedown',function(){ttsPressTimer=setTimeout(function(){openVoicePicker()},600)});
-ttsBtn.addEventListener('touchstart',function(){ttsPressTimer=setTimeout(function(){openVoicePicker()},600)},{passive:true});
-ttsBtn.addEventListener('mouseup',function(){clearTimeout(ttsPressTimer)});
-ttsBtn.addEventListener('touchend',function(){clearTimeout(ttsPressTimer)});}
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices()}}
-updateTtsBtn();
 // Voice Input
 if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.textContent='\uD83D\uDD34'};rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};rec.onspeechend=function(){micBtn.style.transform='scale(1)'};rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};rec.onend=function(){isListening=false;micBtn.classList.remove('listening');micBtn.textContent='\uD83C\uDFA4';micBtn.style.transform='scale(1)';if(inputEl.value.trim())sendMessage()};rec.onerror=function(e){isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';micBtn.textContent='\uD83C\uDFA4';if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please allow microphone access in browser settings.')}else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet.')}else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone.')}};micBtn.addEventListener('click',function(){if(isListening){rec.stop();return}rec.lang=getLangCode();if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){stream.getTracks().forEach(function(t){t.stop()});inputEl.value='';try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}}).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings.')})}else{inputEl.value='';try{rec.start()}catch(e){}}})}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
 // Tips
@@ -645,7 +634,7 @@ if(savedHistory&&savedHistory.length>0){
   scrollBottom();
   addMsg('assistant','Welcome back! Your previous conversation has been restored. How may Krishna guide you today?');
 }else{addMsg('assistant',LC[curLang].welcome)}
-if(curLang!=='en'){langBtn.classList.add('active');langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
+if(curLang!=='en'){langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
 SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
 if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
 </script>
