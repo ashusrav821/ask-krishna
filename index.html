@@ -149,6 +149,8 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-actions">
+      <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound" onclick="toggleOmHeader()">&#x1F54E;</button>
+      <button class="hdr-btn" id="history-btn" title="Save History" aria-label="Save history" onclick="openHistFromMenu()">&#x1F4BE;</button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
   </div>
@@ -228,15 +230,6 @@
   <div id="hamburger-sheet">
     <div id="hamburger-handle"></div>
     <div id="hamburger-items">
-      <!-- Om Sound -->
-      <div class="hmenu-item" id="hm-om" onclick="toggleOmFromMenu()" role="button" aria-label="Toggle Om sound">
-        <div class="hmenu-icon" id="hm-om-icon">&#x1F54E;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Om Sound</div>
-          <div class="hmenu-sub" id="hm-om-sub">Tap to play calming Om</div>
-        </div>
-        <div class="hmenu-toggle" id="hm-om-toggle"></div>
-      </div>
       <!-- Voice TTS -->
       <div class="hmenu-item" id="hm-tts" onclick="toggleTtsFromMenu()">
         <div class="hmenu-icon">&#x1F50A;</div>
@@ -256,15 +249,6 @@
         </div>
         <div class="hmenu-arrow">&#x203A;</div>
       </div>
-      <!-- Save History -->
-      <div class="hmenu-item" onclick="openHistFromMenu()">
-        <div class="hmenu-icon">&#x1F4BE;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Save History</div>
-          <div class="hmenu-sub" id="hm-hist-sub">Off — tap to enable</div>
-        </div>
-        <div class="hmenu-toggle" id="hm-hist-toggle"></div>
-      </div>
       <div class="hmenu-divider"></div>
       <!-- Help & Tips -->
       <div class="hmenu-item" onclick="openTips();closeHamburger()" role="button" aria-label="Help and Tips">
@@ -272,15 +256,6 @@
         <div class="hmenu-label">
           <div class="hmenu-title">Help &amp; Tips</div>
           <div class="hmenu-sub">Quick guide to all features</div>
-        </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Saved Wisdom / Bookmarks -->
-      <div class="hmenu-item" onclick="openBookmarks();closeHamburger()" role="button" aria-label="Saved wisdom bookmarks">
-        <div class="hmenu-icon">&#x1F516;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Saved Wisdom</div>
-          <div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarked responses</div>
         </div>
         <div class="hmenu-arrow">&#x203A;</div>
       </div>
@@ -490,7 +465,11 @@ if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-m
 function selectLang(lang){pendLang=lang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===lang)})}
 function confirmLang(){curLang=pendLang;localStorage.setItem(LK,curLang);var c=LC[curLang];langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;if(curLang==='en'){langBtn.classList.remove('active')}else{langBtn.classList.add('active')}closeModal('lang-modal');addMsg('assistant',c.sw)}
 if(langBtn&&langBtn.addEventListener)langBtn.addEventListener('click',function(){pendLang=curLang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===curLang)});openModal('lang-modal')});
-function updateHistBtn(){if(histEn){histBtn.classList.add('active');histStatus.style.display='block'}else{histBtn.classList.remove('active');histStatus.style.display='none'}}
+function updateHistBtn(){
+  var hb=document.getElementById('history-btn');
+  if(hb){if(histEn){hb.classList.add('active')}else{hb.classList.remove('active')}}
+  if(histStatus){histStatus.style.display=histEn?'block':'none'}
+}
 function saveHist(){if(!histEn)return;try{localStorage.setItem(HK,JSON.stringify(msgs))}catch(e){}}
 function loadHist(){try{var s=localStorage.getItem(HK);return s?JSON.parse(s):null}catch(e){return null}}
 function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist();updateHistBtn();closeModal('history-modal');addMsg('assistant','Your conversations will now be saved on this device only — never in any cloud.')}
@@ -543,21 +522,9 @@ function updateHamburgerState(){
   var ttsS=document.getElementById('hm-tts-sub');
   if(ttsEnabled){ttsT.classList.add('on');ttsS.textContent='On — Krishna speaks answers';}
   else{ttsT.classList.remove('on');ttsS.textContent='Off — tap to enable';}
-  // History toggle
-  var histT=document.getElementById('hm-hist-toggle');
-  var histS=document.getElementById('hm-hist-sub');
-  if(histEn){histT.classList.add('on');histS.textContent='On — saved on device only';}
-  else{histT.classList.remove('on');histS.textContent='Off — tap to enable';}
-  // Bookmark count
-  var sub=document.getElementById('hm-bookmark-sub');
-  if(sub){var bc=loadBookmarks().length;sub.textContent=bc?bc+' saved response'+(bc===1?'':'s'):'Your bookmarked responses';}
   // Language label
   var langNames={en:'English',te:'Telugu',ta:'Tamil',hi:'Hindi'};
-  document.getElementById('hm-lang-sub').textContent=langNames[curLang]||'English';
-}
-function toggleOmFromMenu(){
-  if(omPlaying){stopOm();updateHamburgerState();}
-  else{playOm();setTimeout(updateHamburgerState,400);}
+  var langSub=document.getElementById('hm-lang-sub');if(langSub)langSub.textContent=langNames[curLang]||'English';
 }
 
 function toggleTtsFromMenu(){
@@ -619,18 +586,19 @@ function unlockAudio(){
 }
 document.addEventListener('touchstart',unlockAudio,{passive:true});
 document.addEventListener('mousedown',unlockAudio);
-function stopOm(){if(omAudio){omAudio.pause();omAudio.currentTime=0;}omPlaying=false;}
+function stopOm(){if(omAudio){omAudio.pause();omAudio.currentTime=0;}omPlaying=false;var b=document.getElementById('om-btn');if(b)b.classList.remove('active');}
 function playOm(){
   if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();}
-  omAudio.play().then(function(){omPlaying=true;}).catch(function(){
+  omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');}).catch(function(){
     omAudio.load();
     setTimeout(function(){
-      omAudio.play().then(function(){omPlaying=true;}).catch(function(){
+      omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');}).catch(function(){
         addMsg('assistant','Om sound could not play. Please make sure om.mp3 is uploaded and try once more.');
       });
     },150);
   });
 }
+function toggleOmHeader(){if(omPlaying){stopOm()}else{playOm()}}
 if(omBtn&&omBtn.addEventListener)omBtn.addEventListener('click',function(){if(omPlaying){stopOm()}else{playOm()}});
 // TTS - Warm Male Indian Voice
 var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
