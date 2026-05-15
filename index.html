@@ -557,16 +557,9 @@ function updateHamburgerState(){
 }
 function toggleOmFromMenu(){
   if(omPlaying){stopOm();updateHamburgerState();}
-  else{
-    if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;}
-    omAudio.play().then(function(){omPlaying=true;updateHamburgerState();}).catch(function(){
-      try{
-        var ctx=new(window.AudioContext||window.webkitAudioContext)();
-        ctx.resume().then(function(){omAudio.play().then(function(){omPlaying=true;updateHamburgerState();}).catch(function(){addMsg('assistant','Om sound blocked by browser. Please try again.');closeHamburger();});});
-      }catch(e){addMsg('assistant','Om sound could not play. Please try again.');}
-    });
-  }
+  else{playOm();setTimeout(updateHamburgerState,400);}
 }
+
 function toggleTtsFromMenu(){
   ttsEnabled=!ttsEnabled;
   localStorage.setItem(TTSK,ttsEnabled?'true':'false');
@@ -609,20 +602,33 @@ function shareApp(){
 var sheetStartY=0;
 hamburgerSheet.addEventListener('touchstart',function(e){sheetStartY=e.touches[0].clientY},{passive:true});
 hamburgerSheet.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sheetStartY>60)closeHamburger()},{passive:true});
-// Om Sound - Real MP3
-function initOm(){if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is uploaded to your GitHub repo.');});}}
-var omPreloaded=false;
-function preloadOm(){if(omPreloaded)return;omPreloaded=true;initOm();omAudio.load();}
-document.addEventListener('touchstart',preloadOm,{once:true,passive:true});
-document.addEventListener('mousedown',preloadOm,{once:true});
+// Om Sound
+var audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;
+  audioUnlocked=true;
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var buf=ctx.createBuffer(1,1,22050);
+    var src=ctx.createBufferSource();
+    src.buffer=buf;src.connect(ctx.destination);src.start(0);ctx.resume();
+  }catch(e){}
+  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();
+    omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is in the repository.');});
+  }
+}
+document.addEventListener('touchstart',unlockAudio,{passive:true});
+document.addEventListener('mousedown',unlockAudio);
 function stopOm(){if(omAudio){omAudio.pause();omAudio.currentTime=0;}omPlaying=false;}
 function playOm(){
-  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;}
+  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();}
   omAudio.play().then(function(){omPlaying=true;}).catch(function(){
-    try{
-      var ctx=new(window.AudioContext||window.webkitAudioContext)();
-      ctx.resume().then(function(){omAudio.play().then(function(){omPlaying=true;}).catch(function(){addMsg('assistant','Om sound blocked by browser. Please try again.');});});
-    }catch(e){addMsg('assistant','Om sound could not play. Please try again.');}
+    omAudio.load();
+    setTimeout(function(){
+      omAudio.play().then(function(){omPlaying=true;}).catch(function(){
+        addMsg('assistant','Om sound could not play. Please make sure om.mp3 is uploaded and try once more.');
+      });
+    },150);
   });
 }
 if(omBtn&&omBtn.addEventListener)omBtn.addEventListener('click',function(){if(omPlaying){stopOm()}else{playOm()}});
