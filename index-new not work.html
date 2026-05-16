@@ -25,7 +25,8 @@
     #header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
     .hdr-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);color:#fdba74;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
     .hdr-btn.active{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.4)}
-    #om-btn.playing{background:linear-gradient(135deg,#d97706,#b45309)!important;border-color:#d97706!important;color:white!important;box-shadow:0 0 12px rgba(217,119,6,0.5)!important;animation:pulse 2s ease-in-out infinite}
+    #om-btn.active{background:linear-gradient(135deg,#d97706,#b45309)!important;border-color:#d97706!important;color:white!important;box-shadow:0 0 12px rgba(217,119,6,0.6)!important;animation:omPulse 2s ease-in-out infinite}
+    @keyframes omPulse{0%,100%{box-shadow:0 0 12px rgba(217,119,6,0.6)}50%{box-shadow:0 0 22px rgba(217,119,6,0.9)}}
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;align-items:center;justify-content:center;padding:20px}
     .modal.show{display:flex}
     .modal-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:26px 22px;max-width:360px;width:100%;text-align:center;max-height:88vh;overflow-y:auto}
@@ -149,7 +150,7 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-actions">
-      <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound" onclick="toggleOmHeader()">🕉️</button>
+      <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound">🕉️</button>
       <button class="hdr-btn" id="history-btn" title="Save History" aria-label="Save history" onclick="openHistFromMenu()">&#x1F4BE;</button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
@@ -297,7 +298,7 @@
 </div>
 <script>
 var W='https://ask-krishna-api.oletyashrith.workers.dev/';
-var HK='ask_krishna_history',HEK='ask_krishna_enabled',LK='ask_krishna_lang',TK='ask_krishna_tips_seen',VK='ask_krishna_voice',TTSK='ask_krishna_tts';
+var HK='ask_krishna_history',HEK='ask_krishna_enabled',LK='ask_krishna_lang',TK='ask_krishna_tips_seen',VK='ask_krishna_voice',TTSK='ask_krishna_tts',BK='ask_krishna_bookmarks';
 var LC={
   en:{name:'English',ind:'',ph:'Type or tap mic to speak...',
     welcome:'Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?',
@@ -326,7 +327,6 @@ var pendLang=curLang;
 var ttsEnabled=localStorage.getItem(TTSK)==='true';
 var ttsSpeaking=false;
 var omAudio=null,omPlaying=false;
-var VK='ask_krishna_voice';
 var messagesEl=document.getElementById('messages');
 var suggestEl=document.getElementById('suggestions');
 var inputEl=document.getElementById('msg-input');
@@ -336,13 +336,12 @@ var offBanner=document.getElementById('offline-banner');
 var instBanner=document.getElementById('install-banner');
 var histStatus=document.getElementById('history-status');
 var langInd=document.getElementById('lang-indicator');
-function closeModal(id){document.getElementById(id).classList.remove('show')}
-function openModal(id){document.getElementById(id).classList.add('show')}
 var scrollBtn=document.getElementById('scroll-btn');
 var MAX_DOM_MSGS=40;
-var BK='ask_krishna_bookmarks';
 var THINKING_MSGS=['Krishna is reflecting...','Seeking wisdom from the Gita...','Consulting the eternal teachings...','Krishna contemplates your question...'];
 var thinkIdx=0;
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openModal(id){document.getElementById(id).classList.add('show')}
 function getTime(){var d=new Date();var h=d.getHours(),m=d.getMinutes();var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(m<10?'0'+m:m)+' '+ap}
 function scrollBottom(){setTimeout(function(){messagesEl.scrollTop=messagesEl.scrollHeight;},60)}
 // Scroll-to-bottom button logic
@@ -471,7 +470,7 @@ function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist()
 function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared. Each session starts fresh, like a new dawn.')}
 updateHistBtn();
 function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
-function sendMessage(){var text=inputEl.value.trim();if(!text||loading)return;if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs})}).then(function(r){return r.json()}).then(function(data){hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(){hideTyping();addMsg('assistant',navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
+function sendMessage(){var text=inputEl.value.trim();if(!text||loading)return;if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();addMsg('assistant',err.name==='AbortError'?'The response took too long. Please try again.':navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 inputEl.addEventListener('input',function(){
@@ -529,7 +528,6 @@ function openLangFromMenu(){
   openModal('lang-modal');
 }
 function openHistFromMenu(){
-  closeHamburger();
   var desc=document.getElementById('history-desc');
   var enR=document.getElementById('modal-enable-row');
   var disR=document.getElementById('modal-disable-row');
@@ -607,12 +605,12 @@ if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynth
 // Voice Input
 if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.textContent='\uD83D\uDD34'};rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};rec.onspeechend=function(){micBtn.style.transform='scale(1)'};rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};rec.onend=function(){isListening=false;micBtn.classList.remove('listening');micBtn.textContent='\uD83C\uDFA4';micBtn.style.transform='scale(1)';if(inputEl.value.trim())sendMessage()};rec.onerror=function(e){isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';micBtn.textContent='\uD83C\uDFA4';if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please allow microphone access in browser settings.')}else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet.')}else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone.')}};micBtn.addEventListener('click',function(){if(isListening){rec.stop();return}rec.lang=getLangCode();if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){stream.getTracks().forEach(function(t){t.stop()});inputEl.value='';try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}}).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings.')})}else{inputEl.value='';try{rec.start()}catch(e){}}})}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
 // Tips
-var TIPS=[{icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to the timeless wisdom of the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or the green mic button to get started.'},{icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question in English, Telugu, Tamil or Hindi.',steps:'1. Tap the green mic button\n2. Speak clearly\n3. Krishna responds automatically'},{icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi!',steps:'Open ☰ menu → Language → select and tap OK'},{icon:'\uD83D\uDD09',title:'Om Sound & Voice',desc:'Play a calming Om sound while you reflect. Enable voice so Krishna speaks every response.',steps:'Open ☰ menu → toggle Om Sound or Voice Responses'},{icon:'\uD83D\uDD16',title:'Save Wisdom',desc:'Bookmark any Krishna response to revisit later.',steps:'Tap Save 🔖 on any message → view in ☰ → Saved Wisdom'},{icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Save conversations on this device only. Never in any cloud.',steps:'Open ☰ menu → Save History → Enable'},{icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand you better.',steps:'Answer the follow-up to go deeper into the conversation.'},{icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared this session.',steps:'Say "going back to what I said" and Krishna will remember.'},{icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install on your home screen for daily quick access.',steps:'Android: Browser menu then Add to Home Screen\niPhone: Tap Share then Add to Home Screen'},{icon:'\uD83D\uDEE1',title:'Safe and Respectful',desc:'Ask Krishna always responds with dignity and compassion.',steps:'Feel free to share whatever is on your mind. Krishna meets you with kindness.'}];
+var TIPS=[{icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to the timeless wisdom of the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or the green mic button to get started.'},{icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question in English, Telugu, Tamil or Hindi.',steps:'1. Tap the green mic button\n2. Speak clearly\n3. Krishna responds automatically'},{icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi!',steps:'Open ☰ menu → Language → select and tap OK'},{icon:'\uD83D\uDD09',title:'Om Sound',desc:'Tap the 🕉️ button in the header to play a calming Om sound while you reflect. Tap again to stop.',steps:'🕉️ button top right → tap to play, tap again to stop'},{icon:'\uD83D\uDD16',title:'Save Wisdom',desc:'Bookmark any Krishna response to revisit later. Tap Save 🔖 on any message.',steps:'Tap Save 🔖 on any Krishna response to bookmark it'},{icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Tap 💾 in the header to save conversations on this device only. Never in any cloud.',steps:'💾 button top right → Enable to save chats locally'},{icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand you better.',steps:'Answer the follow-up to go deeper into the conversation.'},{icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared this session.',steps:'Say "going back to what I said" and Krishna will remember.'},{icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install on your home screen for daily quick access.',steps:'Android: Browser menu → Add to Home Screen\niPhone: Tap Share → Add to Home Screen'},{icon:'\uD83D\uDEE1\uFE0F',title:'Safe and Respectful',desc:'Ask Krishna always responds with dignity and compassion.',steps:'Feel free to share whatever is on your mind.'}];
 var tipIdx=0;
 function renderTip(){var t=TIPS[tipIdx];var c=document.getElementById('tips-content');if(!c)return;c.innerHTML='<div class="tip-card"><div class="tip-icon">'+t.icon+'</div><div class="tip-title">'+t.title+'</div><div class="tip-desc">'+t.desc+'</div><div class="tip-steps">'+t.steps.replace(/\n/g,'<br>')+'</div></div>';var prog=document.getElementById('tips-progress');if(prog){prog.innerHTML='';TIPS.forEach(function(_,i){var d=document.createElement('button');d.className='tip-dot'+(i===tipIdx?' active':'');d.onclick=function(){tipIdx=i;renderTip()};prog.appendChild(d)})}var p=document.getElementById('tips-prev');var n=document.getElementById('tips-next');if(p)p.style.display=tipIdx===0?'none':'flex';if(n)n.textContent=tipIdx===TIPS.length-1?'Get Started':'Next'}
 function closeTips(){var o=document.getElementById('tips-overlay');if(o)o.classList.remove('show');localStorage.setItem(TK,'true')}
 function openTips(){tipIdx=0;renderTip();var o=document.getElementById('tips-overlay');if(o)o.classList.add('show')}
-if(tipsBtn)tipsBtn.addEventListener('click',function(){openTips()});
+// Tips listeners
 document.getElementById('tips-next').addEventListener('click',function(){if(tipIdx===TIPS.length-1){closeTips()}else{tipIdx++;renderTip()}});
 document.getElementById('tips-prev').addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
