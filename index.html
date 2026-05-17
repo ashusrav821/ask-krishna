@@ -11,6 +11,7 @@
   <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="noindex, nosnippet, noarchive" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev; media-src *;" />
+  <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
   <style>
@@ -71,7 +72,7 @@
     .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px}
     .avatar.bot{background:radial-gradient(circle,#7c2d12,#431407);border:1px solid rgba(249,115,22,0.4)}
     .avatar.user{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);border:1px solid rgba(99,102,241,0.4)}
-    .bubble{max-width:78%;padding:12px 16px;font-size:14.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+    .bubble{padding:12px 16px;font-size:14.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
     .bubble.bot{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px 18px 18px 4px;color:#e5e7eb;box-shadow:0 2px 16px rgba(0,0,0,0.3)}
     .bubble.user{background:linear-gradient(135deg,#92400e,#78350f);border:1px solid rgba(249,115,22,0.3);border-radius:18px 18px 4px 18px;color:#fef3c7}
     .typing-dots{display:flex;gap:5px;align-items:center;padding:10px 0}
@@ -92,9 +93,6 @@
     #verse-footer{text-align:center;margin-top:7px;font-size:10.5px;color:rgba(161,98,7,0.5);letter-spacing:0.03em}
     #history-status{display:none;text-align:center;font-size:11.5px;color:rgba(249,115,22,0.6);margin-top:3px}
     #lang-indicator{text-align:center;font-size:10.5px;color:rgba(251,191,36,0.6);margin-top:2px}
-    #voice-list{max-height:300px;overflow-y:auto}
-    .voice-item{width:100%;padding:10px 12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);border-radius:10px;color:#e5e7eb;font-size:12.5px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-    .voice-item.selected{background:rgba(249,115,22,0.2);border-color:#f97316}
     @supports(padding-bottom:env(safe-area-inset-bottom)){#input-area{padding-bottom:calc(14px + env(safe-area-inset-bottom))}#header{padding-top:calc(14px + env(safe-area-inset-top))}}
     /* Hamburger Menu */
     #hamburger-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:150;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
@@ -338,7 +336,6 @@ var histEn=localStorage.getItem(HEK)==='true';
 var curLang=localStorage.getItem(LK)||'en';
 var pendLang=curLang;
 var ttsEnabled=localStorage.getItem(TTSK)==='true';
-var ttsSpeaking=false;
 var omAudio=null,omPlaying=false;
 var messagesEl=document.getElementById('messages');
 var suggestEl=document.getElementById('suggestions');
@@ -465,7 +462,7 @@ function getSys(){return BS+'\n\n'+LC[curLang].sys}
 function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
 function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
-['lang-modal','history-modal','voice-modal','bookmarks-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
+['lang-modal','history-modal','bookmarks-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
 document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
@@ -504,7 +501,6 @@ document.addEventListener('visibilitychange',function(){
 inputEl.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 sendBtn.addEventListener('click',sendMessage);
 // Hamburger Menu
-var menuBtn=document.getElementById('menu-btn');
 var hamburgerSheet=document.getElementById('hamburger-sheet');
 var hamburgerOverlay=document.getElementById('hamburger-overlay');
 function openHamburger(){
@@ -598,7 +594,6 @@ function playOm(){
 document.getElementById('om-btn').addEventListener('click',function(){
   if(omPlaying){stopOm();}else{playOm();}
 });
-function toggleOmHeader(){if(omPlaying){stopOm();}else{playOm();}}
 // TTS - Warm Male Indian Voice
 var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
 var MALE_PREF=['Ravi','Hemant','Mohan','Arjun','Karan','Google Hindi','Microsoft Heera','en-IN','Neural2-B','Neural2-C','Wavenet-B','Wavenet-C'];
@@ -613,7 +608,6 @@ function updateTtsBtn(){
   if(!ttsEnabled&&window.speechSynthesis)window.speechSynthesis.cancel();
 }
 function openVoicePicker(){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];var list=document.getElementById('voice-list');list.innerHTML='';var useful=voices.filter(function(v){return v.lang.startsWith('en')||v.lang.startsWith('hi')||v.lang.startsWith('te')||v.lang.startsWith('ta')});if(useful.length===0){list.innerHTML='<p style="color:#d1d5db;font-size:13px;text-align:center;padding:10px">No voices found. Try on your phone browser.</p>';openModal('voice-modal');return;}var saved=localStorage.getItem(VK);useful.forEach(function(v){var btn=document.createElement('button');btn.className='voice-item'+(saved===v.name?' selected':'');btn.innerHTML='<span>'+v.name+'</span><span style="font-size:11px;color:rgba(249,115,22,0.5)">'+v.lang+'</span>';btn.onclick=function(){window.speechSynthesis.cancel();var utt=new SpeechSynthesisUtterance('Namaste. I am Ask Krishna. May wisdom and peace guide you always.');utt.voice=v;utt.lang=v.lang;utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;window.speechSynthesis.speak(utt);localStorage.setItem(VK,v.name);list.querySelectorAll('.voice-item').forEach(function(b){b.classList.remove('selected')});btn.classList.add('selected')};list.appendChild(btn)});openModal('voice-modal')}
-var ttsPressTimer=null;
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices()}}
 // Voice Input
 if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="#ef4444"/><circle cx="20" cy="20" r="7" fill="white"/></svg>'};
@@ -635,6 +629,8 @@ document.getElementById('tips-prev').addEventListener('click',function(){if(tipI
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
 document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){})}
+// Render suggestions first so they appear above welcome bubble
+SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
 var savedHistory=histEn?loadHist():null;
 if(savedHistory&&savedHistory.length>0){
   savedHistory.forEach(function(m){
@@ -652,7 +648,6 @@ if(savedHistory&&savedHistory.length>0){
   addMsg('assistant','Welcome back! Your previous conversation has been restored. How may Krishna guide you today?');
 }else{addMsg('assistant',LC[curLang].welcome)}
 if(curLang!=='en'){langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
-SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
 if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
 </script>
 </body>
