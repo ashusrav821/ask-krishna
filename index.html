@@ -313,6 +313,16 @@
         </div>
         <div class="hmenu-arrow">&#x203A;</div>
       </div>
+      <!-- Saved Wisdom (Bookmarks) -->
+      <div class="hmenu-item" onclick="openBookmarks();closeHamburger()">
+        <div class="hmenu-icon">&#x1F516;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Saved Wisdom</div>
+          <div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarked responses</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <div class="hmenu-divider"></div>
       <!-- Share App -->
       <div class="hmenu-item" onclick="shareApp()">
         <div class="hmenu-icon">&#x1F4E4;</div>
@@ -399,7 +409,7 @@ var LC={
 var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply. Help people apply Gita wisdom to real everyday situations.\n\nGita chapters: Ch1:Arjuna crisis. Ch2:Eternal soul,duty,detachment(2.47). Ch3:Selfless action. Ch4:Knowledge,letting go. Ch5:Peace while active. Ch6:Mind friend or enemy(6.5). Ch7:Divine everywhere. Ch8:Focus shapes you. Ch9:Devotion. Ch10:God as best. Ch11:Everything connected. Ch12:Love and devotion. Ch13:Body vs real self. Ch14:Three energy states. Ch15:Let go of harm. Ch16:Fear vs love choices. Ch17:Beliefs shape life. Ch18:Full surrender(18.66).\n\nTONE: Wise friend over coffee. Plain everyday words. No jargon without explanation. Specific and concrete. Relate to modern life. 16-year-old and 60-year-old both understand.\n\nVERSES: Casual mention. Plain explanation. Connect to person.\n\nSTRUCTURE: 1)Understand situation 2)Krishna teaching plainly 3)Real analogy 4)1-2 verses plainly 5)1-2 action steps.\n\n4-5 short paragraphs. Easy on phone. Maintain full context.\n\nGUARDRAILS: NEVER use abusive or disrespectful language. NEVER respond with anger even if user is rude. If user uses bad language respond with calm compassion and redirect. NEVER demean any person, religion, caste, gender or community. If asked for harmful content politely decline and offer Krishna wisdom. Always respond with dignity and grace.';
 var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
 var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','slut'];
-var msgs=[],loading=false,isListening=false,deferredPrompt=null;
+var msgs=[],loading=false,isListening=false,deferredPrompt=null,ttsSpeaking=false;
 var histEn=localStorage.getItem(HEK)==='true';
 var curLang=localStorage.getItem(LK)||'en';
 var pendLang=curLang;
@@ -530,7 +540,7 @@ function getSys(){return BS+'\n\n'+LC[curLang].sys}
 function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
 function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
-['lang-modal','history-modal','bookmarks-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
+['lang-modal','history-modal','bookmarks-modal','voice-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
 document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
@@ -594,6 +604,9 @@ function updateHamburgerState(){
   var voiceLabels={'en-IN-Neural2-B':'English India — Neural2 Male (Warm)','en-IN-Neural2-C':'English India — Neural2 Male (Calm)','en-IN-Wavenet-B':'English India — WaveNet Male','en-IN-Wavenet-C':'English India — WaveNet Male (Alt)','hi-IN-Neural2-B':'Hindi — Neural2 Male','hi-IN-Wavenet-B':'Hindi — WaveNet Male','te-IN-Standard-A':'Telugu — Standard Female','ta-IN-Wavenet-A':'Tamil — WaveNet Female'};
   var vs=document.getElementById('hm-voice-sub');
   if(vs)vs.textContent=voiceLabels[saved]||saved;
+  // Bookmark count
+  var bmSub=document.getElementById('hm-bookmark-sub');
+  if(bmSub){var bmc=loadBookmarks().length;bmSub.textContent=bmc?bmc+' saved response'+(bmc===1?'':'s'):'Your bookmarked responses';}
   // Text size buttons
   var sz=localStorage.getItem(FSK)||'medium';
   ['small','medium','large'].forEach(function(s){var el=document.getElementById('sz-'+s.charAt(0));if(el)el.classList.toggle('active',s===sz)});
@@ -856,9 +869,8 @@ document.getElementById('tips-next').addEventListener('click',function(){if(tipI
 document.getElementById('tips-prev').addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
 document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){})}
-// Listen for notification tap while app is already open
 if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){});
   navigator.serviceWorker.addEventListener('message',function(e){
     if(e.data&&e.data.type==='WISDOM_NOTIF_TAP'){askTodaysWisdom();}
   });
@@ -898,10 +910,11 @@ if(curLang!=='en'){langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curL
 if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
 
 // ── Daily Wisdom Notification ─────────────────────────────────────────────
-var NK='ask_krishna_notif'; // localStorage key — 'on'/'off'
-var NS='ask_krishna_notif_sched'; // last scheduled date string
+var NK='ask_krishna_notif';
+var NS='ask_krishna_notif_sched';
+var notifIntervalId=null;
 
-function getDailyTeasers(){return[
+var DAILY_TEASERS=[
   'A flame of wisdom awaits you \uD83D\uDD4A\uFE0F',
   'Krishna has a message for you today \uD83C\uDF3C',
   'Your daily Gita verse is ready \u2600\uFE0F',
@@ -910,12 +923,12 @@ function getDailyTeasers(){return[
   'Today\u2019s truth from the Bhagavad Gita \uD83D\uDCD6',
   'Begin your day with Krishna\u2019s guidance \uD83E\uDD9A',
   'The Gita speaks to you this morning \uD83C\uDF05'
-];}
+];
 
 function showDailyNotification(){
   if(!('serviceWorker' in navigator)||!('Notification' in window))return;
   if(Notification.permission!=='granted')return;
-  var teasers=getDailyTeasers();
+  var teasers=DAILY_TEASERS;
   var idx=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/(864e5))%teasers.length;
   navigator.serviceWorker.ready.then(function(sw){
     sw.showNotification('Ask Krishna \uD83C\uDF38',{
@@ -936,7 +949,7 @@ function scheduleDailyNotification(){
   var ms=next-now;
   setTimeout(function(){
     showDailyNotification();
-    setInterval(showDailyNotification,864e5); // repeat every 24h
+    notifIntervalId=setInterval(showDailyNotification,864e5);
   },ms);
   localStorage.setItem(NS,now.toDateString());
 }
@@ -963,6 +976,7 @@ function enableDailyAlert(){
 
 function disableDailyAlert(){
   localStorage.setItem(NK,'off');
+  if(notifIntervalId){clearInterval(notifIntervalId);notifIntervalId=null;}
   updateNotifToggle();
 }
 
