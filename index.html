@@ -295,6 +295,15 @@
         </div>
         <div class="hmenu-arrow">&#x203A;</div>
       </div>
+      <!-- Daily Alert -->
+      <div class="hmenu-item" id="hm-notif" onclick="toggleDailyAlert()">
+        <div class="hmenu-icon">&#x1F514;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Daily Wisdom Alert</div>
+          <div class="hmenu-sub" id="hm-notif-sub">Off — tap to enable</div>
+        </div>
+        <div class="hmenu-toggle" id="hm-notif-toggle"></div>
+      </div>
       <!-- Help & Tips -->
       <div class="hmenu-item" onclick="openTips();closeHamburger()" role="button" aria-label="Help and Tips">
         <div class="hmenu-icon">&#x2139;&#xFE0F;</div>
@@ -588,6 +597,8 @@ function updateHamburgerState(){
   // Text size buttons
   var sz=localStorage.getItem(FSK)||'medium';
   ['small','medium','large'].forEach(function(s){var el=document.getElementById('sz-'+s.charAt(0));if(el)el.classList.toggle('active',s===sz)});
+  // Notification toggle
+  updateNotifToggle();
 }
 
 function toggleTtsFromMenu(){
@@ -846,6 +857,12 @@ document.getElementById('tips-prev').addEventListener('click',function(){if(tipI
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
 document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){})}
+// Listen for notification tap while app is already open
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='WISDOM_NOTIF_TAP'){askTodaysWisdom();}
+  });
+}
 // Text size
 function setTextSize(size){
   localStorage.setItem(FSK,size);
@@ -879,6 +896,103 @@ if(savedHistory&&savedHistory.length>0){
 }else{addMsg('assistant',LC[curLang].welcome)}
 if(curLang!=='en'){langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
 if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
+
+// ── Daily Wisdom Notification ─────────────────────────────────────────────
+var NK='ask_krishna_notif'; // localStorage key — 'on'/'off'
+var NS='ask_krishna_notif_sched'; // last scheduled date string
+
+function getDailyTeasers(){return[
+  'A flame of wisdom awaits you \uD83D\uDD4A\uFE0F',
+  'Krishna has a message for you today \uD83C\uDF3C',
+  'Your daily Gita verse is ready \u2600\uFE0F',
+  'Wisdom to carry through your day \uD83C\uDF3F',
+  'A moment of clarity from the Gita \u2728',
+  'Today\u2019s truth from the Bhagavad Gita \uD83D\uDCD6',
+  'Begin your day with Krishna\u2019s guidance \uD83E\uDD9A',
+  'The Gita speaks to you this morning \uD83C\uDF05'
+];}
+
+function showDailyNotification(){
+  if(!('serviceWorker' in navigator)||!('Notification' in window))return;
+  if(Notification.permission!=='granted')return;
+  var teasers=getDailyTeasers();
+  var idx=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/(864e5))%teasers.length;
+  navigator.serviceWorker.ready.then(function(sw){
+    sw.showNotification('Ask Krishna \uD83C\uDF38',{
+      body:teasers[idx],
+      icon:'/ask-krishna/icon-192.png',
+      badge:'/ask-krishna/icon-192.png',
+      tag:'daily-wisdom',
+      renotify:true,
+      data:{url:location.origin+'/ask-krishna/?wisdom=1'}
+    });
+  });
+}
+
+function scheduleDailyNotification(){
+  var now=new Date();
+  var next=new Date(now.getFullYear(),now.getMonth(),now.getDate(),7,0,0,0);
+  if(now>=next)next.setDate(next.getDate()+1);
+  var ms=next-now;
+  setTimeout(function(){
+    showDailyNotification();
+    setInterval(showDailyNotification,864e5); // repeat every 24h
+  },ms);
+  localStorage.setItem(NS,now.toDateString());
+}
+
+function requestNotifPermission(cb){
+  if(!('Notification' in window)){if(cb)cb(false);return;}
+  if(Notification.permission==='granted'){if(cb)cb(true);return;}
+  if(Notification.permission==='denied'){if(cb)cb(false);return;}
+  Notification.requestPermission().then(function(p){if(cb)cb(p==='granted');});
+}
+
+function enableDailyAlert(){
+  requestNotifPermission(function(granted){
+    if(!granted){
+      alert('Please allow notifications for Ask Krishna in your browser/device settings to receive daily wisdom.');
+      return;
+    }
+    localStorage.setItem(NK,'on');
+    scheduleDailyNotification();
+    updateNotifToggle();
+    showDailyNotification(); // fire a preview immediately so user knows it worked
+  });
+}
+
+function disableDailyAlert(){
+  localStorage.setItem(NK,'off');
+  updateNotifToggle();
+}
+
+function toggleDailyAlert(){
+  if(localStorage.getItem(NK)==='on'){disableDailyAlert();}
+  else{enableDailyAlert();}
+}
+
+function updateNotifToggle(){
+  var on=localStorage.getItem(NK)==='on';
+  var t=document.getElementById('hm-notif-toggle');
+  var s=document.getElementById('hm-notif-sub');
+  if(t)t.classList.toggle('on',on);
+  if(s)s.textContent=on?'On — 7:00 AM every day':'Off — tap to enable';
+}
+
+// Auto-reschedule on page load if enabled
+(function(){
+  if(localStorage.getItem(NK)==='on'){
+    if(Notification.permission==='granted'){
+      var last=localStorage.getItem(NS);
+      if(last!==new Date().toDateString())scheduleDailyNotification();
+    }
+  }
+  // Handle ?wisdom=1 deep link from notification tap
+  if(location.search.indexOf('wisdom=1')!==-1){
+    history.replaceState(null,'',location.pathname);
+    setTimeout(function(){askTodaysWisdom();},800);
+  }
+})();
 </script>
 </body>
 </html>
