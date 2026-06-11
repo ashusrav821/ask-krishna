@@ -10,7 +10,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="noindex, nosnippet, noarchive" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev; media-src *;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
@@ -361,7 +361,7 @@
   </div>
   <div id="input-area">
     <div id="input-row">
-      <textarea id="msg-input" placeholder="Type or tap mic to speak..." rows="1"></textarea>
+      <textarea id="msg-input" placeholder="Type or tap mic to speak..." rows="1" maxlength="2000"></textarea>
       <button id="mic-btn" title="Speak your question" aria-label="Speak your question" style="padding:0;overflow:hidden">
         <svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block">
           <rect width="40" height="40" rx="11" fill="url(#mg)"/>
@@ -410,6 +410,8 @@ var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Git
 var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
 var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','slut'];
 var msgs=[],loading=false,isListening=false,deferredPrompt=null,ttsSpeaking=false;
+var RL_MAX=3,RL_WIN=60000,rlTimestamps=[];  // rate limit: 3 requests per 60s
+var MAX_INPUT=2000;
 var histEn=localStorage.getItem(HEK)==='true';
 var curLang=localStorage.getItem(LK)||'en';
 var pendLang=curLang;
@@ -454,7 +456,10 @@ function openBookmarks(){
   if(!bk.length){list.innerHTML='<div id="bookmarks-empty">&#x1F54A;&#xFE0F; No saved wisdom yet.<br/>Tap the bookmark icon on any Krishna response.</div>';openModal('bookmarks-modal');return;}
   bk.forEach(function(item,idx){
     var card=document.createElement('div');card.className='bookmark-card';
-    card.innerHTML='<div class="bookmark-card-time">&#x1F4C5; '+item.time+'</div>'+item.text+'<button class="bookmark-del" aria-label="Remove bookmark" onclick="removeBookmark('+idx+')">&#x2715;</button>';
+    var timeDiv=document.createElement('div');timeDiv.className='bookmark-card-time';timeDiv.textContent='\uD83D\uDCC5 '+item.time;
+    var textDiv=document.createElement('div');textDiv.textContent=item.text;
+    var delBtn=document.createElement('button');delBtn.className='bookmark-del';delBtn.setAttribute('aria-label','Remove bookmark');delBtn.textContent='\u2715';delBtn.onclick=function(){removeBookmark(idx)};
+    card.appendChild(timeDiv);card.appendChild(textDiv);card.appendChild(delBtn);
     list.appendChild(card);
   });
   var sub=document.getElementById('hm-bookmark-sub');
@@ -558,7 +563,17 @@ function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist()
 function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared. Each session starts fresh, like a new dawn.')}
 updateHistBtn();
 function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
-function sendMessage(){var text=inputEl.value.trim();if(!text||loading)return;if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();addMsg('assistant',err.name==='AbortError'?'The response took too long. Please try again.':navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
+function sendMessage(){
+  var text=inputEl.value.trim();
+  if(!text||loading)return;
+  // Input length guard
+  if(text.length>MAX_INPUT){addMsg('assistant','Your message is too long. Please keep it under 2000 characters.');return;}
+  // Client-side rate limit: 3 requests per 60s
+  var now=Date.now();
+  rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
+  if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
+  rlTimestamps.push(now);
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();addMsg('assistant',err.name==='AbortError'?'The response took too long. Please try again.':navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 inputEl.addEventListener('input',function(){
@@ -694,6 +709,7 @@ function speakText(text){
   if(window.speechSynthesis)window.speechSynthesis.cancel();
   ttsSpeaking=true;
   var clean=text.replace(/[*_#]/g,'').replace(/[\n]+/g,'. ').replace(/[.]{2,}/g,'.').trim();
+  if(clean.length>4800)clean=clean.substring(0,4800)+'...';
   if(!clean){ttsSpeaking=false;return;}
   var voice=googleVoiceMap[curLang]||'en-IN-Neural2-B';
   var lang=ttsLangMap[curLang]||'en-IN';
