@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f0500" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ask Krishna" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
+  <meta name="robots" content="noindex, nosnippet, noarchive" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Ask Krishna</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;width:100%;background:linear-gradient(135deg,#0f0500 0%,#1a0a00 40%,#0d1a0d 100%);font-family:Georgia,'Palatino Linotype',serif;color:#e5e7eb;overflow:hidden;-webkit-tap-highlight-color:transparent}
+    #app{display:flex;flex-direction:column;height:100dvh;max-width:680px;margin:0 auto}
+    #header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;border-bottom:1px solid rgba(249,115,22,0.2);background:rgba(15,5,0,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:10;flex-shrink:0}
+    #logo{width:44px;height:44px;background:radial-gradient(circle,#7c2d12,#431407);border-radius:50%;border:2px solid rgba(249,115,22,0.45);box-shadow:0 0 18px rgba(249,115,22,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    #header-text{flex:1;min-width:0}
+    #header-title{font-size:18.5px;font-weight:bold;background:linear-gradient(90deg,#fbbf24,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.04em}
+    #header-sub{font-size:9.5px;color:#fde68a;letter-spacing:0.06em;margin-top:2px;text-shadow:0 0 6px rgba(251,191,36,0.5)}
+    #header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .hdr-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);color:#fdba74;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+    .hdr-btn.active{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.4)}
+    #om-btn.active{background:linear-gradient(135deg,#d97706,#b45309)!important;border-color:#d97706!important;color:white!important;box-shadow:0 0 12px rgba(217,119,6,0.6)!important;animation:omPulse 2s ease-in-out infinite}
+    @keyframes omPulse{0%,100%{box-shadow:0 0 12px rgba(217,119,6,0.6)}50%{box-shadow:0 0 22px rgba(217,119,6,0.9)}}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .modal-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:26px 22px;max-width:360px;width:100%;text-align:center;max-height:88vh;overflow-y:auto}
+    .modal-box h2{font-size:17.5px;color:#fbbf24;margin-bottom:10px}
+    .modal-box p{font-size:13.5px;color:#d1d5db;line-height:1.7;margin-bottom:8px}
+    .notice{font-size:11.5px;color:#f97316;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:8px 12px;margin:12px 0;line-height:1.6}
+    .btn-row{display:flex;gap:10px;margin-top:16px}
+    .mbtn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14.5px;cursor:pointer;font-family:inherit;font-weight:bold}
+    .mbtn.confirm{background:linear-gradient(135deg,#f97316,#ea580c);color:white}
+    .mbtn.cancel{background:rgba(255,255,255,0.07);color:#d1d5db;border:1px solid rgba(255,255,255,0.1)}
+    .mbtn.danger{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+    .lang-options{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;justify-content:center}
+    .lang-opt{flex:1;min-width:calc(50% - 4px);padding:10px 6px;border-radius:12px;border:1px solid rgba(249,115,22,0.25);background:rgba(249,115,22,0.05);color:#ffffff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center}
+    .lang-opt.selected{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.3)}
+    #tips-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;padding:20px}
+    #tips-overlay.show{display:flex}
+    #tips-box{background:#1a0a00;border:1px solid rgba(249,115,22,0.4);border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
+    #tips-box h2{font-size:18px;color:#fbbf24;margin-bottom:4px}
+    .tips-sub{font-size:12px;color:rgba(249,115,22,0.6);margin-bottom:16px}
+    .tip-card{background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:14px;padding:14px;text-align:left;min-height:160px}
+    .tip-icon{font-size:28px;margin-bottom:8px}
+    .tip-title{font-size:14px;color:#fbbf24;font-weight:bold;margin-bottom:6px}
+    .tip-desc{font-size:13px;color:#e5e7eb;line-height:1.6;margin-bottom:8px}
+    .tip-steps{font-size:12px;color:rgba(249,115,22,0.8);line-height:1.8;border-top:1px solid rgba(249,115,22,0.1);padding-top:8px}
+    #tips-progress{display:flex;justify-content:center;gap:6px;margin:14px 0 10px}
+    .tip-dot{width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,0.25);transition:all 0.3s;cursor:pointer;border:none}
+    .tip-dot.active{background:#f97316;transform:scale(1.3)}
+    #tips-nav{display:flex;gap:10px;margin-top:12px}
+    #tips-skip-btn{font-size:12.5px;color:rgba(249,115,22,0.5);background:none;border:none;cursor:pointer;font-family:inherit;margin-top:10px;text-decoration:underline;display:block;width:100%;text-align:center}
+    /* Text size */
+    .sz-opts{display:flex;gap:5px}
+    .sz-opt{flex:1;padding:6px 4px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);border-radius:8px;color:#fdba74;cursor:pointer;text-align:center;font-family:inherit;transition:all 0.2s}
+    .sz-opt.active{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white}
+    /* Voice picker */
+    #voice-list{max-height:300px;overflow-y:auto}
+    .v-item{width:100%;padding:10px 12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);border-radius:10px;color:#e5e7eb;font-size:12px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+    .v-item.selected{background:rgba(249,115,22,0.2);border-color:#f97316}
+
+    #offline-banner{display:none;justify-content:center;align-items:center;padding:7px 16px;background:rgba(239,68,68,0.9);color:white;font-size:13.5px;flex-shrink:0}
+    #install-banner{display:none;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(249,115,22,0.12);border-bottom:1px solid rgba(249,115,22,0.2);font-size:12.5px;color:#fdba74;gap:10px;flex-shrink:0}
+    #install-btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:20px;padding:5px 12px;color:white;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+    #install-close{background:transparent;border:none;padding:4px 8px;color:rgba(249,115,22,0.5);font-size:16px;cursor:pointer}
+    #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;height:100%}
+    #messages::-webkit-scrollbar{display:none}
+    #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+    .suggestion-btn{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:20px;padding:7px 13px;color:#ffffff;font-size:12.5px;cursor:pointer;font-family:inherit;text-align:left}
+    .suggestion-btn:active{background:rgba(249,115,22,0.2)}
+    .msg-row{display:flex;gap:10px;align-items:flex-start}
+    .msg-row.user{flex-direction:row-reverse}
+    .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px}
+    .avatar.bot{background:radial-gradient(circle,#7c2d12,#431407);border:1px solid rgba(249,115,22,0.4)}
+    .avatar.user{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);border:1px solid rgba(99,102,241,0.4)}
+    .bubble{padding:12px 16px;font-size:14.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+    .bubble.bot{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px 18px 18px 4px;color:#e5e7eb;box-shadow:0 2px 16px rgba(0,0,0,0.3)}
+    .bubble.user{background:linear-gradient(135deg,#92400e,#78350f);border:1px solid rgba(249,115,22,0.3);border-radius:18px 18px 4px 18px;color:#fef3c7}
+    .typing-dots{display:flex;gap:5px;align-items:center;padding:10px 0}
+    .dot{width:7px;height:7px;border-radius:50%;background:#f97316;animation:bounce 1.2s ease-in-out infinite}
+    .dot:nth-child(2){animation-delay:0.2s}
+    .dot:nth-child(3){animation-delay:0.4s}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+    #input-area{padding:11px 14px 18px;background:rgba(15,5,0,0.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(249,115,22,0.15);z-index:10;flex-shrink:0}
+    #input-row{display:flex;gap:8px;align-items:flex-end;background:rgba(254,215,170,0.15);border:1px solid rgba(249,115,22,0.4);border-radius:14px;padding:9px 11px}
+    #input-row:focus-within{border-color:rgba(249,115,22,0.6)}
+    #msg-input{flex:1;background:transparent;border:none;outline:none;color:#fff7ed;font-size:15.5px;font-family:inherit;resize:none;line-height:1.5;min-height:24px;max-height:100px;overflow-y:auto}
+    #msg-input::placeholder{color:rgba(255,255,255,0.8)}
+    #mic-btn{width:40px;height:40px;border-radius:11px;border:none;background:linear-gradient(135deg,#fbbf24,#f97316);color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;touch-action:manipulation;box-shadow:0 0 12px rgba(249,115,22,0.5);padding:0;overflow:hidden}
+    #mic-btn.listening{box-shadow:0 0 16px rgba(239,68,68,0.7);animation:pulse 1s ease-in-out infinite;border-radius:11px}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+    #send-btn{width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,#f97316,#ea580c);color:white;font-size:18.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;touch-action:manipulation;box-shadow:0 0 12px rgba(249,115,22,0.35)}
+    #send-btn:disabled{background:rgba(249,115,22,0.2);box-shadow:none;cursor:not-allowed}
+    #verse-footer{text-align:center;margin-top:7px;font-size:10.5px;color:rgba(161,98,7,0.5);letter-spacing:0.03em}
+    #history-status{display:none;text-align:center;font-size:11.5px;color:rgba(249,115,22,0.6);margin-top:3px}
+    #lang-indicator{text-align:center;font-size:10.5px;color:rgba(251,191,36,0.6);margin-top:2px}
+    @supports(padding-bottom:env(safe-area-inset-bottom)){#input-area{padding-bottom:calc(14px + env(safe-area-inset-bottom))}#header{padding-top:calc(14px + env(safe-area-inset-top))}}
+    /* Hamburger Menu */
+    #hamburger-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:150;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+    #hamburger-overlay.show{display:block}
+    #hamburger-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:680px;background:#1a0800;border-top:1px solid rgba(249,115,22,0.35);border-radius:22px 22px 0 0;z-index:151;transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 40px rgba(0,0,0,0.6)}
+    #hamburger-sheet.open{transform:translateX(-50%) translateY(0)}
+    #hamburger-handle{width:40px;height:4px;background:rgba(249,115,22,0.35);border-radius:2px;margin:14px auto 6px}
+    #hamburger-items{padding:6px 0 18px}
+    .hmenu-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:background 0.15s;-webkit-tap-highlight-color:transparent}
+    .hmenu-item:active{background:rgba(249,115,22,0.08)}
+    .hmenu-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+    .hmenu-label{flex:1;min-width:0}
+    .hmenu-title{font-size:15px;color:#f3f4f6;font-weight:600;letter-spacing:0.01em}
+    .hmenu-sub{font-size:12px;color:rgba(253,186,116,0.6);margin-top:2px}
+    .hmenu-arrow{font-size:20px;color:rgba(249,115,22,0.4);flex-shrink:0}
+    .hmenu-divider{height:1px;background:rgba(249,115,22,0.1);margin:6px 20px}
+    .hmenu-toggle{width:44px;height:26px;border-radius:13px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);flex-shrink:0;position:relative;transition:all 0.25s;cursor:pointer}
+    .hmenu-toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#aaa;transition:all 0.25s}
+    .hmenu-toggle.on{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;box-shadow:0 0 8px rgba(249,115,22,0.4)}
+    .hmenu-toggle.on::after{transform:translateX(18px);background:white}
+    #menu-btn{font-size:18px}
+    /* Message timestamps */
+    .msg-time{font-size:10px;color:rgba(249,115,22,0.35);margin-top:4px;padding:0 4px;text-align:right}
+    .msg-row.user .msg-time{text-align:left}
+    .msg-col{display:flex;flex-direction:column;max-width:78%}
+    /* Message action buttons (copy / bookmark) */
+    .msg-actions{display:flex;gap:6px;margin-top:5px;opacity:0;transition:opacity 0.2s}
+    .msg-row:hover .msg-actions,.msg-row:focus-within .msg-actions{opacity:1}
+    .msg-act-btn{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;color:rgba(253,186,116,0.8);font-size:11px;padding:3px 8px;cursor:pointer;font-family:inherit;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+    .msg-act-btn:active{background:rgba(249,115,22,0.25)}
+    .msg-act-btn.bookmarked{color:#fbbf24;border-color:#f97316}
+    /* Typing indicator */
+    .typing-label{font-size:11.5px;color:rgba(249,115,22,0.55);margin-bottom:4px;font-style:italic}
+    /* Scroll to bottom button */
+    #scroll-btn{display:none;position:absolute;bottom:90px;right:18px;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:white;font-size:17px;cursor:pointer;box-shadow:0 3px 14px rgba(249,115,22,0.5);z-index:20;align-items:center;justify-content:center;transition:all 0.2s}
+    #scroll-btn.show{display:flex}
+    /* Bookmarks modal */
+    #bookmarks-modal .modal-box{text-align:left}
+    #bookmarks-list{max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .bookmark-card{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);border-radius:12px;padding:11px 13px;font-size:13px;color:#e5e7eb;line-height:1.6;position:relative}
+    .bookmark-card-time{font-size:10.5px;color:rgba(249,115,22,0.4);margin-bottom:5px}
+    .bookmark-del{position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(239,68,68,0.5);font-size:15px;cursor:pointer;padding:2px 5px}
+    .bookmark-del:active{color:#ef4444}
+    #bookmarks-empty{text-align:center;color:rgba(253,186,116,0.4);font-size:13px;padding:20px 0}
+    /* Today's Wisdom button */
+    #wisdom-btn{width:100%;padding:11px 16px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(249,115,22,0.08));border:1px solid rgba(251,191,36,0.35);border-radius:14px;color:#fbbf24;font-size:13.5px;cursor:pointer;font-family:Georgia,'Palatino Linotype',serif;text-align:left;display:flex;align-items:center;gap:10px;margin-bottom:10px;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+    #wisdom-btn:active{background:linear-gradient(135deg,rgba(251,191,36,0.22),rgba(249,115,22,0.15))}
+    #wisdom-btn-icon{font-size:20px;flex-shrink:0}
+    #wisdom-btn-text{flex:1}
+    #wisdom-btn-title{font-weight:bold;font-size:13.5px;color:#fbbf24}
+    #wisdom-btn-sub{font-size:11px;color:rgba(251,191,36,0.55);margin-top:2px}
+    /* Auth */
+    #signin-btn{height:34px;padding:0 14px;border-radius:20px;border:1px solid rgba(249,115,22,0.45);background:rgba(249,115,22,0.12);color:#fdba74;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
+    #signin-btn:active{background:rgba(249,115,22,0.25)}
+    #signin-btn.signed-in{background:linear-gradient(135deg,rgba(249,115,22,0.25),rgba(251,191,36,0.15));border-color:#f97316;color:#fbbf24}
+    .auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(249,115,22,0.25);border-radius:12px;color:#f3f4f6;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;transition:border-color 0.2s}
+    .auth-input:focus{border-color:rgba(249,115,22,0.6)}
+    .auth-input::placeholder{color:rgba(255,255,255,0.35)}
+    .auth-err{font-size:12px;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:7px 10px;margin-bottom:10px;display:none;text-align:left}
+    .auth-err.show{display:block}
+    .auth-link{font-size:12.5px;color:rgba(249,115,22,0.7);background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;margin-top:8px;display:block;width:100%;text-align:center}
+    .auth-link:active{color:#f97316}
+    .auth-divider{font-size:11px;color:rgba(249,115,22,0.35);text-align:center;margin:6px 0 10px;letter-spacing:0.05em}
+    .profile-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(249,115,22,0.1);margin-bottom:14px}
+    .profile-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7c2d12,#431407);border:2px solid rgba(249,115,22,0.4);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .profile-name{font-size:15px;color:#fbbf24;font-weight:600}
+    .profile-email{font-size:11.5px;color:rgba(253,186,116,0.5);margin-top:2px}
+    .profile-action{width:100%;padding:11px;border-radius:12px;border:1px solid rgba(249,115,22,0.2);background:rgba(249,115,22,0.06);color:#fdba74;font-size:13.5px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:background 0.15s}
+    .profile-action:active{background:rgba(249,115,22,0.15)}
+    .sync-badge{font-size:11px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:20px;padding:2px 8px;margin-left:auto}
+  </style>
+</head>
+<body oncontextmenu="return false">
+<div id="app">
+  <div id="header">
+    <div id="logo">&#x1F99A;</div>
+    <div id="header-text">
+      <div id="header-title">Ask Krishna</div>
+      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
+    </div>
+    <div id="header-actions">
+      <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound">🕉️</button>
+      <button class="hdr-btn" id="history-btn" title="Save History" aria-label="Save history" onclick="openHistFromMenu()">&#x1F4BE;</button>
+      <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or view profile">Sign In</button>
+      <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
+    </div>
+  </div>
+
+  <div id="offline-banner">&#x1F534; No internet connection</div>
+  <div id="install-banner">
+    <span>&#x1F4F2; Install Ask Krishna on your home screen!</span>
+    <button id="install-btn" aria-label="Install app">Install</button>
+    <button id="install-close" aria-label="Dismiss install banner">&#x2715;</button>
+  </div>
+  <div id="tips-overlay">
+    <div id="tips-box">
+      <h2>&#x1F4A1; Quick Guide</h2>
+      <p class="tips-sub">Learn all features in 60 seconds</p>
+      <div id="tips-content"></div>
+      <div id="tips-progress"></div>
+      <div id="tips-nav">
+        <button class="mbtn cancel" id="tips-prev">&#x2190; Back</button>
+        <button class="mbtn confirm" id="tips-next">Next &#x2192;</button>
+      </div>
+      <button id="tips-skip-btn">Skip and Start Chatting</button>
+    </div>
+  </div>
+  <div class="modal" id="lang-modal">
+    <div class="modal-box">
+      <h2>&#x1F310; Choose Language</h2>
+      <p>Select the language for Ask Krishna responses</p>
+      <div class="lang-options">
+        <button class="lang-opt" id="lang-en" onclick="selectLang('en')">&#x1F1FA;&#x1F1F8; English</button>
+        <button class="lang-opt" id="lang-te" onclick="selectLang('te')">&#x1F1EE;&#x1F1F3; Telugu</button>
+        <button class="lang-opt" id="lang-ta" onclick="selectLang('ta')">&#x1F1EE;&#x1F1F3; Tamil</button>
+        <button class="lang-opt" id="lang-hi" onclick="selectLang('hi')">&#x1F1EE;&#x1F1F3; Hindi</button>
+      </div>
+      <div class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('lang-modal')">Cancel</button>
+        <button class="mbtn confirm" onclick="confirmLang()">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="history-modal">
+    <div class="modal-box">
+      <h2>&#x1F4BE; Conversation History</h2>
+      <p id="history-desc">Would you like Ask Krishna to remember your conversations?</p>
+      <div class="notice">&#x1F512; <strong>Saved only on this device</strong><br/>Never uploaded to any cloud or server.</div>
+      <div id="modal-enable-row" class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('history-modal')">Cancel</button>
+        <button class="mbtn confirm" onclick="enableHistory()">Enable &#x1F64F;</button>
+      </div>
+      <div id="modal-disable-row" class="btn-row" style="display:none;flex-direction:column;gap:10px">
+        <button class="mbtn danger" onclick="clearHistory()">&#x1F5D1; Clear History &amp; Disable</button>
+        <button class="mbtn cancel" onclick="closeModal('history-modal')">Keep Saving &mdash; Close</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="voice-modal">
+    <div class="modal-box">
+      <h2>&#x1F399;&#xFE0F; Choose Krishna Voice</h2>
+      <p style="font-size:12px;color:rgba(249,115,22,0.7);margin-bottom:12px">Tap any voice to preview. Best: male, Indian English.</p>
+      <div id="voice-list"></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="mbtn cancel" onclick="closeModal('voice-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="bookmarks-modal">
+    <div class="modal-box">
+      <h2>&#x1F516; Saved Wisdom</h2>
+      <p style="font-size:12px;color:rgba(249,115,22,0.6)">Responses you bookmarked — saved on this device</p>
+      <div id="bookmarks-list"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="mbtn cancel" onclick="closeModal('bookmarks-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+  <!-- Sign In Modal -->
+  <div class="modal" id="signin-modal">
+    <div class="modal-box">
+      <h2>&#x1F54F; Welcome Back</h2>
+      <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Sign in to sync your history &amp; preferences</p>
+      <div class="auth-err" id="signin-err"></div>
+      <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
+      <input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" />
+      <div class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('signin-modal')">Cancel</button>
+        <button class="mbtn confirm" id="signin-submit" onclick="doSignIn()">Sign In</button>
+      </div>
+      <div class="auth-divider">— or —</div>
+      <button class="auth-link" onclick="switchToSignUp()">New here? Create an account</button>
+    </div>
+  </div>
+  <!-- Sign Up Modal -->
+  <div class="modal" id="signup-modal">
+    <div class="modal-box">
+      <h2>&#x1F33C; Join Ask Krishna</h2>
+      <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Create an account to sync history &amp; personalise</p>
+      <div class="auth-err" id="signup-err"></div>
+      <input class="auth-input" id="signup-name" type="text" placeholder="Your name (Krishna will address you by this)" autocomplete="name" maxlength="50" />
+      <input class="auth-input" id="signup-email" type="email" placeholder="Email address" autocomplete="email" />
+      <input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 characters)" autocomplete="new-password" />
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:rgba(253,186,116,0.5);margin-bottom:8px">Preferred language</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="lang-opt selected" id="su-lang-en" onclick="selectSignupLang('en')" style="min-width:0;flex:1;padding:7px 4px;font-size:12px">&#x1F1FA;&#x1F1F8; English</button>
+          <button class="lang-opt" id="su-lang-te" onclick="selectSignupLang('te')" style="min-width:0;flex:1;padding:7px 4px;font-size:12px">&#x1F1EE;&#x1F1F3; Telugu</button>
+          <button class="lang-opt" id="su-lang-ta" onclick="selectSignupLang('ta')" style="min-width:0;flex:1;padding:7px 4px;font-size:12px">&#x1F1EE;&#x1F1F3; Tamil</button>
+          <button class="lang-opt" id="su-lang-hi" onclick="selectSignupLang('hi')" style="min-width:0;flex:1;padding:7px 4px;font-size:12px">&#x1F1EE;&#x1F1F3; Hindi</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('signup-modal')">Cancel</button>
+        <button class="mbtn confirm" id="signup-submit" onclick="doSignUp()">Create Account</button>
+      </div>
+      <button class="auth-link" onclick="switchToSignIn()">Already have an account? Sign in</button>
+    </div>
+  </div>
+  <!-- Profile Modal -->
+  <div class="modal" id="profile-modal">
+    <div class="modal-box">
+      <div class="profile-row">
+        <div class="profile-avatar">&#x1F64F;</div>
+        <div>
+          <div class="profile-name" id="profile-name-display"></div>
+          <div class="profile-email" id="profile-email-display"></div>
+        </div>
+        <span class="sync-badge">&#x2601;&#xFE0F; Synced</span>
+      </div>
+      <button class="profile-action" onclick="openEditName()">&#x270F;&#xFE0F;&nbsp; Change Display Name</button>
+      <button class="profile-action" onclick="openEditPassword()">&#x1F511;&nbsp; Change Password</button>
+      <div style="margin-top:6px">
+        <button class="mbtn cancel" style="width:100%;margin-bottom:8px" onclick="doSignOut()">&#x1F6AA; Sign Out</button>
+        <button class="mbtn danger" style="width:100%" onclick="confirmDeleteAccount()">&#x1F5D1;&#xFE0F; Delete Account &amp; All Data</button>
+      </div>
+      <button class="mbtn cancel" style="width:100%;margin-top:8px" onclick="closeModal('profile-modal')">Close</button>
+    </div>
+  </div>
+  <!-- Edit Field Modal (reused for name + password) -->
+  <div class="modal" id="edit-modal">
+    <div class="modal-box">
+      <h2 id="edit-modal-title">Change Name</h2>
+      <div class="auth-err" id="edit-err"></div>
+      <input class="auth-input" id="edit-field1" type="text" placeholder="" />
+      <input class="auth-input" id="edit-field2" type="password" placeholder="Current password (to confirm)" style="display:none" />
+      <input class="auth-input" id="edit-field3" type="password" placeholder="New password (min 8 characters)" style="display:none" />
+      <div class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('edit-modal')">Cancel</button>
+        <button class="mbtn confirm" id="edit-submit" onclick="doEditSubmit()">Save</button>
+      </div>
+    </div>
+  </div>
+  <!-- Hamburger Menu Bottom Sheet -->
+  <div id="hamburger-overlay" onclick="closeHamburger()"></div>
+  <div id="hamburger-sheet">
+    <div id="hamburger-handle"></div>
+    <div id="hamburger-items">
+      <!-- Voice TTS -->
+      <div class="hmenu-item" id="hm-tts" onclick="toggleTtsFromMenu()">
+        <div class="hmenu-icon">&#x1F50A;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Voice Responses</div>
+          <div class="hmenu-sub" id="hm-tts-sub">Krishna speaks every answer</div>
+        </div>
+        <div class="hmenu-toggle" id="hm-tts-toggle"></div>
+      </div>
+      <!-- Choose Voice -->
+      <div class="hmenu-item" onclick="openVoicePicker();closeHamburger()">
+        <div class="hmenu-icon">&#x1F399;&#xFE0F;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Choose Voice</div>
+          <div class="hmenu-sub" id="hm-voice-sub">Google Cloud TTS voices</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <!-- Text Size -->
+      <div class="hmenu-item" style="cursor:default">
+        <div class="hmenu-icon">&#x1F524;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Text Size</div>
+          <div class="hmenu-sub">Adjust message text size</div>
+        </div>
+        <div class="sz-opts">
+          <button class="sz-opt" id="sz-s" onclick="setTextSize('small')">A</button>
+          <button class="sz-opt active" id="sz-m" onclick="setTextSize('medium')" style="font-size:14px">A</button>
+          <button class="sz-opt" id="sz-l" onclick="setTextSize('large')" style="font-size:17px">A</button>
+        </div>
+      </div>
+      <div class="hmenu-divider"></div>
+      <!-- Language -->
+      <div class="hmenu-item" onclick="openLangFromMenu()">
+        <div class="hmenu-icon">&#x1F310;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Language</div>
+          <div class="hmenu-sub" id="hm-lang-sub">English</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <div class="hmenu-divider"></div>
+      <!-- Today's Wisdom -->
+      <div class="hmenu-item" onclick="askTodaysWisdom();closeHamburger()" role="button" aria-label="Today's wisdom">
+        <div class="hmenu-icon">🌅</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Today's Wisdom</div>
+          <div class="hmenu-sub" id="hm-wisdom-sub">Daily verse from the Gita</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <!-- Daily Alert -->
+      <div class="hmenu-item" id="hm-notif" onclick="toggleDailyAlert()">
+        <div class="hmenu-icon">&#x1F514;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Daily Wisdom Alert</div>
+          <div class="hmenu-sub" id="hm-notif-sub">Off — tap to enable</div>
+        </div>
+        <div class="hmenu-toggle" id="hm-notif-toggle"></div>
+      </div>
+      <!-- Help & Tips -->
+      <div class="hmenu-item" onclick="openTips();closeHamburger()" role="button" aria-label="Help and Tips">
+        <div class="hmenu-icon">&#x2139;&#xFE0F;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Help &amp; Tips</div>
+          <div class="hmenu-sub">Quick guide to all features</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <!-- Saved Wisdom (Bookmarks) -->
+      <div class="hmenu-item" onclick="openBookmarks();closeHamburger()">
+        <div class="hmenu-icon">&#x1F516;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Saved Wisdom</div>
+          <div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarked responses</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <div class="hmenu-divider"></div>
+      <!-- Share App -->
+      <div class="hmenu-item" onclick="shareApp()">
+        <div class="hmenu-icon">&#x1F4E4;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Share App</div>
+          <div class="hmenu-sub">Spread Krishna's wisdom</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
+      <!-- Clear Chat -->
+      <div class="hmenu-item" onclick="clearChatFromMenu()">
+        <div class="hmenu-icon">&#x1F5D1;&#xFE0F;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Clear Chat</div>
+          <div class="hmenu-sub">Start a fresh conversation</div>
+        </div>
+        <div class="hmenu-arrow" style="color:rgba(239,68,68,0.6)">&#x203A;</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div id="messages">
+      <div id="wisdom-wrap">
+        <button id="wisdom-btn" onclick="askTodaysWisdom()" aria-label="Get today's wisdom from the Bhagavad Gita">
+          <div id="wisdom-btn-icon">🌅</div>
+          <div id="wisdom-btn-text">
+            <div id="wisdom-btn-title">Today's Wisdom</div>
+            <div id="wisdom-btn-sub">Tap for today's verse from the Gita</div>
+          </div>
+        </button>
+      </div>
+      <div id="suggestions"></div>
+    </div>
+    <button id="scroll-btn" aria-label="Scroll to bottom" onclick="scrollBottom()">&#x2193;</button>
+  </div>
+  <div id="input-area">
+    <div id="input-row">
+      <textarea id="msg-input" placeholder="Type or tap mic to speak..." rows="1" maxlength="2000"></textarea>
+      <button id="mic-btn" title="Speak your question" aria-label="Speak your question" style="padding:0;overflow:hidden">
+        <svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block">
+          <rect width="40" height="40" rx="11" fill="url(#mg)"/>
+          <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f97316"/></linearGradient></defs>
+          <!-- Capsule body -->
+          <rect x="15" y="8" width="10" height="14" rx="5" fill="rgba(255,255,255,0.92)"/>
+          <!-- Arc stand -->
+          <path d="M12 21 Q12 30 20 30 Q28 30 28 21" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Stand pole -->
+          <line x1="20" y1="30" x2="20" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Base -->
+          <line x1="15" y1="34" x2="25" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button id="send-btn" disabled>&#x2191;</button>
+    </div>
+    <div id="verse-footer">&#x0964;&#x0964; कर्मण्येवाधिकारस्ते मा फलेषु कदाचन &#x0964;&#x0964; &mdash; Bhagavad Gita 2.47</div>
+    <div id="history-status">&#x1F4BE; Saving to device storage</div>
+    <div id="lang-indicator"></div>
+  </div>
+</div>
+<script>
+var W='https://ask-krishna-api.oletyashrith.workers.dev/';
+var HK='ask_krishna_history',HEK='ask_krishna_enabled',LK='ask_krishna_lang',TK='ask_krishna_tips_seen',VK='ask_krishna_voice',TTSK='ask_krishna_tts',BK='ask_krishna_bookmarks',FSK='ask_krishna_fontsize';
+var googleVoiceMap={en:'en-IN-Neural2-B',te:'te-IN-Standard-A',ta:'ta-IN-Wavenet-A',hi:'hi-IN-Neural2-B'};
+var ttsAudio=null;
+var LC={
+  en:{name:'English',ind:'',ph:'Type or tap mic to speak...',
+    welcome:'Namaste! I am Ask Krishna, your guide to the timeless wisdom of the Bhagavad Gita.\n\nShare with me any situation, challenge, or question you are facing in life and I will illuminate it through Lord Krishna\'s divine teachings.\n\nWhat weighs on your heart today, dear seeker?',
+    sw:'Switched to English. How can I help you today?',
+    sys:'Respond in English. End every response with ONE natural follow-up question on a new line starting with an emoji. Maintain full conversation context.'},
+  te:{name:'Telugu',ind:'&#x1F1EE;&#x1F1F3; Telugu mode active',ph:'\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41\u0c32\u0c4b \u0c1f\u0c48\u0c2a\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f...',
+    welcome:'\u0c28\u0c2e\u0c38\u0c4d\u0c24\u0c47! \u0c28\u0c47\u0c28\u0c41 Ask Krishna.\n\n\u0c2e\u0c40\u0c30\u0c41 \u0c1c\u0c40\u0c35\u0c3f\u0c24\u0c02\u0c32\u0c4b \u0c0e\u0c26\u0c41\u0c30\u0c4d\u0c15\u0c4a\u0c28\u0c4d\u0c28 \u0c38\u0c2e\u0c38\u0c4d\u0c2f\u0c28\u0c41 \u0c28\u0c28\u0c4d\u0c28\u0c41 \u0c05\u0c21\u0c17\u0c02\u0c21\u0c3f.\n\n\u0c08 \u0c30\u0c4b\u0c1c\u0c41 \u0c2e\u0c40 \u0c2e\u0c28\u0c38\u0c41\u0c32\u0c4b \u0c0f\u0c2e\u0c41\u0c02\u0c26\u0c3f?',
+    sw:'\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41\u0c15\u0c41 \u0c2e\u0c3e\u0c30\u0c3e\u0c2e\u0c41.',
+    sys:'Respond entirely in Telugu script. End with ONE follow-up question in Telugu. Maintain full conversation context.'},
+  ta:{name:'Tamil',ind:'&#x1F1EE;&#x1F1F3; Tamil mode active',ph:'\u0ba4\u0bae\u0bbf\u0bb4\u0bbf\u0bb2\u0bcd \u0ba4\u0b9f\u0bcd\u0b9f\u0b9a\u0bcd\u0b9a\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd...',
+    welcome:'\u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bae\u0bcd! \u0ba8\u0bbe\u0ba9\u0bcd Ask Krishna.\n\n\u0bb5\u0bbe\u0bb4\u0bcd\u0b95\u0bcd\u0b95\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0ba8\u0bc0\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0b8e\u0ba4\u0bbf\u0bb0\u0bcd\u0b95\u0bca\u0bb3\u0bcd\u0bb3\u0bc1\u0bae\u0bcd \u0b8e\u0ba4\u0bc1 \u0b9a\u0bb5\u0bbe\u0bb2\u0bc8\u0baf\u0bc1\u0bae\u0bcd \u0b8e\u0ba9\u0bcd\u0ba9\u0bbf\u0b9f\u0bae\u0bcd \u0b95\u0bc7\u0bb3\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd.\n\n\u0b87\u0ba9\u0bcd\u0bb1\u0bc1 \u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0bae\u0ba9\u0ba4\u0bbf\u0bb2\u0bcd \u0b8e\u0ba9\u0bcd\u0ba9 \u0b89\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1?',
+    sw:'\u0ba4\u0bae\u0bbf\u0bb4\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0bae\u0bbe\u0bb1\u0bbf\u0ba9\u0bcb\u0bae\u0bcd.',
+    sys:'Respond entirely in Tamil script. End with ONE follow-up question in Tamil. Maintain full conversation context.'},
+  hi:{name:'Hindi',ind:'&#x1F1EE;&#x1F1F3; Hindi mode active',ph:'\u0939\u093f\u0902\u0926\u0940 \u092e\u0947\u0902 \u0932\u093f\u0916\u0947\u0902...',
+    welcome:'\u0928\u092e\u0938\u094d\u0924\u0947! \u092e\u0948\u0902 Ask Krishna \u0939\u0942\u0901.\n\n\u091c\u0940\u0935\u0928 \u092e\u0947\u0902 \u091c\u094b \u092d\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u0939\u094b \u2014 \u0938\u092c \u0915\u0941\u091b \u092e\u0947\u0930\u0947 \u0938\u093e\u0925 \u0938\u093e\u091d\u093e \u0915\u0930\u0947\u0902\u0964\n\n\u0906\u091c \u0906\u092a\u0915\u0947 \u092e\u0928 \u092e\u0947\u0902 \u0915\u094d\u092f\u093e \u0939\u0948, \u092a\u094d\u0930\u093f\u092f \u0938\u093e\u0927\u0915?',
+    sw:'\u0939\u093f\u0902\u0926\u0940 \u092e\u0947\u0902 \u092c\u0926\u0932 \u0917\u090f\u0964',
+    sys:'Respond entirely in Hindi Devanagari script. End with ONE follow-up question in Hindi. Maintain full conversation context.'}
+};
+var BS='You are Ask Krishna — a wise, caring friend who knows the Bhagavad Gita deeply. Help people apply Gita wisdom to real everyday situations.\n\nGita chapters: Ch1:Arjuna crisis. Ch2:Eternal soul,duty,detachment(2.47). Ch3:Selfless action. Ch4:Knowledge,letting go. Ch5:Peace while active. Ch6:Mind friend or enemy(6.5). Ch7:Divine everywhere. Ch8:Focus shapes you. Ch9:Devotion. Ch10:God as best. Ch11:Everything connected. Ch12:Love and devotion. Ch13:Body vs real self. Ch14:Three energy states. Ch15:Let go of harm. Ch16:Fear vs love choices. Ch17:Beliefs shape life. Ch18:Full surrender(18.66).\n\nTONE: Wise friend over coffee. Plain everyday words. No jargon without explanation. Specific and concrete. Relate to modern life. 16-year-old and 60-year-old both understand.\n\nVERSES: Casual mention. Plain explanation. Connect to person.\n\nSTRUCTURE: 1)Understand situation 2)Krishna teaching plainly 3)Real analogy 4)1-2 verses plainly 5)1-2 action steps.\n\n4-5 short paragraphs. Easy on phone. Maintain full context.\n\nGUARDRAILS: NEVER use abusive or disrespectful language. NEVER respond with anger even if user is rude. If user uses bad language respond with calm compassion and redirect. NEVER demean any person, religion, caste, gender or community. If asked for harmful content politely decline and offer Krishna wisdom. Always respond with dignity and grace.';
+var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
+var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','slut'];
+var msgs=[],loading=false,isListening=false,deferredPrompt=null,ttsSpeaking=false;
+var RL_MAX=3,RL_WIN=60000,rlTimestamps=[];  // rate limit: 3 requests per 60s
+var MAX_INPUT=2000;
+var histEn=localStorage.getItem(HEK)==='true';
+var curLang=localStorage.getItem(LK)||'en';
+var pendLang=curLang;
+var ttsEnabled=localStorage.getItem(TTSK)==='true';
+var omAudio=null,omPlaying=false;
+var messagesEl=document.getElementById('messages');
+var suggestEl=document.getElementById('suggestions');
+var inputEl=document.getElementById('msg-input');
+var sendBtn=document.getElementById('send-btn');
+var micBtn=document.getElementById('mic-btn');
+var offBanner=document.getElementById('offline-banner');
+var instBanner=document.getElementById('install-banner');
+var histStatus=document.getElementById('history-status');
+var langInd=document.getElementById('lang-indicator');
+var scrollBtn=document.getElementById('scroll-btn');
+var MAX_DOM_MSGS=40;
+var THINKING_MSGS=['Krishna is reflecting...','Seeking wisdom from the Gita...','Consulting the eternal teachings...','Krishna contemplates your question...'];
+var thinkIdx=0;
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openModal(id){document.getElementById(id).classList.add('show')}
+function getTime(){var d=new Date();var h=d.getHours(),m=d.getMinutes();var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(m<10?'0'+m:m)+' '+ap}
+function scrollBottom(){setTimeout(function(){messagesEl.scrollTop=messagesEl.scrollHeight;},60)}
+// Scroll-to-bottom button logic
+messagesEl.addEventListener('scroll',function(){
+  var fromBottom=messagesEl.scrollHeight-messagesEl.scrollTop-messagesEl.clientHeight;
+  if(fromBottom>120){scrollBtn.classList.add('show')}else{scrollBtn.classList.remove('show')}
+});
+// Trim old DOM messages to keep rendering fast
+function trimMsgDom(){
+  var rows=messagesEl.querySelectorAll('.msg-row');
+  if(rows.length>MAX_DOM_MSGS){
+    for(var i=0;i<rows.length-MAX_DOM_MSGS;i++){rows[i].remove()}
+  }
+}
+// Bookmarks
+function loadBookmarks(){try{var s=localStorage.getItem(BK);return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveBookmarks(bk){try{localStorage.setItem(BK,JSON.stringify(bk))}catch(e){}}
+function openBookmarks(){
+  var bk=loadBookmarks();
+  var list=document.getElementById('bookmarks-list');
+  list.innerHTML='';
+  if(!bk.length){list.innerHTML='<div id="bookmarks-empty">&#x1F54A;&#xFE0F; No saved wisdom yet.<br/>Tap the bookmark icon on any Krishna response.</div>';openModal('bookmarks-modal');return;}
+  bk.forEach(function(item,idx){
+    var card=document.createElement('div');card.className='bookmark-card';
+    var timeDiv=document.createElement('div');timeDiv.className='bookmark-card-time';timeDiv.textContent='\uD83D\uDCC5 '+item.time;
+    var textDiv=document.createElement('div');textDiv.textContent=item.text;
+    var delBtn=document.createElement('button');delBtn.className='bookmark-del';delBtn.setAttribute('aria-label','Remove bookmark');delBtn.textContent='\u2715';delBtn.onclick=function(){removeBookmark(idx)};
+    card.appendChild(timeDiv);card.appendChild(textDiv);card.appendChild(delBtn);
+    list.appendChild(card);
+  });
+  var sub=document.getElementById('hm-bookmark-sub');
+  if(sub)sub.textContent=bk.length+' saved response'+(bk.length===1?'':'s');
+  openModal('bookmarks-modal');
+}
+function removeBookmark(idx){var bk=loadBookmarks();bk.splice(idx,1);saveBookmarks(bk);openBookmarks();}
+function addMsg(role,content){
+  msgs.push({role:role,content:content});
+  var time=getTime();
+  var row=document.createElement('div');
+  row.className='msg-row '+role;
+  var av=document.createElement('div');
+  av.className='avatar '+(role==='assistant'?'bot':'user');
+  av.textContent=role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';
+  av.setAttribute('aria-hidden','true');
+  // Column wrapper (bubble + time + actions)
+  var col=document.createElement('div');
+  col.className='msg-col';
+  var bub=document.createElement('div');
+  bub.className='bubble '+(role==='assistant'?'bot':'user');
+  bub.textContent=content;
+  col.appendChild(bub);
+  // Timestamp
+  var ts=document.createElement('div');
+  ts.className='msg-time';
+  ts.textContent=time;
+  col.appendChild(ts);
+  // Action buttons (only on assistant messages)
+  if(role==='assistant'){
+    var acts=document.createElement('div');
+    acts.className='msg-actions';
+    // Copy button
+    var copyBtn=document.createElement('button');
+    copyBtn.className='msg-act-btn';
+    copyBtn.textContent='Copy';
+    copyBtn.setAttribute('aria-label','Copy message');
+    copyBtn.onclick=function(){
+      if(navigator.clipboard){navigator.clipboard.writeText(content).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy'},1500)}).catch(function(){});}
+      else{var ta=document.createElement('textarea');ta.value=content;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy'},1500);}
+    };
+    // Bookmark button
+    var bmBtn=document.createElement('button');
+    var bk=loadBookmarks();
+    var alreadySaved=bk.some(function(b){return b.text===content});
+    bmBtn.className='msg-act-btn'+(alreadySaved?' bookmarked':'');
+    bmBtn.textContent=alreadySaved?'Saved \uD83D\uDD16':'Save \uD83D\uDD16';
+    bmBtn.setAttribute('aria-label','Bookmark this message');
+    bmBtn.onclick=function(){
+      var bk2=loadBookmarks();
+      var exists=bk2.findIndex(function(b){return b.text===content});
+      if(exists>=0){bk2.splice(exists,1);saveBookmarks(bk2);bmBtn.textContent='Save \uD83D\uDD16';bmBtn.classList.remove('bookmarked');}
+      else{bk2.push({text:content,time:(new Date()).toLocaleDateString()+' '+getTime()});saveBookmarks(bk2);bmBtn.textContent='Saved \uD83D\uDD16';bmBtn.classList.add('bookmarked');}
+      var sub=document.getElementById('hm-bookmark-sub');
+      if(sub){var c=loadBookmarks().length;sub.textContent=c?c+' saved response'+(c===1?'':'s'):'Your bookmarked responses';}
+    };
+    acts.appendChild(copyBtn);
+    acts.appendChild(bmBtn);
+    col.appendChild(acts);
+  }
+  row.appendChild(av);
+  row.appendChild(col);
+  messagesEl.appendChild(row);
+  trimMsgDom();
+  scrollBottom();
+  saveHistAndSync();
+  if(role==='assistant'){setTimeout(function(){speakText(content)},400);}
+}
+function showTyping(){
+  var msg=THINKING_MSGS[thinkIdx%THINKING_MSGS.length];thinkIdx++;
+  var row=document.createElement('div');row.className='msg-row';row.id='typing-row';
+  var av=document.createElement('div');av.className='avatar bot';av.textContent='\uD83E\uDD9A';av.setAttribute('aria-hidden','true');
+  var col=document.createElement('div');col.className='msg-col';
+  var lbl=document.createElement('div');lbl.className='typing-label';lbl.textContent=msg;
+  var bub=document.createElement('div');bub.className='bubble bot';
+  bub.innerHTML='<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  col.appendChild(lbl);col.appendChild(bub);
+  row.appendChild(av);row.appendChild(col);
+  messagesEl.appendChild(row);scrollBottom();
+}
+function updateSend(){sendBtn.disabled=!inputEl.value.trim()||loading}
+function getSys(){
+  var base=BS+'\n\n'+LC[curLang].sys;
+  if(currentUser&&currentUser.name)base+='\n\nThe user\'s name is '+currentUser.name+'. Address them by name warmly and personally.';
+  return base;
+}
+function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
+function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
+window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
+['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
+document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
+document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches){instBanner.style.display='flex';instBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';document.getElementById('install-btn').style.display='none';}
+function selectLang(lang){pendLang=lang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===lang)})}
+function confirmLang(){curLang=pendLang;localStorage.setItem(LK,curLang);var c=LC[curLang];langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;closeModal('lang-modal');addMsg('assistant',c.sw);updateHamburgerState();}
+function updateHistBtn(){
+  var hb=document.getElementById('history-btn');
+  if(hb){if(histEn){hb.classList.add('active')}else{hb.classList.remove('active')}}
+  if(histStatus){histStatus.style.display=histEn?'block':'none'}
+}
+function saveHist(){if(!histEn)return;try{localStorage.setItem(HK,JSON.stringify(msgs))}catch(e){}}
+function saveHistAndSync(){saveHist();if(currentUser)debouncedPush();}
+function loadHist(){try{var s=localStorage.getItem(HK);return s?JSON.parse(s):null}catch(e){return null}}
+function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist();updateHistBtn();closeModal('history-modal');addMsg('assistant','Your conversations will now be saved on this device only — never in any cloud.')}
+function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared. Each session starts fresh, like a new dawn.')}
+updateHistBtn();
+function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
+function sendMessage(){
+  var text=inputEl.value.trim();
+  if(!text||loading)return;
+  // Input length guard
+  if(text.length>MAX_INPUT){addMsg('assistant','Your message is too long. Please keep it under 2000 characters.');return;}
+  // Client-side rate limit: 3 requests per 60s
+  var now=Date.now();
+  rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
+  if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
+  rlTimestamps.push(now);
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();addMsg('assistant',err.name==='AbortError'?'The response took too long. Please try again.':navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
+// Debounced textarea input
+var inputDebounce=null;
+inputEl.addEventListener('input',function(){
+  inputEl.style.height='auto';
+  inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';
+  clearTimeout(inputDebounce);
+  inputDebounce=setTimeout(function(){updateSend()},80);
+});
+// Om audio: pause/resume on page visibility change (phone calls, tab switch)
+document.addEventListener('visibilitychange',function(){
+  if(!omAudio)return;
+  if(document.hidden){
+    if(omPlaying){omAudio.pause();}
+  }else{
+    if(omPlaying){omAudio.play().catch(function(){});}
+  }
+});
+inputEl.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
+sendBtn.addEventListener('click',sendMessage);
+// Hamburger Menu
+var hamburgerSheet=document.getElementById('hamburger-sheet');
+var hamburgerOverlay=document.getElementById('hamburger-overlay');
+function openHamburger(){
+  updateHamburgerState();
+  hamburgerSheet.classList.add('open');
+  hamburgerOverlay.classList.add('show');
+}
+function closeHamburger(){
+  hamburgerSheet.classList.remove('open');
+  hamburgerOverlay.classList.remove('show');
+}
+function updateHamburgerState(){
+  // TTS toggle
+  var ttsT=document.getElementById('hm-tts-toggle'),ttsS=document.getElementById('hm-tts-sub');
+  if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
+  if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
+  // Language label
+  var langNames={en:'English',te:'Telugu',ta:'Tamil',hi:'Hindi'};
+  var langSub=document.getElementById('hm-lang-sub');
+  if(langSub)langSub.textContent=langNames[curLang]||'English';
+  // Voice sub label
+  var saved=localStorage.getItem(VK)||'en-IN-Neural2-B';
+  var voiceLabels={'en-IN-Neural2-B':'English India — Neural2 Male (Warm)','en-IN-Neural2-C':'English India — Neural2 Male (Calm)','en-IN-Wavenet-B':'English India — WaveNet Male','en-IN-Wavenet-C':'English India — WaveNet Male (Alt)','hi-IN-Neural2-B':'Hindi — Neural2 Male','hi-IN-Wavenet-B':'Hindi — WaveNet Male','te-IN-Standard-A':'Telugu — Standard Female','ta-IN-Wavenet-A':'Tamil — WaveNet Female'};
+  var vs=document.getElementById('hm-voice-sub');
+  if(vs)vs.textContent=voiceLabels[saved]||saved;
+  // Bookmark count
+  var bmSub=document.getElementById('hm-bookmark-sub');
+  if(bmSub){var bmc=loadBookmarks().length;bmSub.textContent=bmc?bmc+' saved response'+(bmc===1?'':'s'):'Your bookmarked responses';}
+  // Text size buttons
+  var sz=localStorage.getItem(FSK)||'medium';
+  ['small','medium','large'].forEach(function(s){var el=document.getElementById('sz-'+s.charAt(0));if(el)el.classList.toggle('active',s===sz)});
+  // Notification toggle
+  updateNotifToggle();
+}
+
+function toggleTtsFromMenu(){
+  ttsEnabled=!ttsEnabled;
+  localStorage.setItem(TTSK,ttsEnabled?'true':'false');
+  updateTtsBtn();
+  updateHamburgerState();
+  if(ttsEnabled)speakText('Voice responses are now enabled.');
+}
+function openLangFromMenu(){
+  closeHamburger();
+  pendLang=curLang;
+  ['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===curLang)});
+  openModal('lang-modal');
+}
+function openHistFromMenu(){
+  var desc=document.getElementById('history-desc');
+  var enR=document.getElementById('modal-enable-row');
+  var disR=document.getElementById('modal-disable-row');
+  if(histEn){desc.textContent='History saving is ON. Chats saved on this device only.';enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column';}
+  else{desc.textContent='Enable to save your conversations on this device only.';enR.style.display='flex';disR.style.display='none';}
+  openModal('history-modal');
+}
+function clearChatFromMenu(){
+  closeHamburger();
+  if(confirm('Clear this conversation and start fresh?')){
+    msgs=[];
+    messagesEl.innerHTML='<div id="wisdom-wrap"><button id="wisdom-btn" onclick="askTodaysWisdom()" aria-label="Get today\'s wisdom"><div id="wisdom-btn-icon">🌅</div><div id="wisdom-btn-text"><div id="wisdom-btn-title">Today\'s Wisdom</div><div id="wisdom-btn-sub"></div></div></button></div><div id="suggestions"></div>';
+    suggestEl=document.getElementById('suggestions');
+    var verse=getTodaysVerse();var wsub=document.getElementById('wisdom-btn-sub');if(wsub)wsub.textContent='Gita '+verse.ref+' · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
+    if(histEn)localStorage.removeItem(HK);
+    addMsg('assistant',LC[curLang].welcome);
+  }
+}
+function shareApp(){
+  closeHamburger();
+  if(navigator.share){navigator.share({title:'Ask Krishna',text:'Discover the timeless wisdom of the Bhagavad Gita with Ask Krishna!',url:'https://ashusrav821.github.io/ask-krishna/'}).catch(function(){});}
+  else{navigator.clipboard&&navigator.clipboard.writeText('https://ashusrav821.github.io/ask-krishna/').then(function(){addMsg('assistant','Link copied to clipboard! Share Ask Krishna with others.')}).catch(function(){addMsg('assistant','Visit https://ashusrav821.github.io/ask-krishna/ to share!')});}
+}
+// Swipe down to close hamburger
+var sheetStartY=0;
+hamburgerSheet.addEventListener('touchstart',function(e){sheetStartY=e.touches[0].clientY},{passive:true});
+hamburgerSheet.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sheetStartY>60)closeHamburger()},{passive:true});
+// Om Sound
+var audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;audioUnlocked=true;
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var buf=ctx.createBuffer(1,1,22050);var src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);src.start(0);ctx.resume();}catch(e){}
+  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is in the repository.');});}
+}
+document.addEventListener('touchstart',unlockAudio,{passive:true});
+document.addEventListener('mousedown',unlockAudio);
+function stopOm(){
+  if(omAudio){omAudio.pause();omAudio.currentTime=0;}
+  omPlaying=false;
+  var b=document.getElementById('om-btn');if(b)b.classList.remove('active');
+}
+function playOm(){
+  if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();}
+  omAudio.play().then(function(){
+    omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');
+  }).catch(function(){
+    omAudio.load();
+    setTimeout(function(){
+      omAudio.play().then(function(){omPlaying=true;var b=document.getElementById('om-btn');if(b)b.classList.add('active');})
+      .catch(function(){addMsg('assistant','Om sound could not play. Please make sure om.mp3 is uploaded and try again.');});
+    },200);
+  });
+}
+// Single click handler on Om button — no duplicate
+document.getElementById('om-btn').addEventListener('click',function(){
+  if(omPlaying){stopOm();}else{playOm();}
+});
+// TTS
+var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
+function speakText(text){
+  if(!ttsEnabled)return;
+  if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  ttsSpeaking=true;
+  var clean=text.replace(/[*_#]/g,'').replace(/[\n]+/g,'. ').replace(/[.]{2,}/g,'.').trim();
+  if(clean.length>4800)clean=clean.substring(0,4800)+'...';
+  if(!clean){ttsSpeaking=false;return;}
+  var voice=googleVoiceMap[curLang]||'en-IN-Neural2-B';
+  var lang=ttsLangMap[curLang]||'en-IN';
+  fetch(W+'tts',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:clean,voice:voice,langCode:lang,rate:0.82,pitch:-2.0})
+  })
+  .then(function(r){return r.json()})
+  .then(function(data){
+    if(data.audioContent){
+      var src='data:audio/mp3;base64,'+data.audioContent;
+      ttsAudio=new Audio(src);
+      ttsAudio.volume=0.95;
+      ttsAudio.onended=function(){ttsSpeaking=false;ttsAudio=null;};
+      ttsAudio.onerror=function(){ttsSpeaking=false;ttsAudio=null;fallbackTts(clean);};
+      ttsAudio.play().catch(function(){ttsSpeaking=false;fallbackTts(clean);});
+    }else{fallbackTts(clean);}
+  })
+  .catch(function(){fallbackTts(clean);});
+}
+var MPREF=['Ravi','Hemant','Mohan','Neural2-B','Wavenet-B'];
+function getBestVoice(lang){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!voices||!voices.length)return null;if(lang!=='en'){var lc=ttsLangMap[lang]||'en-IN';return voices.find(function(v){return v.lang===lc})||voices.find(function(v){return v.lang.startsWith(lc.split('-')[0])})||null;}for(var i=0;i<MPREF.length;i++){var pv=voices.find(function(v){return v.name.toLowerCase().indexOf(MPREF[i].toLowerCase())!==-1});if(pv)return pv;}return voices.find(function(v){return v.lang==='en-IN'})||voices.find(function(v){return v.lang.startsWith('en')})||voices[0]}
+function fallbackTts(text){if(!window.speechSynthesis){ttsSpeaking=false;return;}var utt=new SpeechSynthesisUtterance(text);utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;var v=getBestVoice(curLang);if(v){utt.voice=v;utt.lang=v.lang;}else{utt.lang=ttsLangMap[curLang]||'en-IN';}utt.onend=function(){ttsSpeaking=false};utt.onerror=function(){ttsSpeaking=false};window.speechSynthesis.speak(utt)}
+function updateTtsBtn(){
+  var ttsT=document.getElementById('hm-tts-toggle');
+  var ttsS=document.getElementById('hm-tts-sub');
+  if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
+  if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
+  if(!ttsEnabled){if(ttsAudio){ttsAudio.pause();ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+}
+function openVoicePicker(){
+  var list=document.getElementById('voice-list');
+  list.innerHTML='';
+  var googleVoices=[
+    {name:'en-IN-Neural2-B',lang:'en-IN',label:'English India — Neural2 Male (Warm)',desc:'Warmest, most natural · Recommended'},
+    {name:'en-IN-Neural2-C',lang:'en-IN',label:'English India — Neural2 Male (Calm)',desc:'Calm, clear and smooth'},
+    {name:'en-IN-Wavenet-B',lang:'en-IN',label:'English India — WaveNet Male',desc:'Deep, rich tone'},
+    {name:'en-IN-Wavenet-C',lang:'en-IN',label:'English India — WaveNet Male (Alt)',desc:'Smooth and warm'},
+    {name:'hi-IN-Neural2-B',lang:'hi-IN',label:'Hindi — Neural2 Male',desc:'Best for Hindi responses'},
+    {name:'hi-IN-Wavenet-B',lang:'hi-IN',label:'Hindi — WaveNet Male',desc:'Natural Hindi male voice'},
+    {name:'te-IN-Standard-A',lang:'te-IN',label:'Telugu — Standard Female',desc:'Best available for Telugu'},
+    {name:'ta-IN-Wavenet-A',lang:'ta-IN',label:'Tamil — WaveNet Female',desc:'Natural Tamil voice'}
+  ];
+  var saved=localStorage.getItem(VK)||'en-IN-Neural2-B';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='font-size:11px;color:rgba(249,115,22,0.6);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-left:2px';
+  hdr.textContent='Google Cloud TTS Voices';
+  list.appendChild(hdr);
+  googleVoices.forEach(function(v){
+    var btn=document.createElement('button');
+    btn.className='v-item'+(saved===v.name?' selected':'');
+    var isRec=v.name==='en-IN-Neural2-B';
+    btn.innerHTML='<div style="text-align:left"><div style="font-size:13px;color:#e5e7eb;font-weight:'+(isRec?'bold':'normal')+'">'+v.label+(isRec?' &#x2B50;':'')+'</div><div style="font-size:11px;color:rgba(249,115,22,0.5);margin-top:2px">'+v.desc+'</div></div>'+(saved===v.name?'<span style="color:#f97316;font-size:12px">&#x2713;</span>':'');
+    btn.onclick=function(){
+      var previewText='Namaste. I am Ask Krishna. May the wisdom of the Bhagavad Gita guide and protect you always.';
+      fetch(W+'tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:previewText,voice:v.name,langCode:v.lang,rate:0.82,pitch:-2.0})})
+      .then(function(r){return r.json()})
+      .then(function(data){
+        if(data.audioContent){
+          if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
+          ttsAudio=new Audio('data:audio/mp3;base64,'+data.audioContent);
+          ttsAudio.volume=0.95;
+          ttsAudio.play().catch(function(){});
+        }
+      }).catch(function(){});
+      localStorage.setItem(VK,v.name);
+      googleVoiceMap[curLang]=v.name;
+      list.querySelectorAll('.v-item').forEach(function(b){
+        b.classList.remove('selected');
+        var chk=b.querySelector('span');if(chk&&chk.textContent.includes('\u2713'))chk.remove();
+      });
+      btn.classList.add('selected');
+      var tick=document.createElement('span');tick.style.cssText='color:#f97316;font-size:12px';tick.innerHTML='&#x2713;';
+      btn.appendChild(tick);
+      var vs=document.getElementById('hm-voice-sub');if(vs)vs.textContent=v.label;
+    };
+    list.appendChild(btn);
+  });
+  openModal('voice-modal');
+}
+if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices()}}
+// Voice Input
+if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="#ef4444"/><circle cx="20" cy="20" r="7" fill="white"/></svg>'};
+rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};
+rec.onspeechend=function(){micBtn.style.transform='scale(1)'};
+rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};
+function resetMicBtn(){isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="url(#mg2)"/><defs><linearGradient id="mg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f97316"/></linearGradient></defs><rect x="15" y="8" width="10" height="14" rx="5" fill="rgba(255,255,255,0.92)"/><path d="M12 21 Q12 30 20 30 Q28 30 28 21" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/><line x1="20" y1="30" x2="20" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/><line x1="15" y1="34" x2="25" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/></svg>'}
+rec.onend=function(){resetMicBtn();if(inputEl.value.trim())sendMessage()};
+rec.onerror=function(e){resetMicBtn();if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please allow microphone access in browser settings.')}else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet.')}else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone.')}};micBtn.addEventListener('click',function(){if(isListening){rec.stop();return}rec.lang=getLangCode();if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){stream.getTracks().forEach(function(t){t.stop()});inputEl.value='';try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}}).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings.')})}else{inputEl.value='';try{rec.start()}catch(e){}}})}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
+// Today's Wisdom
+var DAILY_VERSES=[
+  {ref:'2.47',theme:'Do your duty without attachment to results'},
+  {ref:'2.20',theme:'The soul is eternal — it is never born and never dies'},
+  {ref:'2.14',theme:'Pleasure and pain come and go — endure them with patience'},
+  {ref:'2.48',theme:'Perform your actions with an even mind — this is yoga'},
+  {ref:'3.19',theme:'Always perform your work without attachment — you reach the Supreme'},
+  {ref:'3.21',theme:'Whatever great people do, others follow their example'},
+  {ref:'4.7',theme:'Whenever dharma declines, I manifest to restore it'},
+  {ref:'4.38',theme:'There is no purifier in this world equal to wisdom'},
+  {ref:'5.10',theme:'Act without attachment like a lotus untouched by water'},
+  {ref:'6.5',theme:'Elevate yourself through your own mind — your mind is your friend or your enemy'},
+  {ref:'6.6',theme:'For one who has conquered the mind, the mind is the best of friends'},
+  {ref:'6.19',theme:'A lamp in a windless place does not flicker — this is the disciplined mind'},
+  {ref:'6.35',theme:'The restless mind can be controlled by practice and detachment'},
+  {ref:'7.8',theme:'I am the taste in water, the light in the sun and moon'},
+  {ref:'8.7',theme:'Remember me at all times and fight — with mind and intellect fixed on me'},
+  {ref:'9.22',theme:'To those who worship me with devotion, I carry what they lack'},
+  {ref:'9.26',theme:'Whoever offers me a leaf, flower, fruit or water with devotion — I accept it'},
+  {ref:'10.20',theme:'I am the Self seated in the heart of all beings'},
+  {ref:'10.41',theme:'Whatever is glorious, prosperous or powerful — know it is born of my splendor'},
+  {ref:'12.13',theme:'One who has no ill will toward any being is dear to me'},
+  {ref:'12.15',theme:'One who is not disturbed in mind, free from anxiety — is dear to me'},
+  {ref:'13.28',theme:'One who sees the Supreme everywhere does not degrade the Self'},
+  {ref:'14.23',theme:'One who is not disturbed by the three modes and knows them as separate — stands firm'},
+  {ref:'15.11',theme:'The striving yogis see the Self within — the unrefined do not'},
+  {ref:'16.1',theme:'Fearlessness, purity, perseverance in yoga — these are divine qualities'},
+  {ref:'16.3',theme:'Vigor, forgiveness, fortitude, purity, non-hostility, humility — these are divine'},
+  {ref:'17.3',theme:'The faith of each person is in accordance with their nature'},
+  {ref:'18.20',theme:'That knowledge by which one sees one imperishable reality in all — is pure'},
+  {ref:'18.63',theme:'Reflect on what I have told you fully — then do as you choose'},
+  {ref:'18.66',theme:'Abandon all varieties of duty and surrender unto me — I will protect you'}
+];
+function getTodaysVerse(){
+  var d=new Date();
+  var dayOfYear=Math.floor((d-new Date(d.getFullYear(),0,0))/(1000*60*60*24));
+  return DAILY_VERSES[dayOfYear%DAILY_VERSES.length];
+}
+function getWisdomDate(){
+  var d=new Date();
+  return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+function askTodaysWisdom(){
+  var wb=document.getElementById('wisdom-wrap');
+  if(wb)wb.style.display='none';
+  suggestEl.style.display='none';
+  var verse=getTodaysVerse();
+  var sub=document.getElementById('hm-wisdom-sub');
+  if(sub)sub.textContent='Gita '+verse.ref+' — '+getWisdomDate();
+  var wisdomPrompt='Share today\'s wisdom from the Bhagavad Gita for '+getWisdomDate()+'.\n\nFocus on Gita '+verse.ref+': "'+verse.theme+'"\n\nShare this as today\'s daily wisdom — explain what this verse means, how it applies to modern daily life, a real-world example, and one small action the seeker can take today to live this teaching. Keep it warm, personal and uplifting.';
+  // Show typing but DON'T add a user bubble — fetch in background
+  showTyping();
+  var apiMsgs=[{role:'user',content:wisdomPrompt}];
+  var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);
+  fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:700,system:getSys(),messages:apiMsgs}),signal:ctrl.signal})
+  .then(function(r){return r.json()})
+  .then(function(data){
+    clearTimeout(tout);hideTyping();
+    var reply='🌅 Today\'s wisdom from the Gita could not be loaded. Please try again.';
+    if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}
+    addMsg('assistant',reply);
+  })
+  .catch(function(err){
+    clearTimeout(tout);hideTyping();
+    addMsg('assistant',err.name==='AbortError'?'Today\'s wisdom took too long to load. Please try again.':'Could not load today\'s wisdom. Please check your connection.');
+  });
+}
+// Update wisdom button sub text on load
+(function(){
+  var verse=getTodaysVerse();
+  var sub=document.getElementById('wisdom-btn-sub');
+  if(sub)sub.textContent='Gita '+verse.ref+' · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  var hmSub=document.getElementById('hm-wisdom-sub');
+  if(hmSub)hmSub.textContent='Gita '+verse.ref+' — '+getWisdomDate();
+})();
+var TIPS=[{icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to the timeless wisdom of the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or the green mic button to get started.'},{icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question in English, Telugu, Tamil or Hindi.',steps:'1. Tap the green mic button\n2. Speak clearly\n3. Krishna responds automatically'},{icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi!',steps:'Open ☰ menu → Language → select and tap OK'},{icon:'\uD83D\uDD09',title:'Om Sound',desc:'Tap the 🕉️ button in the header to play a calming Om sound while you reflect. Tap again to stop.',steps:'🕉️ button top right → tap to play, tap again to stop'},{icon:'\uD83D\uDD16',title:'Save Wisdom',desc:'Bookmark any Krishna response to revisit later. Tap Save 🔖 on any message.',steps:'Tap Save 🔖 on any Krishna response to bookmark it'},{icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Tap 💾 in the header to save conversations on this device only. Never in any cloud.',steps:'💾 button top right → Enable to save chats locally'},{icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand you better.',steps:'Answer the follow-up to go deeper into the conversation.'},{icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared this session.',steps:'Say "going back to what I said" and Krishna will remember.'},{icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install on your home screen for daily quick access.',steps:'Android: Browser menu → Add to Home Screen\niPhone: Tap Share → Add to Home Screen'},{icon:'\uD83D\uDEE1\uFE0F',title:'Safe and Respectful',desc:'Ask Krishna always responds with dignity and compassion.',steps:'Feel free to share whatever is on your mind.'}];
+var tipIdx=0;
+function renderTip(){var t=TIPS[tipIdx];var c=document.getElementById('tips-content');if(!c)return;c.innerHTML='<div class="tip-card"><div class="tip-icon">'+t.icon+'</div><div class="tip-title">'+t.title+'</div><div class="tip-desc">'+t.desc+'</div><div class="tip-steps">'+t.steps.replace(/\n/g,'<br>')+'</div></div>';var prog=document.getElementById('tips-progress');if(prog){prog.innerHTML='';TIPS.forEach(function(_,i){var d=document.createElement('button');d.className='tip-dot'+(i===tipIdx?' active':'');d.onclick=function(){tipIdx=i;renderTip()};prog.appendChild(d)})}var p=document.getElementById('tips-prev');var n=document.getElementById('tips-next');if(p)p.style.display=tipIdx===0?'none':'flex';if(n)n.textContent=tipIdx===TIPS.length-1?'Get Started':'Next'}
+function closeTips(){var o=document.getElementById('tips-overlay');if(o)o.classList.remove('show');localStorage.setItem(TK,'true')}
+function openTips(){tipIdx=0;renderTip();var o=document.getElementById('tips-overlay');if(o)o.classList.add('show')}
+// Tips listeners
+document.getElementById('tips-next').addEventListener('click',function(){if(tipIdx===TIPS.length-1){closeTips()}else{tipIdx++;renderTip()}});
+document.getElementById('tips-prev').addEventListener('click',function(){if(tipIdx>0){tipIdx--;renderTip()}});
+document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
+document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){});
+  navigator.serviceWorker.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='WISDOM_NOTIF_TAP'){askTodaysWisdom();}
+  });
+}
+// Text size
+function setTextSize(size){
+  localStorage.setItem(FSK,size);
+  var sizes={small:'13px',medium:'14.5px',large:'16.5px'};
+  var sEl=document.getElementById('font-size-style');
+  if(!sEl){sEl=document.createElement('style');sEl.id='font-size-style';document.head.appendChild(sEl)}
+  sEl.textContent='.bubble{font-size:'+sizes[size]+'!important}';
+  ['small','medium','large'].forEach(function(s){
+    var el=document.getElementById('sz-'+s.charAt(0));
+    if(el)el.classList.toggle('active',s===size);
+  });
+}
+(function(){var sz=localStorage.getItem(FSK);if(sz)setTextSize(sz);})();
+// Render suggestions first so they appear above welcome bubble
+SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
+var savedHistory=histEn?loadHist():null;
+if(savedHistory&&savedHistory.length>0){
+  savedHistory.forEach(function(m){
+    msgs.push(m);
+    var row=document.createElement('div');row.className='msg-row '+m.role;
+    var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+    av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+    var col=document.createElement('div');col.className='msg-col';
+    var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');bub.textContent=m.content;
+    col.appendChild(bub);
+    row.appendChild(av);row.appendChild(col);
+    messagesEl.appendChild(row);
+  });
+  scrollBottom();
+  addMsg('assistant','Welcome back! Your previous conversation has been restored. How may Krishna guide you today?');
+}else{addMsg('assistant',LC[curLang].welcome)}
+if(curLang!=='en'){langInd.innerHTML=LC[curLang].ind;inputEl.placeholder=LC[curLang].ph}
+if(!localStorage.getItem(TK)){setTimeout(function(){openTips()},1500)}
+
+// ── Auth & Sync ───────────────────────────────────────────────────────────
+var JK='ask_krishna_jwt';
+var currentUser=null; // { email, name, lang } decoded from JWT
+var signupLang='en';
+var editMode=''; // 'name' | 'password'
+
+function b64url(str){return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}
+function decodeJwt(token){try{var p=token.split('.')[1];var pad=p.length%4?p+'='.repeat(4-p.length%4):p;return JSON.parse(atob(pad.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
+
+function getAuthHeaders(){
+  var t=localStorage.getItem(JK);
+  return t?{'Content-Type':'application/json','Authorization':'Bearer '+t}:{'Content-Type':'application/json'};
+}
+
+function showAuthErr(id,msg){
+  var el=document.getElementById(id);
+  if(el){el.textContent=msg;el.classList.add('show');}
+}
+function clearAuthErr(id){
+  var el=document.getElementById(id);
+  if(el){el.textContent='';el.classList.remove('show');}
+}
+function setAuthLoading(btnId,loading){
+  var btn=document.getElementById(btnId);
+  if(!btn)return;
+  btn.disabled=loading;
+  btn.textContent=loading?'Please wait...':btn.getAttribute('data-label')||btn.textContent;
+}
+function validateEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+
+function selectSignupLang(lang){
+  signupLang=lang;
+  ['en','te','ta','hi'].forEach(function(l){
+    var el=document.getElementById('su-lang-'+l);
+    if(el)el.classList.toggle('selected',l===lang);
+  });
+}
+
+function openAuthModal(){
+  if(currentUser){openProfile();}
+  else{clearAuthErr('signin-err');document.getElementById('signin-email').value='';document.getElementById('signin-pass').value='';openModal('signin-modal');}
+}
+
+function switchToSignUp(){
+  closeModal('signin-modal');
+  clearAuthErr('signup-err');
+  document.getElementById('signup-name').value='';
+  document.getElementById('signup-email').value='';
+  document.getElementById('signup-pass').value='';
+  selectSignupLang(curLang);
+  openModal('signup-modal');
+}
+function switchToSignIn(){
+  closeModal('signup-modal');
+  clearAuthErr('signin-err');
+  openModal('signin-modal');
+}
+
+function doSignUp(){
+  clearAuthErr('signup-err');
+  var name=document.getElementById('signup-name').value.trim();
+  var email=document.getElementById('signup-email').value.trim().toLowerCase();
+  var pass=document.getElementById('signup-pass').value;
+  if(!name){showAuthErr('signup-err','Please enter your name.');return;}
+  if(!validateEmail(email)){showAuthErr('signup-err','Please enter a valid email address.');return;}
+  if(pass.length<8){showAuthErr('signup-err','Password must be at least 8 characters.');return;}
+  document.getElementById('signup-submit').disabled=true;
+  document.getElementById('signup-submit').textContent='Creating account...';
+  fetch(W+'auth/signup',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,email:email,password:pass,lang:signupLang})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    document.getElementById('signup-submit').disabled=false;
+    document.getElementById('signup-submit').textContent='Create Account';
+    if(data.error){showAuthErr('signup-err',data.error);return;}
+    onSignedIn(data.token,data.user);
+    closeModal('signup-modal');
+  })
+  .catch(function(){
+    document.getElementById('signup-submit').disabled=false;
+    document.getElementById('signup-submit').textContent='Create Account';
+    showAuthErr('signup-err','Network error. Please try again.');
+  });
+}
+
+function doSignIn(){
+  clearAuthErr('signin-err');
+  var email=document.getElementById('signin-email').value.trim().toLowerCase();
+  var pass=document.getElementById('signin-pass').value;
+  if(!validateEmail(email)){showAuthErr('signin-err','Please enter a valid email address.');return;}
+  if(!pass){showAuthErr('signin-err','Please enter your password.');return;}
+  document.getElementById('signin-submit').disabled=true;
+  document.getElementById('signin-submit').textContent='Signing in...';
+  fetch(W+'auth/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:email,password:pass})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    document.getElementById('signin-submit').disabled=false;
+    document.getElementById('signin-submit').textContent='Sign In';
+    if(data.error){showAuthErr('signin-err',data.error);return;}
+    onSignedIn(data.token,data.user);
+    closeModal('signin-modal');
+  })
+  .catch(function(){
+    document.getElementById('signin-submit').disabled=false;
+    document.getElementById('signin-submit').textContent='Sign In';
+    showAuthErr('signin-err','Network error. Please try again.');
+  });
+}
+
+function onSignedIn(token,user){
+  localStorage.setItem(JK,token);
+  currentUser=user;
+  updateSignInBtn();
+  // Apply language preference from profile
+  if(user.lang&&user.lang!==curLang){
+    curLang=user.lang;pendLang=user.lang;
+    localStorage.setItem(LK,curLang);
+    var c=LC[curLang];
+    if(c){langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;}
+    updateHamburgerState();
+  }
+  // Pull synced history
+  pullHistory();
+  addMsg('assistant','Namaste, '+user.name+'! \uD83D\uDE4F Welcome back. Your history and preferences have been restored across devices. How may Krishna guide you today?');
+}
+
+function doSignOut(){
+  closeModal('profile-modal');
+  localStorage.removeItem(JK);
+  currentUser=null;
+  updateSignInBtn();
+  addMsg('assistant','You have been signed out. Your local chats remain on this device. May Krishna\u2019s wisdom stay with you. \uD83C\uDF38');
+}
+
+function openProfile(){
+  if(!currentUser)return;
+  document.getElementById('profile-name-display').textContent=currentUser.name;
+  document.getElementById('profile-email-display').textContent=currentUser.email;
+  openModal('profile-modal');
+}
+
+function openEditName(){
+  closeModal('profile-modal');
+  editMode='name';
+  document.getElementById('edit-modal-title').textContent='Change Display Name';
+  var f1=document.getElementById('edit-field1');f1.type='text';f1.placeholder='New display name';f1.value=currentUser.name||'';
+  document.getElementById('edit-field2').style.display='none';
+  document.getElementById('edit-field3').style.display='none';
+  clearAuthErr('edit-err');
+  openModal('edit-modal');
+}
+
+function openEditPassword(){
+  closeModal('profile-modal');
+  editMode='password';
+  document.getElementById('edit-modal-title').textContent='Change Password';
+  var f1=document.getElementById('edit-field1');f1.type='password';f1.placeholder='Current password';f1.value='';
+  var f2=document.getElementById('edit-field2');f2.style.display='none'; // not needed for sha256 flow
+  var f3=document.getElementById('edit-field3');f3.style.display='block';f3.value='';
+  clearAuthErr('edit-err');
+  openModal('edit-modal');
+}
+
+function doEditSubmit(){
+  clearAuthErr('edit-err');
+  var btn=document.getElementById('edit-submit');
+  if(editMode==='name'){
+    var name=document.getElementById('edit-field1').value.trim();
+    if(!name||name.length<2){showAuthErr('edit-err','Please enter a valid name.');return;}
+    btn.disabled=true;btn.textContent='Saving...';
+    fetch(W+'auth/profile',{
+      method:'POST',
+      headers:getAuthHeaders(),
+      body:JSON.stringify({name:name})
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      btn.disabled=false;btn.textContent='Save';
+      if(data.error){showAuthErr('edit-err',data.error);return;}
+      currentUser.name=name;
+      if(data.token)localStorage.setItem(JK,data.token);
+      updateSignInBtn();
+      closeModal('edit-modal');
+      addMsg('assistant','Your name has been updated to '+name+'. \uD83D\uDE4F');
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
+  } else if(editMode==='password'){
+    var oldPass=document.getElementById('edit-field1').value;
+    var newPass=document.getElementById('edit-field3').value;
+    if(!oldPass){showAuthErr('edit-err','Please enter your current password.');return;}
+    if(newPass.length<8){showAuthErr('edit-err','New password must be at least 8 characters.');return;}
+    btn.disabled=true;btn.textContent='Saving...';
+    fetch(W+'auth/profile',{
+      method:'POST',
+      headers:getAuthHeaders(),
+      body:JSON.stringify({oldPassword:oldPass,newPassword:newPass})
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      btn.disabled=false;btn.textContent='Save';
+      if(data.error){showAuthErr('edit-err',data.error);return;}
+      if(data.token)localStorage.setItem(JK,data.token);
+      closeModal('edit-modal');
+      addMsg('assistant','Your password has been updated. Stay secure on the path of wisdom. \uD83D\uDD11');
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
+  }
+}
+
+function confirmDeleteAccount(){
+  closeModal('profile-modal');
+  if(confirm('Delete your account and all synced data permanently? This cannot be undone.')){
+    fetch(W+'auth/delete',{method:'DELETE',headers:getAuthHeaders()})
+    .then(function(r){return r.json();})
+    .then(function(){
+      localStorage.removeItem(JK);
+      currentUser=null;
+      updateSignInBtn();
+      addMsg('assistant','Your account and all synced data have been deleted. Your local chats remain on this device. May your path be peaceful. \uD83C\uDF38');
+    })
+    .catch(function(){addMsg('assistant','Could not delete account. Please try again or contact support.');});
+  }
+}
+
+function updateSignInBtn(){
+  var btn=document.getElementById('signin-btn');
+  if(!btn)return;
+  if(currentUser){
+    var first=currentUser.name?currentUser.name.split(' ')[0]:'';
+    btn.textContent='\uD83D\uDE4F '+first;
+    btn.classList.add('signed-in');
+    btn.setAttribute('aria-label','View profile for '+currentUser.name);
+  } else {
+    btn.textContent='Sign In';
+    btn.classList.remove('signed-in');
+    btn.setAttribute('aria-label','Sign in or create account');
+  }
+}
+
+// ── Sync ─────────────────────────────────────────────────────────────────
+var syncDebounce=null;
+function pushHistory(){
+  if(!currentUser)return;
+  var token=localStorage.getItem(JK);
+  if(!token)return;
+  var last20=msgs.slice(-20);
+  fetch(W+'sync/push',{
+    method:'POST',
+    headers:getAuthHeaders(),
+    body:JSON.stringify({history:last20})
+  }).catch(function(){});
+}
+function pullHistory(){
+  if(!currentUser)return;
+  var token=localStorage.getItem(JK);
+  if(!token)return;
+  fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.history&&data.history.length>0){
+      msgs=data.history;
+    }
+  })
+  .catch(function(){});
+}
+// Patch addMsg to debounce-push on every new message when signed in
+var _origAddMsg=addMsg;
+// Debounced push — avoids push on every single token
+function debouncedPush(){
+  clearTimeout(syncDebounce);
+  syncDebounce=setTimeout(pushHistory,2000);
+}
+
+// ── Restore session on load ───────────────────────────────────────────────
+(function(){
+  var token=localStorage.getItem(JK);
+  if(!token)return;
+  var payload=decodeJwt(token);
+  if(!payload||!payload.sub){localStorage.removeItem(JK);return;}
+  currentUser={email:payload.sub,name:payload.name||'',lang:payload.lang||'en'};
+  updateSignInBtn();
+  // Apply saved language
+  if(currentUser.lang&&currentUser.lang!==curLang){
+    curLang=currentUser.lang;pendLang=currentUser.lang;
+    localStorage.setItem(LK,curLang);
+  }
+})();
+
+// ── Daily Wisdom Notification ─────────────────────────────────────────────
+var NK='ask_krishna_notif';
+var NS='ask_krishna_notif_sched';
+var notifIntervalId=null;
+
+var DAILY_TEASERS=[
+  'A flame of wisdom awaits you \uD83D\uDD4A\uFE0F',
+  'Krishna has a message for you today \uD83C\uDF3C',
+  'Your daily Gita verse is ready \u2600\uFE0F',
+  'Wisdom to carry through your day \uD83C\uDF3F',
+  'A moment of clarity from the Gita \u2728',
+  'Today\u2019s truth from the Bhagavad Gita \uD83D\uDCD6',
+  'Begin your day with Krishna\u2019s guidance \uD83E\uDD9A',
+  'The Gita speaks to you this morning \uD83C\uDF05'
+];
+
+function showDailyNotification(){
+  if(!('serviceWorker' in navigator)||!('Notification' in window))return;
+  if(Notification.permission!=='granted')return;
+  var teasers=DAILY_TEASERS;
+  var idx=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/(864e5))%teasers.length;
+  navigator.serviceWorker.ready.then(function(sw){
+    sw.showNotification('Ask Krishna \uD83C\uDF38',{
+      body:teasers[idx],
+      icon:'/ask-krishna/icon-192.png',
+      badge:'/ask-krishna/icon-192.png',
+      tag:'daily-wisdom',
+      renotify:true,
+      data:{url:location.origin+'/ask-krishna/?wisdom=1'}
+    });
+  });
+}
+
+function scheduleDailyNotification(){
+  var now=new Date();
+  var next=new Date(now.getFullYear(),now.getMonth(),now.getDate(),7,0,0,0);
+  if(now>=next)next.setDate(next.getDate()+1);
+  var ms=next-now;
+  setTimeout(function(){
+    showDailyNotification();
+    notifIntervalId=setInterval(showDailyNotification,864e5);
+  },ms);
+  localStorage.setItem(NS,now.toDateString());
+}
+
+function requestNotifPermission(cb){
+  if(!('Notification' in window)){if(cb)cb(false);return;}
+  if(Notification.permission==='granted'){if(cb)cb(true);return;}
+  if(Notification.permission==='denied'){if(cb)cb(false);return;}
+  Notification.requestPermission().then(function(p){if(cb)cb(p==='granted');});
+}
+
+function enableDailyAlert(){
+  requestNotifPermission(function(granted){
+    if(!granted){
+      alert('Please allow notifications for Ask Krishna in your browser/device settings to receive daily wisdom.');
+      return;
+    }
+    localStorage.setItem(NK,'on');
+    scheduleDailyNotification();
+    updateNotifToggle();
+    showDailyNotification(); // fire a preview immediately so user knows it worked
+  });
+}
+
+function disableDailyAlert(){
+  localStorage.setItem(NK,'off');
+  if(notifIntervalId){clearInterval(notifIntervalId);notifIntervalId=null;}
+  updateNotifToggle();
+}
+
+function toggleDailyAlert(){
+  if(localStorage.getItem(NK)==='on'){disableDailyAlert();}
+  else{enableDailyAlert();}
+}
+
+function updateNotifToggle(){
+  var on=localStorage.getItem(NK)==='on';
+  var t=document.getElementById('hm-notif-toggle');
+  var s=document.getElementById('hm-notif-sub');
+  if(t)t.classList.toggle('on',on);
+  if(s)s.textContent=on?'On — 7:00 AM every day':'Off — tap to enable';
+}
+
+// Auto-reschedule on page load if enabled
+(function(){
+  if(localStorage.getItem(NK)==='on'){
+    if(Notification.permission==='granted'){
+      var last=localStorage.getItem(NS);
+      if(last!==new Date().toDateString())scheduleDailyNotification();
+    }
+  }
+  // Handle ?wisdom=1 deep link from notification tap
+  if(location.search.indexOf('wisdom=1')!==-1){
+    history.replaceState(null,'',location.pathname);
+    setTimeout(function(){askTodaysWisdom();},800);
+  }
+})();
+</script>
+</body>
+</html>
