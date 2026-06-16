@@ -165,6 +165,10 @@
     .auth-link{font-size:12.5px;color:rgba(249,115,22,0.7);background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;margin-top:8px;display:block;width:100%;text-align:center}
     .auth-link:active{color:#f97316}
     .auth-divider{font-size:11px;color:rgba(249,115,22,0.35);text-align:center;margin:6px 0 10px;letter-spacing:0.05em}
+    .pw-wrap{position:relative;margin-bottom:10px}
+    .pw-wrap .auth-input{margin-bottom:0;padding-right:42px}
+    .pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(249,115,22,0.5);font-size:16px;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent}
+    .pw-eye:active{color:#f97316}
     .profile-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(249,115,22,0.1);margin-bottom:14px}
     .profile-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7c2d12,#431407);border:2px solid rgba(249,115,22,0.4);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
     .profile-name{font-size:15px;color:#fbbf24;font-weight:600}
@@ -267,7 +271,10 @@
       <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Sign in to sync your history &amp; preferences</p>
       <div class="auth-err" id="signin-err"></div>
       <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
-      <input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" />
+      <div class="pw-wrap">
+        <input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" />
+        <button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)" aria-label="Show password">👁</button>
+      </div>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('signin-modal')">Cancel</button>
         <button class="mbtn confirm" id="signin-submit" onclick="doSignIn()">Sign In</button>
@@ -284,7 +291,10 @@
       <div class="auth-err" id="signup-err"></div>
       <input class="auth-input" id="signup-name" type="text" placeholder="Your name (Krishna will address you by this)" autocomplete="name" maxlength="50" />
       <input class="auth-input" id="signup-email" type="email" placeholder="Email address" autocomplete="email" />
-      <input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 characters)" autocomplete="new-password" />
+      <div class="pw-wrap">
+        <input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 characters)" autocomplete="new-password" />
+        <button type="button" class="pw-eye" onclick="togglePw('signup-pass',this)" aria-label="Show password">👁</button>
+      </div>
       <div style="margin-bottom:12px">
         <div style="font-size:12px;color:rgba(253,186,116,0.5);margin-bottom:8px">Preferred language</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -326,9 +336,9 @@
     <div class="modal-box">
       <h2 id="edit-modal-title">Change Name</h2>
       <div class="auth-err" id="edit-err"></div>
-      <input class="auth-input" id="edit-field1" type="text" placeholder="" />
-      <input class="auth-input" id="edit-field2" type="password" placeholder="Current password (to confirm)" style="display:none" />
-      <input class="auth-input" id="edit-field3" type="password" placeholder="New password (min 8 characters)" style="display:none" />
+      <div class="pw-wrap" id="edit-wrap1"><input class="auth-input" id="edit-field1" type="text" placeholder="" /><button type="button" class="pw-eye" id="edit-eye1" onclick="togglePw('edit-field1',this)" aria-label="Show password" style="display:none">👁</button></div>
+      <div class="pw-wrap" id="edit-wrap2" style="display:none"><input class="auth-input" id="edit-field2" type="password" placeholder="Current password (to confirm)" /><button type="button" class="pw-eye" onclick="togglePw('edit-field2',this)" aria-label="Show password">👁</button></div>
+      <div class="pw-wrap" id="edit-wrap3" style="display:none"><input class="auth-input" id="edit-field3" type="password" placeholder="New password (min 8 characters)" /><button type="button" class="pw-eye" onclick="togglePw('edit-field3',this)" aria-label="Show password">👁</button></div>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('edit-modal')">Cancel</button>
         <button class="mbtn confirm" id="edit-submit" onclick="doEditSubmit()">Save</button>
@@ -1109,6 +1119,12 @@ function setAuthLoading(btnId,loading){
   btn.disabled=loading;
   btn.textContent=loading?'Please wait...':btn.getAttribute('data-label')||btn.textContent;
 }
+function togglePw(inputId,btn){
+  var inp=document.getElementById(inputId);
+  if(!inp)return;
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
 function validateEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
 
 function selectSignupLang(lang){
@@ -1162,10 +1178,10 @@ function doSignUp(){
     onSignedIn(data.token,data.user);
     closeModal('signup-modal');
   })
-  .catch(function(){
+  .catch(function(err){
     document.getElementById('signup-submit').disabled=false;
     document.getElementById('signup-submit').textContent='Create Account';
-    showAuthErr('signup-err','Network error. Please try again.');
+    showAuthErr('signup-err','Could not reach server. Check your connection and try again. ('+((err&&err.message)||'Network error')+')');
   });
 }
 
@@ -1190,10 +1206,10 @@ function doSignIn(){
     onSignedIn(data.token,data.user);
     closeModal('signin-modal');
   })
-  .catch(function(){
+  .catch(function(err){
     document.getElementById('signin-submit').disabled=false;
     document.getElementById('signin-submit').textContent='Sign In';
-    showAuthErr('signin-err','Network error. Please try again.');
+    showAuthErr('signin-err','Could not reach server. Check your connection and try again. ('+((err&&err.message)||'Network error')+')');
   });
 }
 
@@ -1234,8 +1250,9 @@ function openEditName(){
   editMode='name';
   document.getElementById('edit-modal-title').textContent='Change Display Name';
   var f1=document.getElementById('edit-field1');f1.type='text';f1.placeholder='New display name';f1.value=currentUser.name||'';
-  document.getElementById('edit-field2').style.display='none';
-  document.getElementById('edit-field3').style.display='none';
+  document.getElementById('edit-eye1').style.display='none';
+  document.getElementById('edit-wrap2').style.display='none';
+  document.getElementById('edit-wrap3').style.display='none';
   clearAuthErr('edit-err');
   openModal('edit-modal');
 }
@@ -1245,8 +1262,10 @@ function openEditPassword(){
   editMode='password';
   document.getElementById('edit-modal-title').textContent='Change Password';
   var f1=document.getElementById('edit-field1');f1.type='password';f1.placeholder='Current password';f1.value='';
-  var f2=document.getElementById('edit-field2');f2.style.display='none'; // not needed for sha256 flow
-  var f3=document.getElementById('edit-field3');f3.style.display='block';f3.value='';
+  document.getElementById('edit-eye1').style.display='block';
+  document.getElementById('edit-wrap2').style.display='none';
+  document.getElementById('edit-wrap3').style.display='block';
+  document.getElementById('edit-field3').value='';
   clearAuthErr('edit-err');
   openModal('edit-modal');
 }
@@ -1273,7 +1292,7 @@ function doEditSubmit(){
       closeModal('edit-modal');
       addMsg('assistant','Your name has been updated to '+name+'. \uD83D\uDE4F');
     })
-    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
+    .catch(function(err){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Could not reach server. ('+((err&&err.message)||'Network error')+')');}); 
   } else if(editMode==='password'){
     var oldPass=document.getElementById('edit-field1').value;
     var newPass=document.getElementById('edit-field3').value;
@@ -1293,7 +1312,7 @@ function doEditSubmit(){
       closeModal('edit-modal');
       addMsg('assistant','Your password has been updated. Stay secure on the path of wisdom. \uD83D\uDD11');
     })
-    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
+    .catch(function(err){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Could not reach server. ('+((err&&err.message)||'Network error')+')');}); 
   }
 }
 
