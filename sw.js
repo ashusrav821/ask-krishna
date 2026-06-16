@@ -1,16 +1,20 @@
-var CACHE='ask-krishna-v9';
+var CACHE='ask-krishna-v10';
 var ASSETS=[
   '/ask-krishna/',
   '/ask-krishna/index.html',
   '/ask-krishna/manifest.json',
   '/ask-krishna/icon-192.png',
-  '/ask-krishna/icon-512.png'
+  '/ask-krishna/icon-512.png',
+  '/ask-krishna/om.mp3'
 ];
-
 self.addEventListener('install',function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(ASSETS)}).then(function(){return self.skipWaiting()}));
+  e.waitUntil(
+    caches.open(CACHE).then(function(c){
+      // allSettled so a missing file doesn't abort the whole install
+      return Promise.allSettled(ASSETS.map(function(a){return c.add(a)}));
+    }).then(function(){return self.skipWaiting()})
+  );
 });
-
 self.addEventListener('activate',function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
@@ -18,7 +22,6 @@ self.addEventListener('activate',function(e){
     }).then(function(){return self.clients.claim()})
   );
 });
-
 self.addEventListener('fetch',function(e){
   if(e.request.method!=='GET')return;
   e.respondWith(
@@ -34,14 +37,12 @@ self.addEventListener('fetch',function(e){
     })
   );
 });
-
 // ── Notification click → open/focus the app ──────────────────────────────
 self.addEventListener('notificationclick',function(e){
   e.notification.close();
   var target=(e.notification.data&&e.notification.data.url)||'/ask-krishna/?wisdom=1';
   e.waitUntil(
     clients.matchAll({type:'window',includeUncontrolled:true}).then(function(list){
-      // If app already open, focus it and send wisdom trigger
       for(var i=0;i<list.length;i++){
         var c=list[i];
         if(c.url.indexOf('/ask-krishna')!==-1&&'focus' in c){
@@ -50,13 +51,11 @@ self.addEventListener('notificationclick',function(e){
           return;
         }
       }
-      // Otherwise open fresh
       if(clients.openWindow)return clients.openWindow(target);
     })
   );
 });
-
-// ── Message from page → show notification (used by scheduleDailyNotification) ──
+// ── Message from page → show notification ────────────────────────────────
 self.addEventListener('message',function(e){
   if(e.data&&e.data.type==='SHOW_NOTIF'){
     self.registration.showNotification(e.data.title||'Ask Krishna \uD83C\uDF38',{
