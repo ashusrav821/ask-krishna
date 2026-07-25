@@ -165,10 +165,6 @@
     .auth-link{font-size:12.5px;color:rgba(249,115,22,0.7);background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;margin-top:8px;display:block;width:100%;text-align:center}
     .auth-link:active{color:#f97316}
     .auth-divider{font-size:11px;color:rgba(249,115,22,0.35);text-align:center;margin:6px 0 10px;letter-spacing:0.05em}
-    .pw-wrap{position:relative;margin-bottom:10px}
-    .pw-wrap .auth-input{margin-bottom:0;padding-right:42px}
-    .pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(249,115,22,0.5);font-size:16px;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent}
-    .pw-eye:active{color:#f97316}
     .profile-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(249,115,22,0.1);margin-bottom:14px}
     .profile-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7c2d12,#431407);border:2px solid rgba(249,115,22,0.4);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
     .profile-name{font-size:15px;color:#fbbf24;font-weight:600}
@@ -176,6 +172,23 @@
     .profile-action{width:100%;padding:11px;border-radius:12px;border:1px solid rgba(249,115,22,0.2);background:rgba(249,115,22,0.06);color:#fdba74;font-size:13.5px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:background 0.15s}
     .profile-action:active{background:rgba(249,115,22,0.15)}
     .sync-badge{font-size:11px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:20px;padding:2px 8px;margin-left:auto}
+  
+    #hist-stats{display:none;font-size:11.5px;color:rgba(253,186,116,0.6);margin:8px 0;text-align:center}
+    #hist-viewer{scrollbar-width:none;overflow-y:auto;max-height:45vh;display:none;flex-direction:column;gap:6px}
+    #hist-viewer::-webkit-scrollbar{display:none}
+    .hist-bubble{padding:8px 12px;border-radius:12px;font-size:12.5px;line-height:1.6;word-break:break-word;max-width:85%}
+    .hist-bubble.user{background:rgba(146,64,14,0.35);border:1px solid rgba(249,115,22,0.2);border-radius:12px 12px 4px 12px;color:#fef3c7;align-self:flex-end}
+    .hist-bubble.assistant{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px 12px 12px 4px;color:#e5e7eb;align-self:flex-start}
+    .hist-role{font-size:10px;color:rgba(249,115,22,0.4);margin-bottom:2px}
+    #sync-indicator{font-size:10px;color:rgba(249,115,22,0.4);text-align:center;padding:2px 0;display:none}
+    #sync-indicator.syncing{color:rgba(249,115,22,0.7);display:block}
+    #sync-indicator.synced{color:rgba(34,197,94,0.7);display:block}
+    #sync-indicator.error{color:rgba(239,68,68,0.7);display:block}
+    #hm-sync-item{display:none}
+    #hm-sync-item.visible{display:flex}
+    .pw-wrap{position:relative;margin-bottom:10px}
+    .pw-wrap .auth-input{margin-bottom:0;padding-right:42px}
+    .pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(249,115,22,0.5);font-size:15px;padding:4px;line-height:1}
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -233,14 +246,22 @@
     <div class="modal-box">
       <h2>&#x1F4BE; Conversation History</h2>
       <p id="history-desc">Would you like Ask Krishna to remember your conversations?</p>
-      <div class="notice">&#x1F512; <strong>Saved only on this device</strong><br/>Never uploaded to any cloud or server.</div>
+      <div class="notice">&#x1F512; <strong>Saved only on this device</strong> &mdash; never uploaded to any server.</div>
+      <div id="hist-stats"></div>
+      <div id="hist-viewer"></div>
       <div id="modal-enable-row" class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('history-modal')">Cancel</button>
         <button class="mbtn confirm" onclick="enableHistory()">Enable &#x1F64F;</button>
       </div>
-      <div id="modal-disable-row" class="btn-row" style="display:none;flex-direction:column;gap:10px">
-        <button class="mbtn danger" onclick="clearHistory()">&#x1F5D1; Clear History &amp; Disable</button>
-        <button class="mbtn cancel" onclick="closeModal('history-modal')">Keep Saving &mdash; Close</button>
+      <div id="modal-disable-row" style="display:none;flex-direction:column;gap:8px;margin-top:12px">
+        <div class="btn-row" style="margin-top:0">
+          <button class="mbtn confirm" id="hist-view-btn" onclick="showHistoryViewer()">&#x1F4DC; View History</button>
+          <button class="mbtn cancel" onclick="loadHistoryIntoChat()">&#x21BA; Restore Chat</button>
+        </div>
+        <div class="btn-row">
+          <button class="mbtn danger" onclick="clearHistory()">&#x1F5D1; Clear &amp; Disable</button>
+          <button class="mbtn cancel" onclick="closeModal('history-modal')">Close</button>
+        </div>
       </div>
     </div>
   </div>
@@ -271,10 +292,7 @@
       <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Sign in to sync your history &amp; preferences</p>
       <div class="auth-err" id="signin-err"></div>
       <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
-      <div class="pw-wrap">
-        <input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" />
-        <button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)" aria-label="Show password">👁</button>
-      </div>
+      <div class="pw-wrap"><input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" /><button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)">&#x1F441;</button></div>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('signin-modal')">Cancel</button>
         <button class="mbtn confirm" id="signin-submit" onclick="doSignIn()">Sign In</button>
@@ -291,10 +309,7 @@
       <div class="auth-err" id="signup-err"></div>
       <input class="auth-input" id="signup-name" type="text" placeholder="Your name (Krishna will address you by this)" autocomplete="name" maxlength="50" />
       <input class="auth-input" id="signup-email" type="email" placeholder="Email address" autocomplete="email" />
-      <div class="pw-wrap">
-        <input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 characters)" autocomplete="new-password" />
-        <button type="button" class="pw-eye" onclick="togglePw('signup-pass',this)" aria-label="Show password">👁</button>
-      </div>
+      <div class="pw-wrap"><input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 chars)" autocomplete="new-password" /><button type="button" class="pw-eye" onclick="togglePw('signup-pass',this)">&#x1F441;</button></div>
       <div style="margin-bottom:12px">
         <div style="font-size:12px;color:rgba(253,186,116,0.5);margin-bottom:8px">Preferred language</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -336,9 +351,9 @@
     <div class="modal-box">
       <h2 id="edit-modal-title">Change Name</h2>
       <div class="auth-err" id="edit-err"></div>
-      <div class="pw-wrap" id="edit-wrap1"><input class="auth-input" id="edit-field1" type="text" placeholder="" /><button type="button" class="pw-eye" id="edit-eye1" onclick="togglePw('edit-field1',this)" aria-label="Show password" style="display:none">👁</button></div>
-      <div class="pw-wrap" id="edit-wrap2" style="display:none"><input class="auth-input" id="edit-field2" type="password" placeholder="Current password (to confirm)" /><button type="button" class="pw-eye" onclick="togglePw('edit-field2',this)" aria-label="Show password">👁</button></div>
-      <div class="pw-wrap" id="edit-wrap3" style="display:none"><input class="auth-input" id="edit-field3" type="password" placeholder="New password (min 8 characters)" /><button type="button" class="pw-eye" onclick="togglePw('edit-field3',this)" aria-label="Show password">👁</button></div>
+      <input class="auth-input" id="edit-field1" type="text" placeholder="" />
+      <input class="auth-input" id="edit-field2" type="password" placeholder="Current password (to confirm)" style="display:none" />
+      <input class="auth-input" id="edit-field3" type="password" placeholder="New password (min 8 characters)" style="display:none" />
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('edit-modal')">Cancel</button>
         <button class="mbtn confirm" id="edit-submit" onclick="doEditSubmit()">Save</button>
@@ -429,6 +444,15 @@
         <div class="hmenu-arrow">&#x203A;</div>
       </div>
       <div class="hmenu-divider"></div>
+      <!-- Sync Now -->
+      <div class="hmenu-item" id="hm-sync-item" onclick="syncNow()" role="button" aria-label="Sync across devices">
+        <div class="hmenu-icon">&#x21BB;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Sync Now</div>
+          <div class="hmenu-sub" id="hm-sync-sub">Pull latest from cloud</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
+      </div>
       <!-- Share App -->
       <div class="hmenu-item" onclick="shareApp()">
         <div class="hmenu-icon">&#x1F4E4;</div>
@@ -484,6 +508,7 @@
       </button>
       <button id="send-btn" disabled>&#x2191;</button>
     </div>
+    <div id="sync-indicator"></div>
     <div id="verse-footer">&#x0964;&#x0964; कर्मण्येवाधिकारस्ते मा फलेषु कदाचन &#x0964;&#x0964; &mdash; Bhagavad Gita 2.47</div>
     <div id="history-status">&#x1F4BE; Saving to device storage</div>
     <div id="lang-indicator"></div>
@@ -512,123 +537,28 @@ var LC={
     sw:'\u0939\u093f\u0902\u0926\u0940 \u092e\u0947\u0902 \u092c\u0926\u0932 \u0917\u090f\u0964',
     sys:'Respond entirely in Hindi Devanagari script. End with ONE follow-up question in Hindi. Maintain full conversation context.'}
 };
-var BS=`You are Ask Krishna — a wise, warm friend who deeply knows the Bhagavad Gita. You help real people with real problems using the right Gita teaching for their specific situation.
+var BS=`You are Ask Krishna, a wise warm friend who deeply knows the Bhagavad Gita. Help real people with real problems using the RIGHT Gita teaching for their specific situation.
 
-━━━ YOUR MOST IMPORTANT JOB ━━━
-Read what the person is ACTUALLY feeling. Identify the core emotion or struggle. Then find the Gita verse whose teaching directly addresses THAT. Do not reach for popular or famous verses — reach for the RIGHT verse.
+MOST IMPORTANT: Read what the person is ACTUALLY feeling. Find the verse whose teaching directly addresses THAT pain. Never default to popular verses - find the right one.
 
-━━━ VERSE BANK — match the teaching to the struggle ━━━
+VERSE BANK (match teaching to struggle):
+ANXIETY/FEAR: 2.14=pleasure pain impermanent endure. 2.20=soul never born never dies. 2.38=treat gain loss equally then act. 6.5=mind is best friend or worst enemy. 6.35=restless mind can be tamed by practice.
+WORK/BURNOUT: 2.47=right to action not to fruits. 2.48=even mind this is yoga. 3.19=work without attachment. 3.27=ego falsely claims I am doer. 18.45=own duty wholeheartedly attains perfection.
+RELATIONSHIPS: 12.13=no ill will friendly compassionate. 12.15=not disturbed by world not disturbing it. 3.21=whatever great people do others follow. 16.3=forgiveness fortitude purity. 5.20=not elated by good not depressed by bad.
+GRIEF/LOSS: 2.19=he who thinks soul kills both ignorant. 2.23=no weapon fire water wind can harm soul. 2.27=death certain for born rebirth certain for dead. 15.7=living entities eternal fragments of divine.
+PURPOSE/LOST: 3.35=better own duty imperfect than others perfect. 18.47=better own dharma imperfect. 10.41=whatever glorious is spark of my splendor. 4.7=when dharma declines I manifest. 4.38=nothing purifies like wisdom found within.
+ANGER: 2.62=dwelling on objects creates attachment desire anger. 2.63=from anger delusion loss of reason ruin. 16.21=lust anger greed three gates to destruction. 5.26=free from desire anger find liberation.
+SELF-DOUBT: 2.3=do not yield to weakness arise. 6.6=conquered mind best friend uncontrolled worst enemy. 18.66=surrender to me I will free you. 11.33=arise I have already slain them you are instrument.
+DECISIONS: 2.41=resolute mind one focus irresolute branches endlessly. 18.63=reflect fully then do as you choose. 2.7=I am confused guide me.
+JEALOUSY/EGO: 5.18=wise see all beings with equal vision. 14.22=not disturbed by modes nor longs for them. 2.14=pleasure pain come and go do not define you.
+DEVOTION: 9.22=to devoted I carry what they lack. 9.26=leaf flower fruit water offered with love I accept. 7.19=after many births wise surrenders very rare. 12.2=worship with steady devotion most devoted.
+DETACHMENT: 5.10=act without attachment like lotus untouched by water. 4.20=abandoning attachment to results always content. 18.11=impossible give up all activity but give up fruits.
+MIND/HABITS: 6.16=yoga not for who eats sleeps too much or too little. 6.19=lamp in windless place disciplined mind. 2.58=withdraw senses like tortoise. 2.61=control senses fix mind steady wisdom.
 
-ANXIETY / FEAR / OVERTHINKING:
-• 2.14 — "Pleasure and pain come and go like seasons. They are impermanent — endure them." Use when someone is overwhelmed by a current hardship and needs perspective that it will pass.
-• 2.20 — "The soul is never born nor dies. It is eternal." Use when someone fears death, loss of identity, or existential dread.
-• 2.38 — "Treat pleasure and pain, gain and loss, victory and defeat equally — then fight." Use when someone is paralysed by fear of failure or the unknown outcome.
-• 6.5 — "Lift yourself up with your own mind. Your mind is your best friend and your worst enemy." Use when someone is their own biggest obstacle — self-sabotage, negative self-talk.
-• 6.35 — "The restless mind is hard to control — but it can be tamed through practice and detachment." Use when someone feels they cannot control their thoughts or anxiety.
-
-WORK STRESS / PERFORMANCE / BURNOUT:
-• 2.47 — "You have a right to perform your duty, not to the fruits of your actions." Use when someone is stressed about results, outcomes, or being judged on performance.
-• 2.48 — "Perform your duty with an even mind, without attachment to success or failure — this is yoga." Use when someone needs to detach from outcome and just do the work.
-• 3.19 — "Always do your work without attachment — through selfless action you reach the highest." Use for burnout from people-pleasing or working for external validation.
-• 18.45 — "By doing one's own duty wholeheartedly, a person attains perfection." Use when someone questions if their job or role has meaning.
-• 3.27 — "All actions are performed by nature. The ego falsely believes 'I am the doer'." Use when someone is crushed by pressure to control everything.
-
-RELATIONSHIPS / CONFLICT / DIFFICULT PEOPLE:
-• 12.13 — "One who has no ill will toward any being, who is friendly and compassionate — is dear to me." Use for resentment, hatred, or wanting to hurt someone back.
-• 12.15 — "One who does not disturb the world, and is not disturbed by it — is dear to me." Use for toxic relationships or when someone absorbs others' negativity.
-• 3.21 — "Whatever the great person does, others follow. Whatever standard they set, the world follows." Use when someone wants to influence or lead others.
-• 16.3 — "Forgiveness, fortitude, purity and freedom from malice are divine qualities." Use for someone struggling to forgive.
-• 5.20 — "The wise person who knows Brahman is not elated by good fortune nor depressed by bad." Use for emotional dependency on how others treat you.
-
-GRIEF / LOSS / DEATH:
-• 2.19 — "He who thinks this soul kills, and he who thinks it is killed — both are ignorant." Use when someone is devastated by death of a loved one.
-• 2.23 — "No weapon can pierce the soul. No fire can burn it. No water can wet it. No wind can dry it." Use for profound grief — the soul of the departed is indestructible.
-• 2.27 — "Death is certain for those who are born. Rebirth is certain for those who die." Use to help someone accept loss with peace rather than denial.
-• 15.7 — "The living entities are my eternal fragments. They carry with them the mind and senses." Use when someone feels disconnected from a lost loved one.
-
-PURPOSE / MEANING / FEELING LOST:
-• 3.35 — "Better to do your own duty imperfectly than another's duty perfectly." Use when someone is confused about their path or comparing themselves to others.
-• 18.47 — "Better is one's own dharma, though imperfectly followed, than the dharma of another." Use when someone is living someone else's life — parental or societal expectations.
-• 10.41 — "Whatever is glorious, excellent, beautiful or powerful — know it as a spark of my splendor." Use when someone cannot see meaning or beauty in their life.
-• 4.7 — "Whenever dharma declines and chaos rises, I manifest to restore balance." Use when someone feels the world is falling apart or injustice is everywhere.
-• 4.38 — "There is nothing in this world as purifying as wisdom. The seeker finds it within themselves in time." Use when someone is searching for meaning or spiritual direction.
-
-ANGER / RESENTMENT / FRUSTRATION:
-• 2.62 — "Dwelling on objects of the senses creates attachment. From attachment comes desire. From desire comes anger." Use to help someone see where their anger is actually rooted.
-• 2.63 — "From anger comes delusion. From delusion, confused memory. From confused memory, loss of reason. From loss of reason, total ruin." Use when someone's anger is destroying their relationships or decisions.
-• 16.21 — "Lust, anger and greed — these three are the gates to self-destruction." Use when destructive patterns keep repeating.
-• 5.26 — "Those who are free from desire and anger, who have controlled the mind — such people find liberation everywhere." Use when someone wants practical freedom from anger.
-
-SELF-DOUBT / FAILURE / LOW CONFIDENCE:
-• 2.3 — "Do not yield to weakness and cowardice. Arise. This does not suit you." Use directly when someone is giving up or feeling they are not enough.
-• 6.6 — "For one who has conquered the mind, it is the best of friends. For one who has not, the mind is the greatest enemy." Use for chronic self-doubt driven by inner critic.
-• 18.66 — "Abandon all duties and take refuge in me alone. I will free you from all sins — do not grieve." Use for someone completely overwhelmed who needs to let go and trust.
-• 11.33 — "Arise. Conquer your enemies. Enjoy a prosperous kingdom. I have already slain them — you are merely the instrument." Use when someone has already done the hard work but doesn't believe they can succeed.
-
-DECISION MAKING / CONFUSION / CROSSROADS:
-• 2.41 — "In this path, there is only one point of focus — the resolute mind. The thoughts of the irresolute are many-branched and endless." Use when someone is paralysed by too many options.
-• 2.7 — "I am confused about my duty and have lost all composure. I am your disciple — please tell me what is best for me." Use when someone needs permission to ask for help and guidance.
-• 18.63 — "I have shared this wisdom with you. Now reflect on it fully and do as you choose." Use when someone needs to trust their own judgment after reflection.
-• 3.35 — "Better your own path imperfect than another's path perfect." Use for career or life direction confusion.
-
-JEALOUSY / EGO / COMPARISON:
-• 5.18 — "The wise see with equal vision a learned sage, a cow, an elephant, a dog, and an outcast." Use for comparing oneself to others and feeling lesser.
-• 14.22 — "The wise person who is not disturbed when the three modes are active, nor longs for them when absent — is unmoved, undisturbed." Use for ego-driven emotional swings.
-• 16.16 — "Bewildered by many anxieties, entangled in the net of delusion — they become too attached to sense gratification." Use when someone is chasing status or external validation obsessively.
-• 2.14 — "Pleasure and pain come and go. They are impermanent — do not let them define you." Use when someone is suffering from comparison and envy.
-
-DEVOTION / FAITH / SPIRITUAL SEEKING:
-• 9.22 — "To those who worship me with devotion, meditating on my form — I carry what they lack and preserve what they have." Use for someone who feels abandoned or unsupported.
-• 9.26 — "If someone offers me a leaf, a flower, fruit or water with devotion and sincerity — I accept it." Use when someone feels their small efforts or prayers are not enough.
-• 7.19 — "After many lifetimes, the wise person surrenders to me, knowing that all is the divine. Such a person is very rare." Use for spiritual patience — the path is long.
-• 12.2 — "Those who worship me with unwavering devotion, fixing their minds on me — I consider most devoted." Use for someone wanting to deepen their spiritual practice.
-
-DETACHMENT / LETTING GO / ACCEPTANCE:
-• 5.10 — "One who acts without attachment, dedicating results to the divine, is untouched by sin — like a lotus leaf untouched by water." Use for someone who cannot let go of outcomes.
-• 4.20 — "Having given up attachment to the fruits of action, always content and independent — they do nothing even when doing everything." Use for someone exhausted from grasping.
-• 18.11 — "It is not possible for an embodied being to give up all activity. But those who give up the fruits of action are called true renouncers." Use when someone wants to quit everything to escape pressure.
-• 12.15 — "One who is not a source of trouble to anyone, and whom no trouble can shake — is dear to me." Use for someone learning to detach from drama and chaos.
-
-MIND / HABITS / DISCIPLINE:
-• 6.16 — "Yoga is not for one who eats too much or too little, who sleeps too much or too little. It is for the balanced." Use for someone with destructive daily habits.
-• 6.19 — "A lamp in a windless place does not flicker — this is how the disciplined mind behaves in meditation." Use for someone trying to build focus or a meditation practice.
-• 2.58 — "One who withdraws the senses from sense objects — like a tortoise withdrawing its limbs — is firmly established in wisdom." Use for someone overwhelmed by distraction, social media, or overstimulation.
-• 2.61 — "One who controls the senses and keeps the mind fixed on me — their wisdom is steady." Use for building mental discipline.
-
-━━━ HOW TO CHOOSE THE VERSE ━━━
-1. Read what they said carefully — what is the CORE pain? Not just the surface topic.
-2. Find the verse whose actual teaching (above) directly addresses that pain.
-3. Cite it naturally — do not say "as per Gita 2.47" mechanically. Weave it in.
-4. Explain what that verse actually means IN THEIR situation — not generically.
-5. Never pick a verse just because it is famous. Pick it because it fits.
-
-━━━ TONE ━━━
-- Wise friend having a real conversation — never a lecturer or preacher
-- Specific to what THEY said — use their exact words and situation
-- Plain language — no jargon without immediate explanation
-- Warm, direct, honest — like someone who genuinely cares
-- Never use phrases like "the eternal wisdom of the Gita" or "as Krishna teaches" repeatedly
-
-━━━ STRUCTURE (vary based on question) ━━━
-1. Acknowledge their specific situation in 1-2 sentences
-2. The Gita teaching that speaks directly to it
-3. What that verse actually means for them today
-4. A real-world example or analogy from modern life
-5. One or two concrete steps they can take today
-6. ONE follow-up question on a new line starting with an emoji
-
-━━━ VERSE HYGIENE ━━━
-- Never repeat a verse already cited in this conversation — use a fresh one
-- Never give the same analogy twice in one conversation
-- If a follow-up question deepens the same topic — go deeper into that chapter, don't restart
-
-━━━ GUARDRAILS ━━━
-- Never use abusive or disrespectful language
-- If user is rude — calm compassion, gentle redirect
-- Never demean any person, religion, caste, gender or community
-- Harmful content requests — decline warmly, offer Gita wisdom instead`;
-
-
+TONE: Wise friend never preacher. Specific to THEIR words and situation. Plain language. Warm direct.
+STRUCTURE: 1)Acknowledge their specific situation. 2)Gita teaching that speaks to it. 3)What that verse means for them today. 4)Real modern example. 5)Practical steps. 6)ONE follow-up question new line with emoji.
+VERSE HYGIENE: Never repeat verse already cited in this conversation. Never same analogy twice.
+GUARDRAILS: Never abusive or disrespectful. If rude calm compassion redirect. Never demean anyone. Harmful content decline warmly.`;
 var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
 var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','slut'];
 var msgs=[],loading=false,isListening=false,deferredPrompt=null,ttsSpeaking=false;
@@ -764,27 +694,19 @@ function showTyping(){
 }
 function updateSend(){sendBtn.disabled=!inputEl.value.trim()||loading}
 function getUsedVerses(){
-  // Scan assistant messages for verse references like 2.47, 6.5, 18.66 etc.
   var used=[];
-  var versePattern=/\b(\d{1,2})\.(\d{1,3})\b/g;
   msgs.forEach(function(m){
-    if(m.role==='assistant'){
-      var match;
-      while((match=versePattern.exec(m.content))!==null){
-        var ref=match[1]+'.'+match[2];
-        if(used.indexOf(ref)===-1)used.push(ref);
-      }
-    }
+    if(m.role!=='assistant')return;
+    var matches=m.content.match(/\b(\d{1,2})\.(\d{1,3})\b/g)||[];
+    matches.forEach(function(r){if(used.indexOf(r)===-1)used.push(r);});
   });
   return used;
 }
 function getSys(){
   var base=BS+'\n\n'+LC[curLang].sys;
-  if(currentUser&&currentUser.name)base+='\n\nThe user\'s name is '+currentUser.name+'. Address them by name warmly when it feels natural.';
-  var usedVerses=getUsedVerses();
-  if(usedVerses.length>0){
-    base+='\n\nVERSES ALREADY USED IN THIS CONVERSATION — DO NOT REPEAT THESE:\n'+usedVerses.join(', ')+'\nYou MUST choose different verses for this response. There are 700 verses in the Gita — find one that fits this question specifically.';
-  }
+  if(currentUser&&currentUser.name)base+='\n\nUser name: '+currentUser.name+'. Address them warmly when natural.';
+  var used=getUsedVerses();
+  if(used.length>0)base+='\n\nALREADY CITED - DO NOT REPEAT: '+used.join(', ')+'. Choose different verses.';
   return base;
 }
 function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
@@ -1199,12 +1121,6 @@ function setAuthLoading(btnId,loading){
   btn.disabled=loading;
   btn.textContent=loading?'Please wait...':btn.getAttribute('data-label')||btn.textContent;
 }
-function togglePw(inputId,btn){
-  var inp=document.getElementById(inputId);
-  if(!inp)return;
-  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
-  else{inp.type='password';btn.textContent='👁';}
-}
 function validateEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
 
 function selectSignupLang(lang){
@@ -1258,10 +1174,10 @@ function doSignUp(){
     onSignedIn(data.token,data.user);
     closeModal('signup-modal');
   })
-  .catch(function(err){
+  .catch(function(){
     document.getElementById('signup-submit').disabled=false;
     document.getElementById('signup-submit').textContent='Create Account';
-    showAuthErr('signup-err','Could not reach server. Check your connection and try again. ('+((err&&err.message)||'Network error')+')');
+    showAuthErr('signup-err','Network error. Please try again.');
   });
 }
 
@@ -1286,10 +1202,10 @@ function doSignIn(){
     onSignedIn(data.token,data.user);
     closeModal('signin-modal');
   })
-  .catch(function(err){
+  .catch(function(){
     document.getElementById('signin-submit').disabled=false;
     document.getElementById('signin-submit').textContent='Sign In';
-    showAuthErr('signin-err','Could not reach server. Check your connection and try again. ('+((err&&err.message)||'Network error')+')');
+    showAuthErr('signin-err','Network error. Please try again.');
   });
 }
 
@@ -1330,9 +1246,8 @@ function openEditName(){
   editMode='name';
   document.getElementById('edit-modal-title').textContent='Change Display Name';
   var f1=document.getElementById('edit-field1');f1.type='text';f1.placeholder='New display name';f1.value=currentUser.name||'';
-  document.getElementById('edit-eye1').style.display='none';
-  document.getElementById('edit-wrap2').style.display='none';
-  document.getElementById('edit-wrap3').style.display='none';
+  document.getElementById('edit-field2').style.display='none';
+  document.getElementById('edit-field3').style.display='none';
   clearAuthErr('edit-err');
   openModal('edit-modal');
 }
@@ -1342,10 +1257,8 @@ function openEditPassword(){
   editMode='password';
   document.getElementById('edit-modal-title').textContent='Change Password';
   var f1=document.getElementById('edit-field1');f1.type='password';f1.placeholder='Current password';f1.value='';
-  document.getElementById('edit-eye1').style.display='block';
-  document.getElementById('edit-wrap2').style.display='none';
-  document.getElementById('edit-wrap3').style.display='block';
-  document.getElementById('edit-field3').value='';
+  var f2=document.getElementById('edit-field2');f2.style.display='none'; // not needed for sha256 flow
+  var f3=document.getElementById('edit-field3');f3.style.display='block';f3.value='';
   clearAuthErr('edit-err');
   openModal('edit-modal');
 }
@@ -1372,7 +1285,7 @@ function doEditSubmit(){
       closeModal('edit-modal');
       addMsg('assistant','Your name has been updated to '+name+'. \uD83D\uDE4F');
     })
-    .catch(function(err){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Could not reach server. ('+((err&&err.message)||'Network error')+')');}); 
+    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
   } else if(editMode==='password'){
     var oldPass=document.getElementById('edit-field1').value;
     var newPass=document.getElementById('edit-field3').value;
@@ -1392,7 +1305,7 @@ function doEditSubmit(){
       closeModal('edit-modal');
       addMsg('assistant','Your password has been updated. Stay secure on the path of wisdom. \uD83D\uDD11');
     })
-    .catch(function(err){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Could not reach server. ('+((err&&err.message)||'Network error')+')');}); 
+    .catch(function(){btn.disabled=false;btn.textContent='Save';showAuthErr('edit-err','Network error. Please try again.');});
   }
 }
 
@@ -1572,6 +1485,293 @@ function updateNotifToggle(){
     history.replaceState(null,'',location.pathname);
     setTimeout(function(){askTodaysWisdom();},800);
   }
+})();
+
+// ── Multi-device sync: manual, periodic, and on-focus ────────────────────────
+var _autoSyncInterval=null;
+var _lastPullTime=0;
+var _syncInProgress=false;
+
+function syncNow(){
+  closeHamburger();
+  if(!currentUser){addMsg('assistant','Sign in to sync your chat across devices.');return;}
+  if(_syncInProgress){setSyncStatus('syncing','Sync already in progress...');return;}
+  _syncInProgress=true;
+  setSyncStatus('syncing','Syncing now...');
+  var hm=document.getElementById('hm-sync-sub');
+  if(hm)hm.textContent='Syncing...';
+  // Push local first then pull cloud
+  fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
+  .then(function(r){return r.json();})
+  .then(function(){
+    return fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()});
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    _syncInProgress=false;
+    _lastPullTime=Date.now();
+    var hm=document.getElementById('hm-sync-sub');
+    var ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if(hm)hm.textContent='Last synced at '+ts;
+    if(data.history&&data.history.length>msgs.length){
+      // Cloud has more messages — render the new ones
+      var newMsgs=data.history.slice(msgs.length);
+      msgs=data.history;
+      newMsgs.forEach(function(m){
+        var row=document.createElement('div');row.className='msg-row '+m.role;
+        var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+        av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+        var col=document.createElement('div');col.className='msg-col';
+        var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+        bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+      });
+      trimMsgDom();scrollBottom();
+      setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
+    }else{
+      setSyncStatus('synced','\u2713 Already up to date');
+    }
+  })
+  .catch(function(){
+    _syncInProgress=false;
+    setSyncStatus('error','Sync failed \u2014 check your connection');
+  });
+}
+
+function startPeriodicSync(){
+  if(_autoSyncInterval)clearInterval(_autoSyncInterval);
+  // Pull from cloud every 60 seconds silently
+  _autoSyncInterval=setInterval(function(){
+    if(!currentUser||!navigator.onLine||_syncInProgress)return;
+    // Silent pull — only update if cloud has more messages
+    fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      _lastPullTime=Date.now();
+      if(data.history&&data.history.length>msgs.length){
+        var newMsgs=data.history.slice(msgs.length);
+        msgs=data.history;
+        newMsgs.forEach(function(m){
+          var row=document.createElement('div');row.className='msg-row '+m.role;
+          var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+          av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+          var col=document.createElement('div');col.className='msg-col';
+          var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+          bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+        });
+        trimMsgDom();scrollBottom();
+        setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' from another device');
+      }
+    })
+    .catch(function(){});
+  },60000);
+}
+
+function stopPeriodicSync(){
+  if(_autoSyncInterval){clearInterval(_autoSyncInterval);_autoSyncInterval=null;}
+}
+
+// Pull when app comes back into focus (tab switch / phone unlock)
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&currentUser&&navigator.onLine){
+    // Only pull if last pull was more than 30 seconds ago
+    if(Date.now()-_lastPullTime>30000){
+      var sinceMs=Date.now()-_lastPullTime;
+      // Silent pull on focus
+      fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        _lastPullTime=Date.now();
+        if(data.history&&data.history.length>msgs.length){
+          var newMsgs=data.history.slice(msgs.length);
+          msgs=data.history;
+          newMsgs.forEach(function(m){
+            var row=document.createElement('div');row.className='msg-row '+m.role;
+            var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+            av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+            var col=document.createElement('div');col.className='msg-col';
+            var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+            bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+          });
+          trimMsgDom();scrollBottom();
+          setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
+        }
+      })
+      .catch(function(){});
+    }
+  }
+});
+
+// Start/stop periodic sync when user signs in/out
+var _origOnSignedIn=onSignedIn;
+onSignedIn=function(token,user){
+  _origOnSignedIn(token,user);
+  startPeriodicSync();
+  var si=document.getElementById('hm-sync-item');if(si)si.classList.add('visible');
+};
+var _origDoSignOut=doSignOut;
+doSignOut=function(){
+  stopPeriodicSync();
+  var si=document.getElementById('hm-sync-item');if(si)si.classList.remove('visible');
+  _origDoSignOut();
+};
+if(currentUser){startPeriodicSync();var si=document.getElementById('hm-sync-item');if(si)si.classList.add('visible');}
+
+function togglePw(id,btn){
+  var inp=document.getElementById(id);if(!inp)return;
+  if(inp.type==='password'){inp.type='text';btn.innerHTML='hide';}
+  else{inp.type='password';btn.innerHTML='&#x1F441;';}
+}
+
+// ── History: view / restore / clear ──────────────────────────────────────────
+function showHistoryViewer(){
+  var viewer=document.getElementById('hist-viewer');
+  var vbtn=document.getElementById('hist-view-btn');
+  if(!viewer)return;
+  if(viewer.style.display==='flex'){
+    viewer.style.display='none';viewer.innerHTML='';
+    if(vbtn)vbtn.textContent='View History';return;
+  }
+  var saved=loadHist();
+  if(!saved||!saved.length){
+    viewer.innerHTML='<p style="text-align:center;color:rgba(253,186,116,0.4);font-size:13px;padding:14px">No saved messages yet.</p>';
+    viewer.style.display='flex';if(vbtn)vbtn.textContent='Hide';return;
+  }
+  viewer.innerHTML='';viewer.style.display='flex';viewer.style.flexDirection='column';viewer.style.gap='6px';
+  if(vbtn)vbtn.textContent='Hide';
+  saved.forEach(function(m){
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:'+(m.role==='user'?'flex-end':'flex-start');
+    var rl=document.createElement('div');rl.className='hist-role';rl.textContent=m.role==='user'?'You':'Krishna';
+    var bub=document.createElement('div');bub.className='hist-bubble '+m.role;bub.textContent=m.content;
+    wrap.appendChild(rl);wrap.appendChild(bub);viewer.appendChild(wrap);
+  });
+  setTimeout(function(){viewer.scrollTop=viewer.scrollHeight;},50);
+}
+function loadHistoryIntoChat(){
+  var saved=loadHist();
+  if(!saved||!saved.length){
+    closeModal('history-modal');
+    addMsg('assistant','No saved history found. Start chatting and it will be saved automatically.');
+    return;
+  }
+  closeModal('history-modal');
+  msgs=[];
+  var wb=document.getElementById('wisdom-wrap');
+  messagesEl.innerHTML='';
+  if(wb){messagesEl.appendChild(wb);wb.style.display='none';}
+  var sg=document.createElement('div');sg.id='suggestions';messagesEl.appendChild(sg);suggestEl=sg;
+  saved.forEach(function(m){
+    msgs.push(m);
+    var row=document.createElement('div');row.className='msg-row '+m.role;
+    var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+    av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+    var col=document.createElement('div');col.className='msg-col';
+    var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');bub.textContent=m.content;
+    var ts=document.createElement('div');ts.className='msg-time';ts.textContent='saved';
+    col.appendChild(bub);col.appendChild(ts);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+  });
+  trimMsgDom();scrollBottom();
+  addMsg('assistant','Your saved conversation has been restored. Where would you like to continue from?');
+}
+function openHistFromMenu(){
+  var desc=document.getElementById('history-desc');
+  var enR=document.getElementById('modal-enable-row');
+  var disR=document.getElementById('modal-disable-row');
+  var stats=document.getElementById('hist-stats');
+  var viewer=document.getElementById('hist-viewer');
+  var vbtn=document.getElementById('hist-view-btn');
+  if(viewer){viewer.style.display='none';viewer.innerHTML='';}
+  if(vbtn)vbtn.textContent='View History';
+  if(histEn){
+    var saved=loadHist();
+    var uq=saved?saved.filter(function(m){return m.role==='user';}).length:0;
+    desc.textContent='History saving is ON.';
+    if(stats){stats.style.display='block';stats.textContent=uq?uq+' question'+(uq===1?'':'s')+' saved on this device':'No messages saved yet -- start chatting!';}
+    enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column';
+  }else{
+    desc.textContent='Enable to save your conversations on this device only.';
+    if(stats)stats.style.display='none';
+    enR.style.display='flex';disR.style.display='none';
+  }
+  openModal('history-modal');
+}
+clearHistory=function(){
+  if(!confirm('Permanently delete saved history and disable saving?'))return;
+  histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();
+  msgs=[];
+  var wb=document.getElementById('wisdom-wrap');
+  var wbh=wb?wb.outerHTML:'';
+  messagesEl.innerHTML='<div id="suggestions"></div>';
+  if(wbh)messagesEl.insertAdjacentHTML('afterbegin',wbh);
+  suggestEl=document.getElementById('suggestions');
+  SUGG.forEach(function(s){
+    var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;
+    btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb2=document.getElementById('wisdom-wrap');if(wb2)wb2.style.display='none';inputEl.focus();};
+    suggestEl.appendChild(btn);
+  });
+  closeModal('history-modal');
+  addMsg('assistant','History cleared and saving disabled. Each session now starts fresh.');
+};
+enableHistory=function(){
+  histEn=true;localStorage.setItem(HEK,'true');
+  var toSave=msgs.filter(function(m){return m.content&&m.content.length>0;});
+  try{localStorage.setItem(HK,JSON.stringify(toSave));}catch(e){}
+  updateHistBtn();closeModal('history-modal');
+  addMsg('assistant','Your conversations will now be saved on this device. Tap the save button anytime to view, restore or clear your history.');
+};
+saveHist=function(){
+  if(!histEn)return;
+  var toSave=msgs.filter(function(m){return m.content&&m.content.length>0;});
+  try{localStorage.setItem(HK,JSON.stringify(toSave));}catch(e){console.warn('History save failed',e);}
+};
+
+// ── Sync status indicator ─────────────────────────────────────────────────────
+var _syncInd=document.getElementById('sync-indicator');
+function setSyncStatus(state,msg){
+  if(!_syncInd)return;
+  _syncInd.className=state;_syncInd.textContent=msg||'';
+  if(state==='synced')setTimeout(function(){_syncInd.className='';_syncInd.textContent='';},3000);
+}
+pushHistory=function(){
+  if(!currentUser||!localStorage.getItem(JK)||!msgs.length)return;
+  setSyncStatus('syncing','Syncing...');
+  fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
+  .then(function(r){return r.json();})
+  .then(function(d){if(d&&d.ok){setSyncStatus('synced','Synced across devices');}else{setSyncStatus('error','Sync failed');}})
+  .catch(function(){setSyncStatus('error','Sync failed');});
+};
+pullHistory=function(){
+  if(!currentUser||!localStorage.getItem(JK))return;
+  setSyncStatus('syncing','Restoring history...');
+  fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.history&&data.history.length){
+      msgs=data.history;
+      var wb=document.getElementById('wisdom-wrap');var sg=suggestEl;
+      messagesEl.innerHTML='';
+      if(wb)messagesEl.appendChild(wb);
+      if(sg)messagesEl.appendChild(sg);
+      msgs.forEach(function(m){
+        var row=document.createElement('div');row.className='msg-row '+m.role;
+        var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+        av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+        var col=document.createElement('div');col.className='msg-col';
+        var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+        bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+      });
+      trimMsgDom();scrollBottom();setSyncStatus('synced','History restored from cloud');
+    }else{setSyncStatus('','');}
+  })
+  .catch(function(){setSyncStatus('error','Could not restore history');});
+};
+// Hook debouncedPush into addMsg
+(function(){
+  var _orig=addMsg;
+  addMsg=function(role,content){
+    _orig(role,content);
+    if(currentUser){clearTimeout(window._syncTimer);window._syncTimer=setTimeout(pushHistory,2000);}
+  };
 })();
 </script>
 </body>
