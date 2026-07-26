@@ -15,8 +15,6 @@
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="_initGoogle()"></script>
   <!-- Meta / Facebook SDK -->
   <script>
     window.fbAsyncInit=function(){FB.init({appId:'REPLACE_WITH_META_APP_ID',cookie:true,xfbml:true,version:'v19.0'});};
@@ -1518,86 +1516,55 @@ function updateNotifToggle(){
   }
 })();
 
-// ── Google Sign-In ────────────────────────────────────────────────────────────
+// ── Google Sign-In (redirect OAuth flow) ─────────────────────────────────────
 var GOOGLE_CLIENT_ID='598561547537-rsnu1s0tm2jaksqinojqtev3aesukh9a.apps.googleusercontent.com';
-var _googleReady=false;
-
-// Initialize Google Identity Services as soon as the library loads
-function _initGoogle(){
-  if(typeof google==='undefined'||!google.accounts)return;
-  google.accounts.id.initialize({
-    client_id:GOOGLE_CLIENT_ID,
-    callback:function(response){handleGoogleCredential(response.credential);},
-    auto_select:false,
-    cancel_on_tap_outside:true
-  });
-  _googleReady=true;
-}
-// Try immediately in case script already loaded, else wait for it
-if(typeof google!=='undefined'&&google.accounts){
-  _initGoogle();
-}else{
-  window.onGoogleLibraryLoad=function(){_initGoogle();};
-  // Also poll as a fallback (some browsers don't fire onGoogleLibraryLoad)
-  var _gPoll=setInterval(function(){
-    if(typeof google!=='undefined'&&google.accounts){
-      clearInterval(_gPoll);
-      _initGoogle();
-    }
-  },300);
-}
+var GOOGLE_REDIRECT='https://ashusrav821.github.io/ask-krishna/';
 
 function doGoogleSignIn(){
-  if(!_googleReady||typeof google==='undefined'){
-    // Try to init one more time before giving up
-    _initGoogle();
-    if(!_googleReady){
-      showAuthErr('signin-err','Google Sign-In is still loading. Please wait a moment and try again.');
-      showAuthErr('signup-err','Google Sign-In is still loading. Please wait a moment and try again.');
-      return;
-    }
-  }
-  // Use popup flow — most reliable on mobile and desktop
-  google.accounts.id.prompt(function(notification){
-    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
-      // One Tap was blocked — fall back to redirect flow
-      var authUrl=(
-        'https://accounts.google.com/o/oauth2/v2/auth?'
-        +'client_id='+GOOGLE_CLIENT_ID
-        +'&redirect_uri='+encodeURIComponent('https://ashusrav821.github.io/ask-krishna/')
-        +'&response_type=token'
-        +'&scope='+encodeURIComponent('openid email profile')
-        +'&prompt=select_account'
-      );
-      // Open in popup
-      var w=window.open(authUrl,'google-signin','width=500,height=600,left='+((screen.width-500)/2)+',top='+((screen.height-600)/2));
-      if(!w){
-        showAuthErr('signin-err','Please allow popups for this site and try again.');
-        showAuthErr('signup-err','Please allow popups for this site and try again.');
-      }
-    }
-  });
+  // Build Google OAuth URL — redirect flow, works on any domain
+  var state=Math.random().toString(36).slice(2);
+  sessionStorage.setItem('gState',state);
+  var url='https://accounts.google.com/o/oauth2/v2/auth'
+    +'?client_id='+encodeURIComponent(GOOGLE_CLIENT_ID)
+    +'&redirect_uri='+encodeURIComponent(GOOGLE_REDIRECT)
+    +'&response_type=code'
+    +'&scope='+encodeURIComponent('openid email profile')
+    +'&state='+state
+    +'&prompt=select_account'
+    +'&access_type=offline';
+  window.location.href=url;
 }
 
-function handleGoogleCredential(idToken){
-  // Clear errors on both modals
-  clearAuthErr('signin-err');clearAuthErr('signup-err');
+// Handle Google OAuth callback on page load (checks for ?code= in URL)
+function handleGoogleCallback(){
+  var params=new URLSearchParams(window.location.search);
+  var code=params.get('code');
+  var state=params.get('state');
+  var error=params.get('error');
+  if(!code)return;
+  // Clean URL without reloading
+  window.history.replaceState({},'',window.location.pathname);
+  if(error){addMsg('assistant','Google sign-in was cancelled.');return;}
+  if(state&&state!==sessionStorage.getItem('gState')){addMsg('assistant','Google sign-in failed — state mismatch. Please try again.');return;}
+  sessionStorage.removeItem('gState');
+  // Show loading state
+  addMsg('assistant','Signing you in with Google...');
   fetch(W+'auth/google',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({idToken:idToken,lang:curLang})
+    body:JSON.stringify({code:code,redirectUri:GOOGLE_REDIRECT,lang:curLang})
   })
   .then(function(r){return r.json();})
   .then(function(data){
-    if(data.error){showAuthErr('signin-err',data.error);showAuthErr('signup-err',data.error);return;}
-    closeModal('signin-modal');closeModal('signup-modal');
+    if(data.error){addMsg('assistant','Google sign-in failed: '+data.error);return;}
     onSignedIn(data.token,data.user);
   })
-  .catch(function(){
-    showAuthErr('signin-err','Google sign-in failed. Please try again.');
-    showAuthErr('signup-err','Google sign-in failed. Please try again.');
-  });
+  .catch(function(){addMsg('assistant','Google sign-in failed. Please try again.');});
 }
+// Run callback check on load
+handleGoogleCallback();
+
+function handleGoogleCredential(idToken){}
 
 // ── Meta / Facebook Sign-In ───────────────────────────────────────────────────
 function doMetaSignIn(){
