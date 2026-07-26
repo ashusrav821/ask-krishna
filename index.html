@@ -15,11 +15,6 @@
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
-  <!-- Meta / Facebook SDK -->
-  <script>
-    window.fbAsyncInit=function(){FB.init({appId:'REPLACE_WITH_META_APP_ID',cookie:true,xfbml:true,version:'v19.0'});};
-    (function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(d.getElementById(id))return;js=d.createElement(s);js.id=id;js.src='https://connect.facebook.net/en_US/sdk.js';fjs.parentNode.insertBefore(js,fjs);}(document,'script','facebook-jssdk'));
-  </script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;width:100%;background:linear-gradient(135deg,#0f0500 0%,#1a0a00 40%,#0d1a0d 100%);font-family:Georgia,'Palatino Linotype',serif;color:#e5e7eb;overflow:hidden;-webkit-tap-highlight-color:transparent}
@@ -1561,37 +1556,52 @@ function handleGoogleCallback(){
   })
   .catch(function(){addMsg('assistant','Google sign-in failed. Please try again.');});
 }
-// Run callback check on load
+// Run callback checks on load
 handleGoogleCallback();
+handleMetaCallback();
 
 function handleGoogleCredential(idToken){}
 
-// ── Meta / Facebook Sign-In ───────────────────────────────────────────────────
+// ── Meta Sign-In (redirect OAuth flow) ───────────────────────────────────────
+var META_APP_ID='REPLACE_WITH_META_APP_ID';
+var META_REDIRECT='https://ashusrav821.github.io/ask-krishna/';
+
 function doMetaSignIn(){
-  if(typeof FB==='undefined'){showAuthErr('signin-err','Meta Sign-In is loading. Please try again in a moment.');return;}
-  FB.login(function(response){
-    if(response.authResponse){
-      handleMetaLogin(response.authResponse.accessToken);
-    }else{
-      showAuthErr('signin-err','Meta sign-in was cancelled or failed.');
-    }
-  },{scope:'public_profile,email'});
+  var state='meta_'+Math.random().toString(36).slice(2);
+  sessionStorage.setItem('metaState',state);
+  var url='https://www.facebook.com/v19.0/dialog/oauth'
+    +'?client_id='+encodeURIComponent(META_APP_ID)
+    +'&redirect_uri='+encodeURIComponent(META_REDIRECT)
+    +'&scope='+encodeURIComponent('email,public_profile')
+    +'&state='+state
+    +'&response_type=code';
+  window.location.href=url;
 }
-function handleMetaLogin(accessToken){
+
+// Handle Meta OAuth callback on page load (checks for ?code= and ?state= in URL)
+function handleMetaCallback(){
+  var params=new URLSearchParams(window.location.search);
+  var code=params.get('code');
+  var state=params.get('state');
+  var error=params.get('error');
+  if(!code||!state||!state.startsWith('meta_'))return;
+  // Clean URL
+  window.history.replaceState({},'',window.location.pathname);
+  if(error){addMsg('assistant','Meta sign-in was cancelled.');return;}
+  if(state!==sessionStorage.getItem('metaState')){addMsg('assistant','Meta sign-in failed — state mismatch. Please try again.');return;}
+  sessionStorage.removeItem('metaState');
+  addMsg('assistant','Signing you in with Meta...');
   fetch(W+'auth/meta',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({accessToken:accessToken,lang:curLang})
+    body:JSON.stringify({code:code,redirectUri:META_REDIRECT,lang:curLang})
   })
   .then(function(r){return r.json();})
   .then(function(data){
-    if(data.error){showAuthErr('signin-err',data.error);return;}
-    closeModal('signin-modal');closeModal('signup-modal');
+    if(data.error){addMsg('assistant','Meta sign-in failed: '+data.error);return;}
     onSignedIn(data.token,data.user);
   })
-  .catch(function(){
-    showAuthErr('signin-err','Meta sign-in failed. Please try again.');
-  });
+  .catch(function(){addMsg('assistant','Meta sign-in failed. Please try again.');});
 }
 
 var _autoSyncInterval=null;
