@@ -15,6 +15,13 @@
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Meta / Facebook SDK -->
+  <script>
+    window.fbAsyncInit=function(){FB.init({appId:'REPLACE_WITH_META_APP_ID',cookie:true,xfbml:true,version:'v19.0'});};
+    (function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(d.getElementById(id))return;js=d.createElement(s);js.id=id;js.src='https://connect.facebook.net/en_US/sdk.js';fjs.parentNode.insertBefore(js,fjs);}(document,'script','facebook-jssdk'));
+  </script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;width:100%;background:linear-gradient(135deg,#0f0500 0%,#1a0a00 40%,#0d1a0d 100%);font-family:Georgia,'Palatino Linotype',serif;color:#e5e7eb;overflow:hidden;-webkit-tap-highlight-color:transparent}
@@ -189,6 +196,10 @@
     .pw-wrap{position:relative;margin-bottom:10px}
     .pw-wrap .auth-input{margin-bottom:0;padding-right:42px}
     .pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(249,115,22,0.5);font-size:15px;padding:4px;line-height:1}
+    .social-btn{width:100%;padding:11px 16px;border-radius:12px;border:none;font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;margin-bottom:10px;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent}
+    .social-btn:active{opacity:0.85}
+    .google-btn{background:#fff;color:#3c4043;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+    .meta-btn{background:#1877F2;color:#fff}
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -291,6 +302,16 @@
       <h2>&#x1F54F; Welcome Back</h2>
       <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Sign in to sync your history &amp; preferences</p>
       <div class="auth-err" id="signin-err"></div>
+      <!-- Social buttons -->
+      <button class="social-btn google-btn" onclick="doGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <button class="social-btn meta-btn" onclick="doMetaSignIn()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Continue with Meta
+      </button>
+      <div class="auth-divider">— or sign in with email —</div>
       <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
       <div class="pw-wrap"><input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" /><button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)">&#x1F441;</button></div>
       <div class="btn-row">
@@ -307,6 +328,16 @@
       <h2>&#x1F33C; Join Ask Krishna</h2>
       <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Create an account to sync history &amp; personalise</p>
       <div class="auth-err" id="signup-err"></div>
+      <!-- Social buttons -->
+      <button class="social-btn google-btn" onclick="doGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <button class="social-btn meta-btn" onclick="doMetaSignIn()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Continue with Meta
+      </button>
+      <div class="auth-divider">— or sign up with email —</div>
       <input class="auth-input" id="signup-name" type="text" placeholder="Your name (Krishna will address you by this)" autocomplete="name" maxlength="50" />
       <input class="auth-input" id="signup-email" type="email" placeholder="Email address" autocomplete="email" />
       <div class="pw-wrap"><input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 8 chars)" autocomplete="new-password" /><button type="button" class="pw-eye" onclick="togglePw('signup-pass',this)">&#x1F441;</button></div>
@@ -1487,7 +1518,73 @@ function updateNotifToggle(){
   }
 })();
 
-// ── Multi-device sync: manual, periodic, and on-focus ────────────────────────
+// ── Google Sign-In ────────────────────────────────────────────────────────────
+var GOOGLE_CLIENT_ID='598561547537-rsnu1s0tm2jaksqinojqtev3aesukh9a.apps.googleusercontent.com';
+  function doGoogleSignIn(){
+  if(typeof google==='undefined'){showAuthErr('signin-err','Google Sign-In is loading. Please try again in a moment.');return;}
+  google.accounts.id.initialize({
+    client_id:GOOGLE_CLIENT_ID,
+    callback:function(response){handleGoogleCredential(response.credential);}
+  });
+  google.accounts.id.prompt(function(notification){
+    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
+      // Fallback: open Google One Tap manually
+      google.accounts.id.renderButton(
+        document.createElement('div'),
+        {theme:'outline',size:'large'}
+      );
+      showAuthErr('signin-err','Please allow popups for Google Sign-In and try again.');
+    }
+  });
+}
+function handleGoogleCredential(idToken){
+  var signingModal=document.querySelector('.modal.show');
+  var errId=signingModal?signingModal.querySelector('.auth-err'):null;
+  if(errId)errId.textContent='';
+  fetch(W+'auth/google',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({idToken:idToken,lang:curLang})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.error){if(errId)errId.textContent=data.error;return;}
+    closeModal('signin-modal');closeModal('signup-modal');
+    onSignedIn(data.token,data.user);
+  })
+  .catch(function(err){
+    if(errId)errId.textContent='Google sign-in failed. Please try again.';
+  });
+}
+
+// ── Meta / Facebook Sign-In ───────────────────────────────────────────────────
+function doMetaSignIn(){
+  if(typeof FB==='undefined'){showAuthErr('signin-err','Meta Sign-In is loading. Please try again in a moment.');return;}
+  FB.login(function(response){
+    if(response.authResponse){
+      handleMetaLogin(response.authResponse.accessToken);
+    }else{
+      showAuthErr('signin-err','Meta sign-in was cancelled or failed.');
+    }
+  },{scope:'public_profile,email'});
+}
+function handleMetaLogin(accessToken){
+  fetch(W+'auth/meta',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({accessToken:accessToken,lang:curLang})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.error){showAuthErr('signin-err',data.error);return;}
+    closeModal('signin-modal');closeModal('signup-modal');
+    onSignedIn(data.token,data.user);
+  })
+  .catch(function(){
+    showAuthErr('signin-err','Meta sign-in failed. Please try again.');
+  });
+}
+
 var _autoSyncInterval=null;
 var _lastPullTime=0;
 var _syncInProgress=false;
