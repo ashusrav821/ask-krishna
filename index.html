@@ -202,6 +202,61 @@
   
     #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(15,5,0,0.95);border:1px solid rgba(249,115,22,0.4);border-radius:24px;padding:10px 20px;font-size:13px;color:#fbbf24;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  
+    /* Light mode */
+    body.light{background:linear-gradient(135deg,#fef9f0 0%,#fff8f0 40%,#f0fef4 100%)!important;color:#1a0a00!important}
+    body.light #header{background:rgba(255,248,240,0.97)!important;border-color:rgba(249,115,22,0.15)!important}
+    body.light #header-sub{color:#92400e!important;text-shadow:none!important}
+    body.light .bubble.bot{background:rgba(249,115,22,0.05)!important;border-color:rgba(249,115,22,0.15)!important;color:#1a0a00!important}
+    body.light .bubble.user{background:linear-gradient(135deg,#fed7aa,#fdba74)!important;color:#431407!important;border-color:rgba(249,115,22,0.4)!important}
+    body.light #messages{background:transparent}
+    body.light #input-area{background:rgba(255,248,240,0.98)!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light #input-row{background:rgba(249,115,22,0.06)!important;border-color:rgba(249,115,22,0.3)!important}
+    body.light #msg-input{color:#431407!important}
+    body.light #msg-input::placeholder{color:rgba(92,50,20,0.5)!important}
+    body.light .modal-box{background:#fffbf5!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light .modal-box h2{color:#b45309!important}
+    body.light .modal-box p,.modal-box label{color:#44200a!important}
+    body.light .mbtn.cancel{background:rgba(249,115,22,0.08)!important;color:#92400e!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light #hamburger-sheet{background:#fffbf5!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light .hmenu-title{color:#1a0a00!important}
+    body.light .hmenu-sub{color:rgba(146,64,14,0.7)!important}
+    body.light .hmenu-divider{background:rgba(249,115,22,0.1)!important}
+    body.light .hdr-btn{border-color:rgba(249,115,22,0.2)!important;background:rgba(249,115,22,0.06)!important;color:#92400e!important}
+    body.light #verse-footer{color:rgba(146,64,14,0.4)!important}
+    body.light .msg-time{color:rgba(146,64,14,0.4)!important}
+    body.light .suggestion-btn{background:rgba(249,115,22,0.06)!important;color:#431407!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light #wisdom-btn{background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(249,115,22,0.12))!important}
+    body.light .auth-input{background:rgba(249,115,22,0.05)!important;color:#1a0a00!important;border-color:rgba(249,115,22,0.2)!important}
+    body.light .auth-input::placeholder{color:rgba(92,50,20,0.4)!important}
+    body.light .notice{background:rgba(249,115,22,0.08)!important}
+    body.light #offline-banner{background:rgba(220,38,38,0.9)!important}
+    body.light .typing-label{color:rgba(146,64,14,0.6)!important}
+    body.light #sync-indicator.syncing{color:rgba(146,64,14,0.7)!important}
+
+  
+    /* Search */
+    #search-bar{display:none;padding:8px 14px;background:rgba(15,5,0,0.95);border-bottom:1px solid rgba(249,115,22,0.15);gap:8px;align-items:center;flex-shrink:0}
+    #search-bar.show{display:flex}
+    #search-input{flex:1;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:8px 12px;color:#fff7ed;font-size:14px;font-family:inherit;outline:none}
+    #search-input::placeholder{color:rgba(255,255,255,0.4)}
+    #search-close{background:none;border:none;color:rgba(249,115,22,0.5);font-size:18px;cursor:pointer;padding:4px}
+    #search-count{font-size:11px;color:rgba(249,115,22,0.5);white-space:nowrap}
+    .msg-highlight{background:rgba(251,191,36,0.3);border-radius:3px}
+
+  
+    .msg-reactions{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+    .reaction-btn{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.15);border-radius:20px;padding:2px 8px;font-size:13px;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+    .reaction-btn.active{background:rgba(249,115,22,0.25);border-color:rgba(249,115,22,0.5)}
+    .reaction-btn:active{transform:scale(0.9)}
+
+  
+    /* Notification prompt banner */
+    #notif-banner{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(251,191,36,0.08));border-bottom:1px solid rgba(249,115,22,0.2);font-size:12.5px;color:#fbbf24;gap:10px;flex-shrink:0}
+    #notif-banner-text{flex:1;font-size:12px;color:rgba(253,186,116,0.8)}
+    #notif-allow{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:16px;padding:5px 12px;color:white;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+    #notif-dismiss{background:none;border:none;color:rgba(249,115,22,0.4);font-size:16px;cursor:pointer;padding:2px 6px;flex-shrink:0}
+
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -213,13 +268,17 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
     </div>
     <div id="header-actions">
+      <button class="hdr-btn" id="theme-btn" title="Toggle light/dark mode" aria-label="Toggle theme" onclick="toggleTheme()">&#x2600;&#xFE0F;</button>
       <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound">🕉️</button>
       <button class="hdr-btn" id="history-btn" title="Save History" aria-label="Save history" onclick="openHistFromMenu()">&#x1F4BE;</button>
       <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or view profile">Sign In</button>
+      <button class="hdr-btn" id="search-btn" title="Search messages" aria-label="Search" onclick="toggleSearch()">&#x1F50D;</button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
   </div>
 
+  <div id="search-bar"><input id="search-input" type="search" placeholder="Search messages..." /><span id="search-count"></span><button id="search-close" onclick="closeSearch()" aria-label="Close search">&#x2715;</button></div>
+  <div id="notif-banner"><div id="notif-banner-text">&#x1F514; Get daily wisdom from the Gita every morning</div><button id="notif-allow" onclick="requestNotifPermission()">Enable</button><button id="notif-dismiss" onclick="dismissNotifBanner()" aria-label="Dismiss">&#x2715;</button></div>
   <div id="offline-banner">&#x1F534; No internet connection</div>
   <div id="install-banner">
     <span>&#x1F4F2; Install Ask Krishna on your home screen!</span>
@@ -452,6 +511,15 @@
           <div class="hmenu-sub" id="hm-notif-sub">Off — tap to enable</div>
         </div>
         <div class="hmenu-toggle" id="hm-notif-toggle"></div>
+      </div>
+      <!-- Daily Notifications -->
+      <div class="hmenu-item" onclick="openNotifTimePicker()" role="button" aria-label="Daily wisdom notification">
+        <div class="hmenu-icon">&#x1F514;</div>
+        <div class="hmenu-label">
+          <div class="hmenu-title">Daily Wisdom Alert</div>
+          <div class="hmenu-sub" id="hm-notif-sub">Get Gita wisdom every morning</div>
+        </div>
+        <div class="hmenu-arrow">&#x203A;</div>
       </div>
       <!-- Help & Tips -->
       <div class="hmenu-item" onclick="openTips();closeHamburger()" role="button" aria-label="Help and Tips">
@@ -771,7 +839,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();addMsg('assistant',err.name==='AbortError'?'The response took too long. Please try again.':navigator.onLine?'A moment of silence... Something went wrong. Please try again.':'I cannot reach you without internet. Please reconnect.')}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -1887,6 +1955,305 @@ pullHistory=function(){
     if(currentUser){clearTimeout(window._syncTimer);window._syncTimer=setTimeout(pushHistory,2000);}
   };
 })();
+
+
+// ── Dark / Light Mode ─────────────────────────────────────────────────────────
+var THEME_KEY='ask_krishna_theme';
+function applyTheme(t){
+  if(t==='light'){document.body.classList.add('light');var b=document.getElementById('theme-btn');if(b)b.innerHTML='&#x1F319;';}
+  else{document.body.classList.remove('light');var b=document.getElementById('theme-btn');if(b)b.innerHTML='&#x2600;&#xFE0F;';}
+}
+function toggleTheme(){
+  var isLight=document.body.classList.contains('light');
+  var next=isLight?'dark':'light';
+  localStorage.setItem(THEME_KEY,next);
+  applyTheme(next);
+  showToast(next==='light'?'Light mode on':'Dark mode on');
+}
+applyTheme(localStorage.getItem(THEME_KEY)||'dark');
+
+
+// ── Message Search ────────────────────────────────────────────────────────────
+var _searchActive=false;
+var _searchHighlights=[];
+var _searchIdx=0;
+function toggleSearch(){
+  _searchActive=!_searchActive;
+  var bar=document.getElementById('search-bar');
+  var inp=document.getElementById('search-input');
+  if(_searchActive){bar.classList.add('show');if(inp){inp.value='';inp.focus();}}
+  else{closeSearch();}
+}
+function closeSearch(){
+  _searchActive=false;
+  var bar=document.getElementById('search-bar');if(bar)bar.classList.remove('show');
+  clearSearchHighlights();
+  var cnt=document.getElementById('search-count');if(cnt)cnt.textContent='';
+}
+function clearSearchHighlights(){
+  document.querySelectorAll('.msg-highlight').forEach(function(el){
+    var parent=el.parentNode;
+    parent.replaceChild(document.createTextNode(el.textContent),el);
+    parent.normalize();
+  });
+  _searchHighlights=[];_searchIdx=0;
+}
+function doSearch(q){
+  clearSearchHighlights();
+  if(!q||q.length<2){var cnt=document.getElementById('search-count');if(cnt)cnt.textContent='';return;}
+  var bubbles=document.querySelectorAll('.bubble');
+  var found=0;
+  bubbles.forEach(function(bub){
+    var text=bub.textContent;
+    var lo=text.toLowerCase();var qlo=q.toLowerCase();
+    if(lo.indexOf(qlo)===-1)return;
+    var html='';var last=0;var idx;
+    while((idx=lo.indexOf(qlo,last))!==-1){
+      html+=escHtml(text.slice(last,idx))+'<mark class="msg-highlight">'+escHtml(text.slice(idx,idx+q.length))+'</mark>';
+      last=idx+q.length;found++;
+    }
+    html+=escHtml(text.slice(last));
+    bub.innerHTML=html;
+    _searchHighlights=_searchHighlights.concat(Array.from(bub.querySelectorAll('.msg-highlight')));
+  });
+  var cnt=document.getElementById('search-count');
+  if(cnt)cnt.textContent=found?found+' found':'No results';
+  if(_searchHighlights.length>0){_searchIdx=0;_searchHighlights[0].scrollIntoView({behavior:'smooth',block:'center'});}
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+document.getElementById('search-input').addEventListener('input',function(){doSearch(this.value.trim());});
+document.getElementById('search-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&_searchHighlights.length>0){
+    _searchIdx=(_searchIdx+1)%_searchHighlights.length;
+    _searchHighlights[_searchIdx].scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  if(e.key==='Escape')closeSearch();
+});
+
+
+// ── Share Response ────────────────────────────────────────────────────────────
+function shareResponse(content){
+  var text='Krishna says:\n\n'+content+'\n\n— Ask Krishna App\nhttps://ashusrav821.github.io/ask-krishna/';
+  if(navigator.share){
+    navigator.share({title:'Wisdom from Ask Krishna',text:text}).catch(function(){});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){showToast('Copied to clipboard!');});
+  }else{showToast('Sharing not supported on this browser');}
+}
+
+
+// ── Message Reactions ─────────────────────────────────────────────────────────
+var REACTIONS=[{e:'\uD83D\uDE4F',label:'Grateful'},{e:'\uD83D\uDCA1',label:'Insightful'},{e:'\u2764\uFE0F',label:'Love'},{e:'\uD83C\uDF3C',label:'Peaceful'}];
+function addReactions(col,msgId){
+  var reacts=document.createElement('div');reacts.className='msg-reactions';
+  REACTIONS.forEach(function(r){
+    var btn=document.createElement('button');btn.className='reaction-btn';btn.textContent=r.e;
+    btn.title=r.label;btn.setAttribute('aria-label',r.label);
+    var key='reaction_'+msgId+'_'+r.e;
+    if(localStorage.getItem(key))btn.classList.add('active');
+    btn.onclick=function(){
+      if(btn.classList.contains('active')){btn.classList.remove('active');localStorage.removeItem(key);}
+      else{btn.classList.add('active');localStorage.setItem(key,'1');showToast(r.label+'!');}
+    };
+    reacts.appendChild(btn);
+  });
+  col.appendChild(reacts);
+}
+
+
+// ── Retry failed message ──────────────────────────────────────────────────────
+function addRetryMsg(errorText,originalText){
+  var row=document.createElement('div');row.className='msg-row assistant';row.id='retry-row';
+  var av=document.createElement('div');av.className='avatar bot';av.textContent='\uD83E\uDD9A';av.setAttribute('aria-hidden','true');
+  var col=document.createElement('div');col.className='msg-col';
+  var bub=document.createElement('div');bub.className='bubble bot';
+  bub.style.cssText='border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05)';
+  bub.textContent=errorText;
+  var retryBtn=document.createElement('button');
+  retryBtn.className='msg-act-btn';retryBtn.style.marginTop='8px';retryBtn.textContent='\u21BA Try again';
+  retryBtn.onclick=function(){
+    var r=document.getElementById('retry-row');if(r)r.remove();
+    msgs=msgs.filter(function(m){return m.content!==errorText;});
+    inputEl.value=originalText;updateSend();sendMessage();
+  };
+  col.appendChild(bub);col.appendChild(retryBtn);row.appendChild(av);row.appendChild(col);
+  messagesEl.appendChild(row);scrollBottom();
+}
+
+
+// ── Notification Permission & Daily Wisdom ────────────────────────────────────
+var NOTIF_DISMISSED='ak_notif_dismissed';
+var NOTIF_TIME_KEY='ak_notif_time';
+function checkNotifBanner(){
+  if(localStorage.getItem(NOTIF_DISMISSED))return;
+  if(!('Notification' in window)||!('serviceWorker' in navigator))return;
+  if(Notification.permission==='granted'){scheduleWisdomNotif();return;}
+  if(Notification.permission==='denied')return;
+  // Show banner after 30 seconds of use
+  setTimeout(function(){
+    var b=document.getElementById('notif-banner');
+    if(b)b.style.display='flex';
+  },30000);
+}
+function dismissNotifBanner(){
+  var b=document.getElementById('notif-banner');if(b)b.style.display='none';
+  localStorage.setItem(NOTIF_DISMISSED,'1');
+}
+function requestNotifPermission(){
+  dismissNotifBanner();
+  Notification.requestPermission().then(function(perm){
+    if(perm==='granted'){
+      showToast('Daily wisdom notifications enabled!');
+      scheduleWisdomNotif();
+      showNotifTimePicker();
+    }else{
+      showToast('Notifications blocked. Enable in browser settings.');
+    }
+  });
+}
+function showNotifTimePicker(){
+  var time=localStorage.getItem(NOTIF_TIME_KEY)||'07:00';
+  var t=prompt('What time should Krishna send daily wisdom? (e.g. 07:00)',time);
+  if(t&&/^\d{1,2}:\d{2}$/.test(t)){localStorage.setItem(NOTIF_TIME_KEY,t);showToast('Daily wisdom set for '+t);}
+}
+function scheduleWisdomNotif(){
+  if(Notification.permission!=='granted')return;
+  if(!navigator.serviceWorker||!navigator.serviceWorker.controller)return;
+  var timeStr=localStorage.getItem(NOTIF_TIME_KEY)||'07:00';
+  var parts=timeStr.split(':');
+  var now=new Date();
+  var target=new Date();
+  target.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+  if(target<=now)target.setDate(target.getDate()+1);
+  var delay=target.getTime()-now.getTime();
+  clearTimeout(window._notifTimer);
+  window._notifTimer=setTimeout(function(){
+    var verse=getTodaysVerse();
+    navigator.serviceWorker.controller.postMessage({
+      type:'SHOW_NOTIF',
+      title:'Today\'s Wisdom from the Gita \uD83C\uDF38',
+      body:'Gita '+verse.ref+': '+verse.theme
+    });
+    // Reschedule for next day
+    scheduleWisdomNotif();
+  },delay);
+}
+// Handle notification tap from sw.js
+navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='WISDOM_NOTIF_TAP'){
+    askTodaysWisdom();
+  }
+});
+// Add "Notify time" to hamburger menu settings
+function openNotifTimePicker(){
+  closeHamburger();
+  if(Notification.permission!=='granted'){
+    requestNotifPermission();
+  }else{
+    showNotifTimePicker();
+  }
+}
+
+
+// ── Language-aware TTS voices ─────────────────────────────────────────────────
+var TTS_LANG_MAP={
+  'en':'en-IN','te':'te-IN','ta':'ta-IN','hi':'hi-IN'
+};
+var TTS_VOICE_NAMES={
+  'en':['en-IN-Neural2-B','en-IN-Wavenet-B','en-IN-Neural2-C'],
+  'te':['te-IN-Standard-A','te-IN-Standard-B'],
+  'ta':['ta-IN-Wavenet-A','ta-IN-Wavenet-B'],
+  'hi':['hi-IN-Neural2-B','hi-IN-Wavenet-B']
+};
+// Language-specific Gita footer verses
+var FOOTER_VERSE={
+  'en':'\u0964\u0964 \u0915\u0930\u094D\u092E\u0923\u094D\u092F\u0947\u0935\u093E\u0927\u093F\u0915\u093E\u0930\u0938\u094D\u0924\u0947 \u092E\u093E \u092B\u0932\u0947\u0937\u0941 \u0915\u0926\u093E\u091A\u0928 \u0964\u0964 \u2014 Bhagavad Gita 2.47',
+  'te':'\u0964\u0964 \u0C15\u0C30\u0C4D\u0C2E\u0C23\u0C4D\u0C2F\u0C47\u0C35\u0C3E\u0C27\u0C3F\u0C15\u0C3E\u0C30\u0C38\u0C4D\u0C24\u0C47 \u0964\u0964 \u2014 \u0C2D\u0C17\u0C35\u0C26\u0C4D\u0C17\u0C40\u0C24 2.47',
+  'ta':'\u0964\u0964 \u0B95\u0BB0\u0BCD\u0BAE\u0BAE\u0BC7 \u0B89\u0BA9\u0BCD \u0B89\u0BB0\u0BBF\u0BAE\u0BC8 \u0964\u0964 \u2014 \u0BAA\u0B95\u0BB5\u0BA4\u0BCD \u0B95\u0BC0\u0BA4\u0BC8 2.47',
+  'hi':'\u0964\u0964 \u0915\u0930\u094D\u092E \u0915\u0930\u094B \u092B\u0932 \u0915\u0940 \u091A\u093E\u0939 \u0928 \u0930\u0916\u094B \u0964\u0964 \u2014 \u092D\u0917\u0935\u0926\u094D\u0917\u0940\u0924\u093E 2.47'
+};
+function updateVerseFooter(){
+  var vf=document.getElementById('verse-footer');
+  if(vf)vf.textContent=FOOTER_VERSE[curLang]||FOOTER_VERSE['en'];
+}
+
+
+// ── Empty state illustration ──────────────────────────────────────────────────
+function showEmptyState(){
+  var existing=document.getElementById('empty-state');
+  if(existing)existing.remove();
+  var el=document.createElement('div');
+  el.id='empty-state';
+  el.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;opacity:0.85;pointer-events:none';
+  el.innerHTML=(
+    '<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+    +'<circle cx="60" cy="60" r="55" fill="rgba(249,115,22,0.06)" stroke="rgba(249,115,22,0.15)" stroke-width="1.5"/>'
+    +'<text x="60" y="75" font-size="52" text-anchor="middle">\uD83E\uDD9A</text>'
+    +'</svg>'
+    +'<div style="font-size:17px;color:#fbbf24;font-weight:600;margin-top:16px;font-family:Georgia,serif">Ask Krishna</div>'
+    +'<div style="font-size:12.5px;color:rgba(253,186,116,0.5);margin-top:6px;line-height:1.6;max-width:240px">Share any situation, challenge or question and receive wisdom from the Bhagavad Gita</div>'
+    +'<div style="font-size:11px;color:rgba(249,115,22,0.3);margin-top:12px">\u0964\u0964 \u0915\u0930\u094D\u092E\u0923\u094D\u092F\u0947\u0935\u093E\u0927\u093F\u0915\u093E\u0930\u0938\u094D\u0924\u0947 \u0964\u0964</div>'
+  );
+  messagesEl.insertBefore(el,messagesEl.firstChild);
+}
+function hideEmptyState(){
+  var el=document.getElementById('empty-state');if(el)el.remove();
+}
+
+// ── Init new features ─────────────────────────────────────────────────────────
+// Show empty state on first load if no messages
+if(!msgs.length){showEmptyState();}
+// Update verse footer on lang change
+updateVerseFooter();
+// Check notification banner
+checkNotifBanner();
+// Schedule if already granted
+if(typeof Notification!=='undefined'&&Notification.permission==='granted'){scheduleWisdomNotif();}
+// Override confirmLang to update footer and TTS voice
+var _origConfirmLang=confirmLang;
+confirmLang=function(){
+  _origConfirmLang();
+  updateVerseFooter();
+};
+// Override addMsg to hide empty state on first message
+var _origAddMsg2=addMsg;
+addMsg=function(role,content){
+  hideEmptyState();
+  _origAddMsg2(role,content);
+};
+// Update notif sub-text if time is set
+(function(){
+  var t=localStorage.getItem(NOTIF_TIME_KEY);
+  var sub=document.getElementById('hm-notif-sub');
+  if(t&&sub)sub.textContent='Daily at '+t;
+})();
+// Update TTS speakText to use language-aware voice via worker TTS
+var _origSpeakText=speakText;
+speakText=function(text){
+  if(!ttsEnabled)return;
+  // Use Google Cloud TTS via worker for non-English
+  if(curLang!=='en'&&typeof W!=='undefined'){
+    var voices=TTS_VOICE_NAMES[curLang];
+    var voice=voices?voices[0]:'en-IN-Neural2-B';
+    var langCode=TTS_LANG_MAP[curLang]||'en-IN';
+    fetch(W+'tts',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text.slice(0,4800),voice:voice,langCode:langCode,rate:0.82,pitch:-2.0})
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.audioContent){
+        if(window._ttsAudio){window._ttsAudio.pause();}
+        window._ttsAudio=new Audio('data:audio/mp3;base64,'+d.audioContent);
+        window._ttsAudio.play().catch(function(){});
+      }
+    })
+    .catch(function(){_origSpeakText(text);});
+  }else{
+    _origSpeakText(text);
+  }
+};
 </script>
 </body>
 </html>
