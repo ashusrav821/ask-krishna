@@ -1,11 +1,11 @@
-var CACHE='ask-krishna-v10';
+var CACHE='askkeshava-v1';
 var ASSETS=[
-  '/ask-krishna/',
-  '/ask-krishna/index.html',
-  '/ask-krishna/manifest.json',
-  '/ask-krishna/icon-192.png',
-  '/ask-krishna/icon-512.png',
-  '/ask-krishna/om.mp3'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/om.mp3'
 ];
 self.addEventListener('install',function(e){
   e.waitUntil(
@@ -40,12 +40,12 @@ self.addEventListener('fetch',function(e){
 // ── Notification click → open/focus the app ──────────────────────────────
 self.addEventListener('notificationclick',function(e){
   e.notification.close();
-  var target=(e.notification.data&&e.notification.data.url)||'/ask-krishna/?wisdom=1';
+  var target=(e.notification.data&&e.notification.data.url)||'/?wisdom=1';
   e.waitUntil(
     clients.matchAll({type:'window',includeUncontrolled:true}).then(function(list){
       for(var i=0;i<list.length;i++){
         var c=list[i];
-        if(c.url.indexOf('/ask-krishna')!==-1&&'focus' in c){
+        if(c.url.indexOf('askkeshava.com')!==-1&&'focus' in c){
           c.focus();
           c.postMessage({type:'WISDOM_NOTIF_TAP'});
           return;
@@ -60,11 +60,11 @@ self.addEventListener('message',function(e){
   if(e.data&&e.data.type==='SHOW_NOTIF'){
     self.registration.showNotification(e.data.title||'Ask Krishna \uD83C\uDF38',{
       body:e.data.body||'Your daily wisdom from the Bhagavad Gita awaits.',
-      icon:'/ask-krishna/icon-192.png',
-      badge:'/ask-krishna/icon-192.png',
+      icon:'/icon-192.png',
+      badge:'/icon-192.png',
       tag:'daily-wisdom',
       renotify:true,
-      data:{url:'/ask-krishna/?wisdom=1'}
+      data:{url:'/?wisdom=1'}
     });
   }
 });
