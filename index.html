@@ -953,8 +953,8 @@ function clearChatFromMenu(){
 }
 function shareApp(){
   closeHamburger();
-  if(navigator.share){navigator.share({title:'Ask Krishna',text:'Discover the timeless wisdom of the Bhagavad Gita with Ask Krishna!',url:'https://ashusrav821.github.io/ask-krishna/'}).catch(function(){});}
-  else{navigator.clipboard&&navigator.clipboard.writeText('https://ashusrav821.github.io/ask-krishna/').then(function(){addMsg('assistant','Link copied to clipboard! Share Ask Krishna with others.')}).catch(function(){addMsg('assistant','Visit https://ashusrav821.github.io/ask-krishna/ to share!')});}
+  if(navigator.share){navigator.share({title:'Ask Krishna',text:'Discover the timeless wisdom of the Bhagavad Gita with Ask Krishna!',url:'https://askkeshava.com/'}).catch(function(){});}
+  else{navigator.clipboard&&navigator.clipboard.writeText('https://askkeshava.com/').then(function(){addMsg('assistant','Link copied to clipboard! Share Ask Krishna with others.')}).catch(function(){addMsg('assistant','Visit https://askkeshava.com/ to share!')});}
 }
 // Swipe down to close hamburger
 var sheetStartY=0;
@@ -1175,7 +1175,7 @@ document.getElementById('tips-prev').addEventListener('click',function(){if(tipI
 document.getElementById('tips-skip-btn').addEventListener('click',function(){closeTips()});
 document.getElementById('tips-overlay').addEventListener('click',function(e){if(e.target===this)closeTips()});
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/ask-krishna/sw.js').catch(function(){});
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
   navigator.serviceWorker.addEventListener('message',function(e){
     if(e.data&&e.data.type==='WISDOM_NOTIF_TAP'){askTodaysWisdom();}
   });
@@ -1610,7 +1610,7 @@ function updateNotifToggle(){
 
 // ── Google Sign-In (redirect OAuth flow) ─────────────────────────────────────
 var GOOGLE_CLIENT_ID='598561547537-rsnu1s0tm2jaksqinojqtev3aesukh9a.apps.googleusercontent.com';
-var GOOGLE_REDIRECT='https://ashusrav821.github.io/ask-krishna/';
+var GOOGLE_REDIRECT='https://askkeshava.com/';
 
 function showToast(msg,dur){
   var t=document.getElementById('toast');
@@ -2033,7 +2033,7 @@ document.getElementById('search-input').addEventListener('keydown',function(e){
 
 // ── Share Response ────────────────────────────────────────────────────────────
 function shareResponse(content){
-  var text='Krishna says:\n\n'+content+'\n\n— Ask Krishna App\nhttps://ashusrav821.github.io/ask-krishna/';
+  var text='Krishna says:\n\n'+content+'\n\n— Ask Krishna App\nhttps://askkeshava.com/';
   if(navigator.share){
     navigator.share({title:'Wisdom from Ask Krishna',text:text}).catch(function(){});
   }else if(navigator.clipboard){
