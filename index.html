@@ -19,11 +19,11 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;width:100%;background:linear-gradient(135deg,#0f0500 0%,#1a0a00 40%,#0d1a0d 100%);font-family:Georgia,'Palatino Linotype',serif;color:#e5e7eb;overflow:hidden;-webkit-tap-highlight-color:transparent}
     #app{display:flex;flex-direction:column;height:100dvh;max-width:680px;margin:0 auto}
-    #header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;border-bottom:1px solid rgba(249,115,22,0.2);background:rgba(15,5,0,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:10;flex-shrink:0}
+    #header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(249,115,22,0.2);background:rgba(15,5,0,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:10;flex-shrink:0;min-height:56px}
     #logo{width:44px;height:44px;background:radial-gradient(circle,#7c2d12,#431407);border-radius:50%;border:2px solid rgba(249,115,22,0.45);box-shadow:0 0 18px rgba(249,115,22,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
     #header-text{flex:1;min-width:0}
-    #header-title{font-size:18.5px;font-weight:bold;background:linear-gradient(90deg,#fbbf24,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.04em}
-    #header-sub{font-size:9.5px;color:#fde68a;letter-spacing:0.06em;margin-top:2px;text-shadow:0 0 6px rgba(251,191,36,0.5)}
+    #header-title{font-size:19px;font-weight:bold;background:linear-gradient(90deg,#fbbf24,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.02em;white-space:nowrap}
+    #header-sub{font-size:9px;color:#fde68a;letter-spacing:0.05em;margin-top:1px;text-shadow:0 0 6px rgba(251,191,36,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
     .hdr-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);color:#fdba74;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
     .hdr-btn.active{background:linear-gradient(135deg,#f97316,#ea580c);border-color:#f97316;color:white;box-shadow:0 0 10px rgba(249,115,22,0.4)}
@@ -161,7 +161,7 @@
     #wisdom-btn-title{font-weight:bold;font-size:13.5px;color:#fbbf24}
     #wisdom-btn-sub{font-size:11px;color:rgba(251,191,36,0.55);margin-top:2px}
     /* Auth */
-    #signin-btn{height:34px;padding:0 14px;border-radius:20px;border:1px solid rgba(249,115,22,0.45);background:rgba(249,115,22,0.12);color:#fdba74;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
+    #signin-btn-old{height:34px;padding:0 14px;border-radius:20px;border:1px solid rgba(249,115,22,0.45);background:rgba(249,115,22,0.12);color:#fdba74;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
     #signin-btn:active{background:rgba(249,115,22,0.25)}
     #signin-btn.signed-in{background:linear-gradient(135deg,rgba(249,115,22,0.25),rgba(251,191,36,0.15));border-color:#f97316;color:#fbbf24}
     .auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(249,115,22,0.25);border-radius:12px;color:#f3f4f6;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;transition:border-color 0.2s}
@@ -257,6 +257,11 @@
     #notif-allow{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:16px;padding:5px 12px;color:white;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
     #notif-dismiss{background:none;border:none;color:rgba(249,115,22,0.4);font-size:16px;cursor:pointer;padding:2px 6px;flex-shrink:0}
 
+  
+    .hm-quick-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.12);border-radius:10px;cursor:pointer;color:#fdba74;font-size:18px;-webkit-tap-highlight-color:transparent;transition:all 0.15s}
+    .hm-quick-btn span{font-size:10px;color:rgba(253,186,116,0.6);font-family:inherit}
+    .hm-quick-btn:active{background:rgba(249,115,22,0.18);transform:scale(0.95)}
+    .hm-quick-btn.on{background:rgba(249,115,22,0.2);border-color:rgba(249,115,22,0.4)}
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -264,15 +269,10 @@
   <div id="header">
     <div id="logo">&#x1F99A;</div>
     <div id="header-text">
-      <div id="header-title">Ask Krishna</div>
-      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA &middot; 18 CHAPTERS &middot; 700 VERSES</div>
+      <div id="header-title">Ask Keshava</div>
+      <div id="header-sub">WISDOM OF THE BHAGAVAD GITA</div>
     </div>
     <div id="header-actions">
-      <button class="hdr-btn" id="theme-btn" title="Toggle light/dark mode" aria-label="Toggle theme" onclick="toggleTheme()">&#x2600;&#xFE0F;</button>
-      <button class="hdr-btn" id="om-btn" title="Play Om sound" aria-label="Toggle Om sound">🕉️</button>
-      <button class="hdr-btn" id="history-btn" title="Save History" aria-label="Save history" onclick="openHistFromMenu()">&#x1F4BE;</button>
-      <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or view profile">Sign In</button>
-      <button class="hdr-btn" id="search-btn" title="Search messages" aria-label="Search" onclick="toggleSearch()">&#x1F50D;</button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
   </div>
@@ -450,6 +450,25 @@
   <div id="hamburger-overlay" onclick="closeHamburger()"></div>
   <div id="hamburger-sheet">
     <div id="hamburger-handle"></div>
+    <!-- Auth row at top of hamburger -->
+    <div id="hm-auth-row" style="padding:10px 16px 8px;border-bottom:1px solid rgba(249,115,22,0.1)">
+      <button id="hm-signin-btn" onclick="openAuthModal();closeHamburger()" style="width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:block">Sign In / Sign Up</button>
+      <div id="hm-profile-row" style="display:none;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">&#x1F64F;</div>
+        <div style="flex:1;min-width:0">
+          <div id="hm-user-name2" style="font-size:14px;color:#fbbf24;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="hm-user-email2" style="font-size:11px;color:rgba(253,186,116,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        </div>
+        <button onclick="openProfileModal();closeHamburger()" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:8px;color:#fdba74;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">Edit</button>
+      </div>
+    </div>
+    <!-- Quick action row -->
+    <div id="hm-quick-row" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(249,115,22,0.08)">
+      <button class="hm-quick-btn" id="hm-q-om" onclick="if(omPlaying){stopOm()}else{playOm()};updateQuickRow()" aria-label="Om sound">🕉️<span>Om</span></button>
+      <button class="hm-quick-btn" onclick="toggleTheme();updateQuickRow()" id="hm-q-theme" aria-label="Theme">☀️<span>Theme</span></button>
+      <button class="hm-quick-btn" onclick="closeHamburger();toggleSearch()" aria-label="Search">🔍<span>Search</span></button>
+      <button class="hm-quick-btn" onclick="openHistFromMenu();closeHamburger()" aria-label="History">💾<span>History</span></button>
+    </div>
     <div id="hm-user-info" style="display:none;padding:12px 20px 8px;border-bottom:1px solid rgba(249,115,22,0.1);margin-bottom:4px"><div style="font-size:13px;color:#fbbf24;font-weight:600" id="hm-user-name"></div><div style="font-size:11px;color:rgba(253,186,116,0.5)" id="hm-user-email"></div></div>
     <div id="hamburger-items">
       <!-- Voice TTS -->
@@ -1194,7 +1213,13 @@ function setTextSize(size){
 }
 (function(){var sz=localStorage.getItem(FSK);if(sz)setTextSize(sz);})();
 // Render suggestions first so they appear above welcome bubble
-SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
+SUGG.forEach(function(s){
+  var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;
+  btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus();};
+  suggestEl.appendChild(btn);
+});
+// Make sure suggestions are visible
+suggestEl.style.display='flex';
 var savedHistory=histEn?loadHist():null;
 if(savedHistory&&savedHistory.length>0){
   savedHistory.forEach(function(m){
@@ -1702,7 +1727,7 @@ function syncNow(){
         av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
         var col=document.createElement('div');col.className='msg-col';
         var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
-        bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+        bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
       });
       trimMsgDom();scrollBottom();
       setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
@@ -1735,7 +1760,7 @@ function startPeriodicSync(){
           av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
           var col=document.createElement('div');col.className='msg-col';
           var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
-          bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+          bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
         });
         trimMsgDom();scrollBottom();
         setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' from another device');
@@ -1769,7 +1794,7 @@ document.addEventListener('visibilitychange',function(){
             av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
             var col=document.createElement('div');col.className='msg-col';
             var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
-            bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+            bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
           });
           trimMsgDom();scrollBottom();
           setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
@@ -1940,7 +1965,7 @@ pullHistory=function(){
         av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
         var col=document.createElement('div');col.className='msg-col';
         var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
-        bub.textContent=m.content;col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+        bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
       });
       trimMsgDom();scrollBottom();setSyncStatus('synced','History restored from cloud');
     }else{setSyncStatus('','');}
@@ -2182,6 +2207,8 @@ function updateVerseFooter(){
 function showEmptyState(){
   var existing=document.getElementById('empty-state');
   if(existing)existing.remove();
+  // Don't show if suggestions already rendered
+  if(suggestEl&&suggestEl.children.length>0)return;
   var el=document.createElement('div');
   el.id='empty-state';
   el.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;opacity:0.85;pointer-events:none';
@@ -2190,12 +2217,14 @@ function showEmptyState(){
     +'<circle cx="60" cy="60" r="55" fill="rgba(249,115,22,0.06)" stroke="rgba(249,115,22,0.15)" stroke-width="1.5"/>'
     +'<text x="60" y="75" font-size="52" text-anchor="middle">\uD83E\uDD9A</text>'
     +'</svg>'
-    +'<div style="font-size:17px;color:#fbbf24;font-weight:600;margin-top:16px;font-family:Georgia,serif">Ask Krishna</div>'
+    +'<div style="font-size:17px;color:#fbbf24;font-weight:600;margin-top:16px;font-family:Georgia,serif">Ask Keshava</div>'
     +'<div style="font-size:12.5px;color:rgba(253,186,116,0.5);margin-top:6px;line-height:1.6;max-width:240px">Share any situation, challenge or question and receive wisdom from the Bhagavad Gita</div>'
     +'<div style="font-size:11px;color:rgba(249,115,22,0.3);margin-top:12px">\u0964\u0964 \u0915\u0930\u094D\u092E\u0923\u094D\u092F\u0947\u0935\u093E\u0927\u093F\u0915\u093E\u0930\u0938\u094D\u0924\u0947 \u0964\u0964</div>'
   );
-  messagesEl.insertBefore(el,messagesEl.firstChild);
+  messagesEl.appendChild(el);
 }
+// Don't call showEmptyState on init since suggestions are always shown
+// if(!msgs.length){showEmptyState();}
 function hideEmptyState(){
   var el=document.getElementById('empty-state');if(el)el.remove();
 }
@@ -2254,6 +2283,61 @@ speakText=function(text){
     _origSpeakText(text);
   }
 };
+
+// ── Markdown renderer ─────────────────────────────────────────────────────────
+function renderMarkdown(text){
+  var escaped=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // **bold**
+  escaped=escaped.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  // *italic*
+  escaped=escaped.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  // line breaks
+  escaped=escaped.replace(/\n/g,'<br>');
+  return escaped;
+}
+
+// ── Quick row state ───────────────────────────────────────────────────────────
+function updateQuickRow(){
+  var omBtn=document.getElementById('hm-q-om');
+  if(omBtn)omBtn.classList.toggle('on',omPlaying);
+  var themeBtn=document.getElementById('hm-q-theme');
+  if(themeBtn){
+    var isLight=document.body.classList.contains('light');
+    themeBtn.innerHTML=(isLight?'🌙':'☀️')+'<span>Theme</span>';
+    themeBtn.classList.toggle('on',isLight);
+  }
+}
+
+// ── Hamburger auth state ──────────────────────────────────────────────────────
+function updateHamburgerAuth(){
+  var signinBtn=document.getElementById('hm-signin-btn');
+  var profileRow=document.getElementById('hm-profile-row');
+  var name2=document.getElementById('hm-user-name2');
+  var email2=document.getElementById('hm-user-email2');
+  if(currentUser){
+    if(signinBtn)signinBtn.style.display='none';
+    if(profileRow)profileRow.style.display='flex';
+    if(name2)name2.textContent=currentUser.name||'';
+    if(email2)email2.textContent=currentUser.email||'';
+  }else{
+    if(signinBtn)signinBtn.style.display='block';
+    if(profileRow)profileRow.style.display='none';
+  }
+}
+
+// Hook into openHamburger
+var _origOpenHamburger=openHamburger;
+openHamburger=function(){
+  updateHamburgerAuth();
+  updateQuickRow();
+  _origOpenHamburger();
+};
+
+// Hook into onSignedIn and doSignOut
+var _origOnSignedIn2=onSignedIn;
+onSignedIn=function(token,user){_origOnSignedIn2(token,user);updateHamburgerAuth();};
+var _origDoSignOut2=doSignOut;
+doSignOut=function(){_origDoSignOut2();updateHamburgerAuth();};
 </script>
 </body>
 </html>
