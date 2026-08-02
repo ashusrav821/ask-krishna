@@ -1,4 +1,4 @@
-var CACHE='askkeshava-v3';
+var CACHE='askkeshava-v4';
 var ASSETS=[
   '/',
   '/index.html',
@@ -28,7 +28,7 @@ self.addEventListener('activate',function(e){
     }).then(function(){return self.clients.claim()}).then(function(){
       // Notify all open tabs of update
       return self.clients.matchAll({type:'window'}).then(function(clients){
-        clients.forEach(function(c){c.postMessage({type:'APP_UPDATED',version:'v3'});});
+        clients.forEach(function(c){c.postMessage({type:'APP_UPDATED',version:'v4'});});
       });
     })
   );
