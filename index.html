@@ -673,6 +673,19 @@ function renderMarkdown(text){
   s=s.replace(/\n/g,'<br>');
   return s;
 }
+
+// ── App Error Logger ──────────────────────────────────────────────────────────
+function appLog(level, context, message, data){
+  var entry={level:level,context:context,message:message,data:data||{},userAgent:navigator.userAgent,url:window.location.href,ts:new Date().toISOString()};
+  // Always log to console
+  var fn=level==='error'?console.error:level==='warn'?console.warn:console.log;
+  fn('[AskKeshava]['+context+']', message, data||'');
+  // Send to worker (fire and forget)
+  try{
+    fetch(W+'log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(function(){});
+  }catch(e){}
+}
+
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function openModal(id){document.getElementById(id).classList.add('show')}
 function getTime(){var d=new Date();var h=d.getHours(),m=d.getMinutes();var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(m<10?'0'+m:m)+' '+ap}
@@ -832,7 +845,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -1125,30 +1138,77 @@ function getWisdomDate(){
   return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 }
 function askTodaysWisdom(){
-  if(loading){addMsg('assistant','Please wait for the current response to finish, then tap Today\'s Wisdom again.');return;}
-  if(!navigator.onLine){addMsg('assistant','No internet connection. Please reconnect and try Today\'s Wisdom again.');return;}
+  appLog('info','wisdom','Today\'s Wisdom tapped',{loading:loading,online:navigator.onLine});
+  if(loading){
+    appLog('warn','wisdom','Blocked — loading=true');
+    addMsg('assistant','Please wait for the current response to finish, then tap Today\'s Wisdom again.');
+    return;
+  }
+  if(!navigator.onLine){
+    appLog('warn','wisdom','Blocked — offline');
+    addMsg('assistant','No internet connection. Please reconnect and try Today\'s Wisdom again.');
+    return;
+  }
   var wb=document.getElementById('wisdom-wrap');
   if(wb)wb.style.display='none';
   suggestEl.style.display='none';
   var verse=getTodaysVerse();
+  appLog('info','wisdom','Verse selected',{ref:verse.ref,theme:verse.theme});
   var sub=document.getElementById('hm-wisdom-sub');
   if(sub)sub.textContent='Gita '+verse.ref+' \u2014 '+getWisdomDate();
   var wisdomPrompt='Share today\'s wisdom from the Bhagavad Gita for '+getWisdomDate()+'.\n\nFocus on Gita '+verse.ref+': "'+verse.theme+'"\n\nShare this as today\'s daily wisdom \u2014 explain what this verse means, how it applies to modern daily life, a real-world example, and one small action the seeker can take today to live this teaching. Keep it warm, personal and uplifting.';
   loading=true;
+  updateSend();
   showTyping();
+  appLog('info','wisdom','Fetching from worker',{url:W,verse:verse.ref});
   var apiMsgs=[{role:'user',content:wisdomPrompt}];
-  var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort();},30000);
+  var ctrl=new AbortController();
+  var tout=setTimeout(function(){
+    appLog('error','wisdom','Request aborted — 30s timeout');
+    ctrl.abort();
+  },30000);
   fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal})
-  .then(function(r){return r.json();})
+  .then(function(r){
+    appLog('info','wisdom','HTTP response received',{status:r.status,ok:r.ok,contentType:r.headers.get('content-type')});
+    if(!r.ok){
+      return r.text().then(function(t){
+        appLog('error','wisdom','Non-OK HTTP response',{status:r.status,body:t.slice(0,300)});
+        throw new Error('HTTP '+r.status+': '+t.slice(0,100));
+      });
+    }
+    return r.json();
+  })
   .then(function(data){
-    clearTimeout(tout);hideTyping();
-    var reply='\uD83C\uDF05 Today\'s wisdom from the Gita could not be loaded. Please try again.';
-    if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break;}}}
+    clearTimeout(tout);
+    appLog('info','wisdom','Response parsed',{hasContent:!!(data&&data.content),error:data&&data.error});
+    hideTyping();
+    if(data.error){
+      appLog('error','wisdom','Worker returned error',{error:data.error});
+      addMsg('assistant','Today\'s wisdom could not be loaded: '+data.error+'. Please try again.');
+      return;
+    }
+    var reply='';
+    if(data.content){
+      for(var i=0;i<data.content.length;i++){
+        if(data.content[i].type==='text'){reply=data.content[i].text;break;}
+      }
+    }
+    if(!reply){
+      appLog('error','wisdom','Empty reply from API',{data:JSON.stringify(data).slice(0,200)});
+      reply='Today\'s wisdom could not be loaded. Please try again.';
+    }else{
+      appLog('info','wisdom','Reply received successfully',{length:reply.length});
+    }
     addMsg('assistant',reply);
   })
   .catch(function(err){
-    clearTimeout(tout);hideTyping();
-    addMsg('assistant',err.name==='AbortError'?'Today\'s wisdom took too long. Please try again.':'Could not load today\'s wisdom. Please check your connection.');
+    clearTimeout(tout);
+    hideTyping();
+    appLog('error','wisdom','Fetch failed',{name:err.name,message:err.message,stack:(err.stack||'').slice(0,200)});
+    var msg=err.name==='AbortError'
+      ?'Today\'s wisdom took too long (30s timeout). Please check your connection and try again.'
+      :'Could not reach Krishna. Error: '+err.message+'. Please check your connection.';
+    addMsg('assistant',msg);
   })
   .finally(function(){loading=false;updateSend();});
 }
