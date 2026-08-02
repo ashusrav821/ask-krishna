@@ -111,11 +111,13 @@
     /* Hamburger Menu */
     #hamburger-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:150;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
     #hamburger-overlay.show{display:block}
-    #hamburger-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:680px;background:#1a0800;border-top:1px solid rgba(249,115,22,0.35);border-radius:22px 22px 0 0;z-index:151;transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 40px rgba(0,0,0,0.6)}
+    #hamburger-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:680px;background:#1a0800;border-top:1px solid rgba(249,115,22,0.35);border-radius:22px 22px 0 0;z-index:151;transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 40px rgba(0,0,0,0.6);max-height:88dvh;display:flex;flex-direction:column}
     #hamburger-sheet.open{transform:translateX(-50%) translateY(0)}
-    #hamburger-handle{width:40px;height:4px;background:rgba(249,115,22,0.35);border-radius:2px;margin:14px auto 6px}
-    #hamburger-items{padding:6px 0 18px}
-    .hmenu-item{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;transition:background 0.15s;-webkit-tap-highlight-color:transparent;min-height:56px}
+    #hamburger-handle{width:40px;height:4px;background:rgba(249,115,22,0.35);border-radius:2px;margin:12px auto 4px;flex-shrink:0}
+    #hamburger-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    #hamburger-scroll::-webkit-scrollbar{display:none}
+    #hamburger-items{padding:4px 0 12px}
+    .hmenu-item{display:flex;align-items:center;gap:12px;padding:13px 18px;cursor:pointer;transition:background 0.15s;-webkit-tap-highlight-color:transparent;min-height:50px}
     .hmenu-item:active{background:rgba(249,115,22,0.08)}
     .hmenu-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
     .hmenu-label{flex:1;min-width:0}
@@ -450,141 +452,106 @@
   <div id="hamburger-overlay" onclick="closeHamburger()"></div>
   <div id="hamburger-sheet">
     <div id="hamburger-handle"></div>
-    <!-- Auth row at top of hamburger -->
-    <div id="hm-auth-row" style="padding:10px 16px 8px;border-bottom:1px solid rgba(249,115,22,0.1)">
-      <button id="hm-signin-btn" onclick="openAuthModal();closeHamburger()" style="width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:block">Sign In / Sign Up</button>
-      <div id="hm-profile-row" style="display:none;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">&#x1F64F;</div>
-        <div style="flex:1;min-width:0">
-          <div id="hm-user-name2" style="font-size:14px;color:#fbbf24;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-          <div id="hm-user-email2" style="font-size:11px;color:rgba(253,186,116,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-        </div>
-        <button onclick="openProfileModal();closeHamburger()" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:8px;color:#fdba74;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">Edit</button>
-      </div>
-    </div>
-    <!-- Quick action row -->
-    <div id="hm-quick-row" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(249,115,22,0.08)">
-      <button class="hm-quick-btn" id="hm-q-om" onclick="if(omPlaying){stopOm()}else{playOm()};updateQuickRow()" aria-label="Om sound">🕉️<span>Om</span></button>
-      <button class="hm-quick-btn" onclick="toggleTheme();updateQuickRow()" id="hm-q-theme" aria-label="Theme">☀️<span>Theme</span></button>
-      <button class="hm-quick-btn" onclick="closeHamburger();toggleSearch()" aria-label="Search">🔍<span>Search</span></button>
-      <button class="hm-quick-btn" onclick="openHistFromMenu();closeHamburger()" aria-label="History">💾<span>History</span></button>
-    </div>
-    <div id="hm-user-info" style="display:none;padding:12px 20px 8px;border-bottom:1px solid rgba(249,115,22,0.1);margin-bottom:4px"><div style="font-size:13px;color:#fbbf24;font-weight:600" id="hm-user-name"></div><div style="font-size:11px;color:rgba(253,186,116,0.5)" id="hm-user-email"></div></div>
-    <div id="hamburger-items">
-      <!-- Voice TTS -->
-      <div class="hmenu-item" id="hm-tts" onclick="toggleTtsFromMenu()">
-        <div class="hmenu-icon">&#x1F50A;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Voice Responses</div>
-          <div class="hmenu-sub" id="hm-tts-sub">Krishna speaks every answer</div>
-        </div>
-        <div class="hmenu-toggle" id="hm-tts-toggle"></div>
-      </div>
-      <!-- Choose Voice -->
-      <div class="hmenu-item" onclick="openVoicePicker();closeHamburger()">
-        <div class="hmenu-icon">&#x1F399;&#xFE0F;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Choose Voice</div>
-          <div class="hmenu-sub" id="hm-voice-sub">Google Cloud TTS voices</div>
-        </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Text Size -->
-      <div class="hmenu-item" style="cursor:default">
-        <div class="hmenu-icon">&#x1F524;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Text Size</div>
-          <div class="hmenu-sub">Adjust message text size</div>
-        </div>
-        <div class="sz-opts">
-          <button class="sz-opt" id="sz-s" onclick="setTextSize('small')">A</button>
-          <button class="sz-opt active" id="sz-m" onclick="setTextSize('medium')" style="font-size:14px">A</button>
-          <button class="sz-opt" id="sz-l" onclick="setTextSize('large')" style="font-size:17px">A</button>
+    <!-- All scrollable content wrapped -->
+    <div id="hamburger-scroll">
+      <!-- Auth row -->
+      <div id="hm-auth-row" style="padding:10px 16px 8px;border-bottom:1px solid rgba(249,115,22,0.1)">
+        <button id="hm-signin-btn" onclick="openAuthModal();closeHamburger()" style="width:100%;padding:10px;border-radius:12px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:block">Sign In / Sign Up</button>
+        <div id="hm-profile-row" style="display:none;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">&#x1F64F;</div>
+          <div style="flex:1;min-width:0">
+            <div id="hm-user-name2" style="font-size:13px;color:#fbbf24;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="hm-user-email2" style="font-size:11px;color:rgba(253,186,116,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          </div>
+          <button onclick="openProfileModal();closeHamburger()" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:8px;color:#fdba74;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">Edit</button>
         </div>
       </div>
-      <div class="hmenu-divider"></div>
-      <!-- Language -->
-      <div class="hmenu-item" onclick="openLangFromMenu()">
-        <div class="hmenu-icon">&#x1F310;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Language</div>
-          <div class="hmenu-sub" id="hm-lang-sub">English</div>
-        </div>
-        <div class="hmenu-arrow">&#x203A;</div>
+      <!-- Quick actions -->
+      <div id="hm-quick-row" style="display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid rgba(249,115,22,0.08)">
+        <button class="hm-quick-btn" id="hm-q-om" onclick="if(omPlaying){stopOm()}else{playOm()};updateQuickRow()" aria-label="Om">🕉️<span>Om</span></button>
+        <button class="hm-quick-btn" onclick="toggleTheme();updateQuickRow()" id="hm-q-theme" aria-label="Theme">☀️<span>Theme</span></button>
+        <button class="hm-quick-btn" onclick="closeHamburger();toggleSearch()" aria-label="Search">🔍<span>Search</span></button>
+        <button class="hm-quick-btn" onclick="openHistFromMenu();closeHamburger()" aria-label="History">💾<span>History</span></button>
       </div>
-      <div class="hmenu-divider"></div>
-      <!-- Today's Wisdom -->
-      <div class="hmenu-item" onclick="askTodaysWisdom();closeHamburger()" role="button" aria-label="Today's wisdom">
-        <div class="hmenu-icon">🌅</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Today's Wisdom</div>
-          <div class="hmenu-sub" id="hm-wisdom-sub">Daily verse from the Gita</div>
-        </div>
-        <div class="hmenu-arrow">&#x203A;</div>
+      <div id="hm-user-info" style="display:none;padding:8px 18px 6px;border-bottom:1px solid rgba(249,115,22,0.08)">
+        <div style="font-size:12px;color:#fbbf24;font-weight:600" id="hm-user-name"></div>
+        <div style="font-size:10px;color:rgba(253,186,116,0.5)" id="hm-user-email"></div>
       </div>
-      <!-- Daily Alert -->
-      <div class="hmenu-item" id="hm-notif" onclick="toggleDailyAlert()">
-        <div class="hmenu-icon">&#x1F514;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Daily Wisdom Alert</div>
-          <div class="hmenu-sub" id="hm-notif-sub">Off — tap to enable</div>
+      <!-- Menu items -->
+      <div id="hamburger-items">
+        <!-- Voice -->
+        <div class="hmenu-item" id="hm-tts" onclick="toggleTtsFromMenu()">
+          <div class="hmenu-icon">&#x1F50A;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Voice Responses</div><div class="hmenu-sub" id="hm-tts-sub">Off</div></div>
+          <div class="hmenu-toggle" id="hm-tts-toggle"></div>
         </div>
-        <div class="hmenu-toggle" id="hm-notif-toggle"></div>
-      </div>
-      <!-- Daily Notifications -->
-      <div class="hmenu-item" onclick="openNotifTimePicker()" role="button" aria-label="Daily wisdom notification">
-        <div class="hmenu-icon">&#x1F514;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Daily Wisdom Alert</div>
-          <div class="hmenu-sub" id="hm-notif-sub">Get Gita wisdom every morning</div>
+        <div class="hmenu-item" onclick="openVoicePicker();closeHamburger()">
+          <div class="hmenu-icon">&#x1F399;&#xFE0F;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Choose Voice</div><div class="hmenu-sub">Google TTS voices</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Help & Tips -->
-      <div class="hmenu-item" onclick="openTips();closeHamburger()" role="button" aria-label="Help and Tips">
-        <div class="hmenu-icon">&#x2139;&#xFE0F;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Help &amp; Tips</div>
-          <div class="hmenu-sub">Quick guide to all features</div>
+        <!-- Text Size -->
+        <div class="hmenu-item" style="cursor:default">
+          <div class="hmenu-icon">&#x1F524;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Text Size</div></div>
+          <div class="sz-opts">
+            <button class="sz-opt" id="sz-s" onclick="setTextSize('small')">A</button>
+            <button class="sz-opt active" id="sz-m" onclick="setTextSize('medium')" style="font-size:14px">A</button>
+            <button class="sz-opt" id="sz-l" onclick="setTextSize('large')" style="font-size:17px">A</button>
+          </div>
         </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Saved Wisdom (Bookmarks) -->
-      <div class="hmenu-item" onclick="openBookmarks();closeHamburger()">
-        <div class="hmenu-icon">&#x1F516;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Saved Wisdom</div>
-          <div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarked responses</div>
+        <div class="hmenu-divider"></div>
+        <!-- Language -->
+        <div class="hmenu-item" onclick="openLangFromMenu()">
+          <div class="hmenu-icon">&#x1F310;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Language</div><div class="hmenu-sub" id="hm-lang-sub">English</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <div class="hmenu-divider"></div>
-      <!-- Sync Now -->
-      <div class="hmenu-item" id="hm-sync-item" onclick="syncNow()" role="button" aria-label="Sync across devices">
-        <div class="hmenu-icon">&#x21BB;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Sync Now</div>
-          <div class="hmenu-sub" id="hm-sync-sub">Pull latest from cloud</div>
+        <div class="hmenu-divider"></div>
+        <!-- Today's Wisdom -->
+        <div class="hmenu-item" onclick="askTodaysWisdom();closeHamburger()">
+          <div class="hmenu-icon">🌅</div>
+          <div class="hmenu-label"><div class="hmenu-title">Today's Wisdom</div><div class="hmenu-sub" id="hm-wisdom-sub">Daily verse</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Share App -->
-      <div class="hmenu-item" onclick="shareApp()">
-        <div class="hmenu-icon">&#x1F4E4;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Share App</div>
-          <div class="hmenu-sub">Spread Krishna's wisdom</div>
+        <!-- Daily Alert (single, no duplicate) -->
+        <div class="hmenu-item" onclick="openNotifTimePicker()">
+          <div class="hmenu-icon">&#x1F514;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Daily Wisdom Alert</div><div class="hmenu-sub" id="hm-notif-sub">Get Gita wisdom every morning</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <div class="hmenu-arrow">&#x203A;</div>
-      </div>
-      <!-- Clear Chat -->
-      <div class="hmenu-item" onclick="clearChatFromMenu()">
-        <div class="hmenu-icon">&#x1F5D1;&#xFE0F;</div>
-        <div class="hmenu-label">
-          <div class="hmenu-title">Clear Chat</div>
-          <div class="hmenu-sub">Start a fresh conversation</div>
+        <div class="hmenu-divider"></div>
+        <!-- Saved Wisdom -->
+        <div class="hmenu-item" onclick="openBookmarks();closeHamburger()">
+          <div class="hmenu-icon">&#x1F516;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Saved Wisdom</div><div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarks</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <div class="hmenu-arrow" style="color:rgba(239,68,68,0.6)">&#x203A;</div>
+        <!-- Help -->
+        <div class="hmenu-item" onclick="openTips();closeHamburger()">
+          <div class="hmenu-icon">&#x2139;&#xFE0F;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Help &amp; Tips</div><div class="hmenu-sub">Quick guide</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
+        </div>
+        <div class="hmenu-divider"></div>
+        <!-- Sync (signed in only) -->
+        <div class="hmenu-item" id="hm-sync-item" onclick="syncNow()">
+          <div class="hmenu-icon">&#x21BB;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Sync Now</div><div class="hmenu-sub" id="hm-sync-sub">Pull latest from cloud</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
+        </div>
+        <!-- Share -->
+        <div class="hmenu-item" onclick="shareApp()">
+          <div class="hmenu-icon">&#x1F4E4;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Share App</div><div class="hmenu-sub">Spread Krishna's wisdom</div></div>
+          <div class="hmenu-arrow">&#x203A;</div>
+        </div>
+        <!-- Clear Chat -->
+        <div class="hmenu-item" onclick="clearChatFromMenu()">
+          <div class="hmenu-icon">&#x1F5D1;&#xFE0F;</div>
+          <div class="hmenu-label"><div class="hmenu-title">Clear Chat</div><div class="hmenu-sub">Start fresh</div></div>
+          <div class="hmenu-arrow" style="color:rgba(239,68,68,0.6)">&#x203A;</div>
+        </div>
       </div>
     </div>
   </div>
@@ -699,6 +666,15 @@ var scrollBtn=document.getElementById('scroll-btn');
 var MAX_DOM_MSGS=40;
 var THINKING_MSGS=['Krishna is reflecting...','Seeking wisdom from the Gita...','Consulting the eternal teachings...','Krishna contemplates your question...'];
 var thinkIdx=0;
+
+// ── Markdown renderer (must be defined before addMsg) ────────────────────────
+function renderMarkdown(text){
+  var s=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+  s=s.replace(/\n/g,'<br>');
+  return s;
+}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function openModal(id){document.getElementById(id).classList.add('show')}
 function getTime(){var d=new Date();var h=d.getHours(),m=d.getMinutes();var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(m<10?'0'+m:m)+' '+ap}
@@ -750,7 +726,7 @@ function addMsg(role,content){
   col.className='msg-col';
   var bub=document.createElement('div');
   bub.className='bubble '+(role==='assistant'?'bot':'user');
-  bub.textContent=content;
+  bub.innerHTML=renderMarkdown(content);
   col.appendChild(bub);
   // Timestamp
   var ts=document.createElement('div');
@@ -1511,8 +1487,6 @@ function pullHistory(){
   })
   .catch(function(){});
 }
-// Patch addMsg to debounce-push on every new message when signed in
-var _origAddMsg=addMsg;
 // Debounced push — avoids push on every single token
 function debouncedPush(){
   clearTimeout(syncDebounce);
@@ -2230,8 +2204,7 @@ function hideEmptyState(){
 }
 
 // ── Init new features ─────────────────────────────────────────────────────────
-// Show empty state on first load if no messages
-if(!msgs.length){showEmptyState();}
+// Empty state only shown after clear chat, not on init (suggestions handle it)
 // Update verse footer on lang change
 updateVerseFooter();
 // Check notification banner
@@ -2284,17 +2257,6 @@ speakText=function(text){
   }
 };
 
-// ── Markdown renderer ─────────────────────────────────────────────────────────
-function renderMarkdown(text){
-  var escaped=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // **bold**
-  escaped=escaped.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  // *italic*
-  escaped=escaped.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-  // line breaks
-  escaped=escaped.replace(/\n/g,'<br>');
-  return escaped;
-}
 
 // ── Quick row state ───────────────────────────────────────────────────────────
 function updateQuickRow(){
