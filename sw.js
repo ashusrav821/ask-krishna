@@ -1,4 +1,4 @@
-var CACHE='askkeshava-v1';
+var CACHE='askkeshava-v2';
 var ASSETS=[
   '/',
   '/index.html',
@@ -19,7 +19,12 @@ self.addEventListener('activate',function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
       return Promise.all(keys.filter(function(k){return k!==CACHE}).map(function(k){return caches.delete(k)}));
-    }).then(function(){return self.clients.claim()})
+    }).then(function(){return self.clients.claim()}).then(function(){
+      // Notify all open tabs of update
+      return self.clients.matchAll({type:'window'}).then(function(clients){
+        clients.forEach(function(c){c.postMessage({type:'APP_UPDATED',version:'v2'});});
+      });
+    })
   );
 });
 self.addEventListener('fetch',function(e){
@@ -55,8 +60,9 @@ self.addEventListener('notificationclick',function(e){
     })
   );
 });
-// ── Message from page → show notification ────────────────────────────────
+// ── Message from page → show notification or skip waiting ────────────────
 self.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='SKIP_WAITING'){self.skipWaiting();return;}
   if(e.data&&e.data.type==='SHOW_NOTIF'){
     self.registration.showNotification(e.data.title||'Ask Krishna \uD83C\uDF38',{
       body:e.data.body||'Your daily wisdom from the Bhagavad Gita awaits.',
