@@ -467,11 +467,13 @@
         </div>
       </div>
       <!-- Quick actions -->
-      <div id="hm-quick-row" style="display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid rgba(249,115,22,0.08)">
+      <div id="hm-quick-row" style="display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid rgba(249,115,22,0.08);flex-wrap:wrap">
         <button class="hm-quick-btn" id="hm-q-om" onclick="if(omPlaying){stopOm()}else{playOm()};updateQuickRow()" aria-label="Om">🕉️<span>Om</span></button>
         <button class="hm-quick-btn" onclick="toggleTheme();updateQuickRow()" id="hm-q-theme" aria-label="Theme">☀️<span>Theme</span></button>
         <button class="hm-quick-btn" onclick="closeHamburger();toggleSearch()" aria-label="Search">🔍<span>Search</span></button>
         <button class="hm-quick-btn" onclick="openHistFromMenu();closeHamburger()" aria-label="History">💾<span>History</span></button>
+        <button class="hm-quick-btn" onclick="shareApp()" aria-label="Share">📤<span>Share</span></button>
+        <button class="hm-quick-btn" onclick="openTips();closeHamburger()" aria-label="Help">ℹ️<span>Help</span></button>
       </div>
       <div id="hm-user-info" style="display:none;padding:8px 18px 6px;border-bottom:1px solid rgba(249,115,22,0.08)">
         <div style="font-size:12px;color:#fbbf24;font-weight:600" id="hm-user-name"></div>
@@ -527,23 +529,11 @@
           <div class="hmenu-label"><div class="hmenu-title">Saved Wisdom</div><div class="hmenu-sub" id="hm-bookmark-sub">Your bookmarks</div></div>
           <div class="hmenu-arrow">&#x203A;</div>
         </div>
-        <!-- Help -->
-        <div class="hmenu-item" onclick="openTips();closeHamburger()">
-          <div class="hmenu-icon">&#x2139;&#xFE0F;</div>
-          <div class="hmenu-label"><div class="hmenu-title">Help &amp; Tips</div><div class="hmenu-sub">Quick guide</div></div>
-          <div class="hmenu-arrow">&#x203A;</div>
-        </div>
         <div class="hmenu-divider"></div>
         <!-- Sync (signed in only) -->
         <div class="hmenu-item" id="hm-sync-item" onclick="syncNow()">
           <div class="hmenu-icon">&#x21BB;</div>
           <div class="hmenu-label"><div class="hmenu-title">Sync Now</div><div class="hmenu-sub" id="hm-sync-sub">Pull latest from cloud</div></div>
-          <div class="hmenu-arrow">&#x203A;</div>
-        </div>
-        <!-- Share -->
-        <div class="hmenu-item" onclick="shareApp()">
-          <div class="hmenu-icon">&#x1F4E4;</div>
-          <div class="hmenu-label"><div class="hmenu-title">Share App</div><div class="hmenu-sub">Spread Krishna's wisdom</div></div>
           <div class="hmenu-arrow">&#x203A;</div>
         </div>
         <!-- Clear Chat -->
