@@ -1,37 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Ask Keshava — Logs</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Keshava — Log Viewer</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Courier New',monospace;background:#0a0a0a;color:#e5e7eb;min-height:100vh;padding:16px}
-    /* Lock screen */
-    #lock{position:fixed;inset:0;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
-    #lock h1{font-size:22px;color:#fbbf24;font-family:Georgia,serif}
-    #lock p{font-size:13px;color:rgba(253,186,116,0.5)}
-    #lock-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
-    .key-input{background:#1a1a1a;border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:10px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;width:100%}
-    .key-input:focus{border-color:#f97316}
-    .btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:8px;padding:10px 16px;color:white;font-size:14px;cursor:pointer;font-family:inherit;width:100%}
-    .btn.sec{background:#1a1a1a;border:1px solid rgba(249,115,22,0.3);color:#fdba74}
-    .btn.red{background:#7f1d1d;border:1px solid rgba(239,68,68,0.3);color:#fca5a5}
-    #lock-err{color:#f87171;font-size:12px;min-height:16px}
-    /* Main UI */
-    #app{display:none}
     h1{font-size:18px;color:#fbbf24;font-family:Georgia,serif;margin-bottom:16px}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+    .key-input{background:#1a1a1a;border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;font-family:inherit;width:220px;outline:none}
+    .btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:8px;padding:8px 16px;color:white;font-size:13px;cursor:pointer;font-family:inherit}
+    .btn.sec{background:#1a1a1a;border:1px solid rgba(249,115,22,0.3);color:#fdba74}
+    .btn.red{background:#7f1d1d;border:1px solid rgba(239,68,68,0.3);color:#fca5a5}
+    .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     .fb{background:#111;border:1px solid #333;border-radius:20px;padding:4px 12px;font-size:11px;color:#9ca3af;cursor:pointer;font-family:inherit}
     .fb.on{background:rgba(249,115,22,0.15);border-color:rgba(249,115,22,0.4);color:#fbbf24}
-    .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     #stats{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
     .stat{background:#111;border:1px solid #222;border-radius:8px;padding:8px 14px;font-size:11px}
     .stat b{display:block;font-size:18px;margin-bottom:2px}
     .ec b{color:#f87171}.wc b{color:#fbbf24}.ic b{color:#34d399}.tc b{color:#60a5fa}
     #log-list{display:flex;flex-direction:column;gap:6px}
-    .le{background:#111;border:1px solid #222;border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer;transition:border-color 0.15s}
-    .le:hover{border-color:rgba(249,115,22,0.3)}
+    .le{background:#111;border:1px solid #222;border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer}
     .le.error{border-left:3px solid #ef4444}
     .le.warn{border-left:3px solid #f59e0b}
     .le.info{border-left:3px solid #10b981}
@@ -49,141 +39,81 @@
     .ar{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280}
     .ar input{accent-color:#f97316}
     #lts{font-size:11px;color:#4b5563;margin-left:8px}
-    #logout-btn{font-size:11px;color:rgba(249,115,22,0.5);background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline}
   </style>
 </head>
 <body>
+<h1>🪷 Ask Keshava — Log Viewer</h1>
 
-<!-- Lock Screen -->
-<div id="lock">
-  <div style="font-size:40px">🪷</div>
-  <h1>Ask Keshava Logs</h1>
-  <p>Enter your admin key to view logs</p>
-  <div id="lock-form">
-    <input class="key-input" id="lock-key" type="password" placeholder="Admin key..." autocomplete="current-password" />
-    <button class="btn" onclick="unlock()">Unlock</button>
-    <div id="lock-err"></div>
-  </div>
+<div class="controls">
+  <input class="key-input" id="akey" type="password" placeholder="Admin key..." />
+  <button class="btn" onclick="load()">🔄 Refresh</button>
+  <button class="btn sec" onclick="clearF()">Clear filter</button>
+  <button class="btn red" onclick="clearLogs()">🗑 Clear logs</button>
+  <div class="ar"><input type="checkbox" id="ar" onchange="toggleAuto()" /><label for="ar">Auto 10s</label><span id="lts"></span></div>
 </div>
 
-<!-- Main App -->
-<div id="app">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-    <h1>🪷 Ask Keshava — Log Viewer</h1>
-    <div style="display:flex;align-items:center;gap:10px">
-      <span id="lts" style="font-size:11px;color:#4b5563"></span>
-      <button id="logout-btn" onclick="logout()">Lock</button>
-    </div>
-  </div>
-
-  <div class="controls">
-    <button class="btn" onclick="load()">🔄 Refresh</button>
-    <button class="btn sec" onclick="clearF()">Clear filter</button>
-    <button class="btn red" onclick="clearLogs()">🗑 Clear logs</button>
-    <div class="ar"><input type="checkbox" id="ar" onchange="toggleAuto()"/><label for="ar">Auto 10s</label></div>
-  </div>
-
-  <div id="err-box"></div>
-  <div id="stats" style="display:none">
-    <div class="stat tc"><b id="st">0</b>Total</div>
-    <div class="stat ec"><b id="se">0</b>Errors</div>
-    <div class="stat wc"><b id="sw">0</b>Warns</div>
-    <div class="stat ic"><b id="si">0</b>Info</div>
-  </div>
-  <div class="filter-row" id="fr" style="display:none">
-    <span style="font-size:11px;color:#6b7280;line-height:2">Filter:</span>
-    <button class="fb on" onclick="sf('all',this)">All</button>
-    <button class="fb" onclick="sf('error',this)">Errors</button>
-    <button class="fb" onclick="sf('warn',this)">Warnings</button>
-    <button class="fb" onclick="sf('wisdom',this)">Wisdom</button>
-    <button class="fb" onclick="sf('sendMessage',this)">Chat</button>
-    <button class="fb" onclick="sf('auth',this)">Auth</button>
-    <button class="fb" onclick="sf('sync',this)">Sync</button>
-  </div>
-  <div id="log-list"></div>
-  <div id="empty" style="display:none">🕊️ No logs found</div>
+<div id="err-box"></div>
+<div id="stats" style="display:none">
+  <div class="stat tc"><b id="st">0</b>Total</div>
+  <div class="stat ec"><b id="se">0</b>Errors</div>
+  <div class="stat wc"><b id="sw">0</b>Warns</div>
+  <div class="stat ic"><b id="si">0</b>Info</div>
 </div>
+<div class="filter-row" id="fr" style="display:none">
+  <span style="font-size:11px;color:#6b7280;line-height:2">Filter:</span>
+  <button class="fb on" onclick="sf('all',this)">All</button>
+  <button class="fb" onclick="sf('error',this)">Errors</button>
+  <button class="fb" onclick="sf('warn',this)">Warnings</button>
+  <button class="fb" onclick="sf('wisdom',this)">Wisdom</button>
+  <button class="fb" onclick="sf('sendMessage',this)">Chat</button>
+  <button class="fb" onclick="sf('auth',this)">Auth</button>
+  <button class="fb" onclick="sf('sync',this)">Sync</button>
+</div>
+
+<div id="log-list"></div>
+<div id="empty" style="display:none">🕊️ No logs found</div>
 
 <script>
 var W='https://ask-krishna-api.oletyashrith.workers.dev/';
-var logs=[],flt='all',timer=null,adminKey='';
-var SK='ak_logs_key';
-
-// ── Lock / unlock ─────────────────────────────────────────────────────────────
-function unlock(){
-  var k=document.getElementById('lock-key').value.trim();
-  if(!k){document.getElementById('lock-err').textContent='Please enter the admin key';return;}
-  // Verify by making a test request
-  document.getElementById('lock-err').textContent='Verifying...';
-  fetch(W+'logs',{headers:{'X-Admin-Key':k}})
-  .then(function(r){
-    if(r.status===401){document.getElementById('lock-err').textContent='Incorrect key. Try again.';return;}
-    if(!r.ok){document.getElementById('lock-err').textContent='Server error: '+r.status;return;}
-    return r.json().then(function(d){
-      adminKey=k;
-      // Store in sessionStorage only (clears when tab closes)
-      sessionStorage.setItem(SK,k);
-      document.getElementById('lock').style.display='none';
-      document.getElementById('app').style.display='block';
-      logs=d.logs||[];
-      updateStats();render();
-      document.getElementById('lts').textContent='Updated '+new Date().toLocaleTimeString();
-      if(logs.length){document.getElementById('stats').style.display='flex';document.getElementById('fr').style.display='flex';}
-    });
-  })
-  .catch(function(e){document.getElementById('lock-err').textContent='Cannot connect: '+e.message;});
-}
-document.getElementById('lock-key').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
-
-function logout(){
-  sessionStorage.removeItem(SK);
-  adminKey='';
-  document.getElementById('app').style.display='none';
-  document.getElementById('lock').style.display='flex';
-  document.getElementById('lock-key').value='';
-  document.getElementById('lock-err').textContent='';
-  if(timer){clearInterval(timer);timer=null;}
-}
-
-// Auto-restore session if key saved this session
-(function(){
-  var k=sessionStorage.getItem(SK);
-  if(k){document.getElementById('lock-key').value=k;setTimeout(unlock,100);}
-})();
-
-// ── Log functions ──────────────────────────────────────────────────────────────
+var logs=[],flt='all',timer=null;
+function key(){return document.getElementById('akey').value.trim();}
 function err(m){var e=document.getElementById('err-box');e.textContent=m;e.style.display=m?'block':'none';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function load(){
   err('');
   document.getElementById('log-list').innerHTML='<div style="text-align:center;padding:30px;color:#f97316">Loading...</div>';
-  fetch(W+'logs',{headers:{'X-Admin-Key':adminKey}})
+  document.getElementById('empty').style.display='none';
+  fetch(W+'logs',{headers:{'X-Admin-Key':key()}})
   .then(function(r){
-    if(r.status===401){err('Session expired. Please lock and re-enter key.');return;}
-    if(!r.ok){err('Server error: '+r.status);return;}
+    if(r.status===401){err('Invalid admin key.');throw new Error('401');}
+    if(!r.ok){err('Server error: '+r.status);throw new Error(r.status);}
     return r.json();
   })
   .then(function(d){
-    if(!d)return;
     logs=d.logs||[];
     document.getElementById('lts').textContent='Updated '+new Date().toLocaleTimeString();
-    updateStats();render();
-    document.getElementById('stats').style.display=logs.length?'flex':'none';
-    document.getElementById('fr').style.display=logs.length?'flex':'none';
+    var tot=logs.length,e=0,w=0,i=0;
+    logs.forEach(function(l){if(l.level==='error')e++;else if(l.level==='warn')w++;else i++;});
+    document.getElementById('st').textContent=tot;
+    document.getElementById('se').textContent=e;
+    document.getElementById('sw').textContent=w;
+    document.getElementById('si').textContent=i;
+    document.getElementById('stats').style.display=tot?'flex':'none';
+    document.getElementById('fr').style.display=tot?'flex':'none';
+    render();
   })
-  .catch(function(e){err('Cannot connect: '+e.message);});
+  .catch(function(e){
+    document.getElementById('log-list').innerHTML='';
+    if(e.message!=='401')err('Cannot connect: '+e.message);
+  });
 }
 
-function updateStats(){
-  var tot=logs.length,e=0,w=0,i=0;
-  logs.forEach(function(l){if(l.level==='error')e++;else if(l.level==='warn')w++;else i++;});
-  document.getElementById('st').textContent=tot;
-  document.getElementById('se').textContent=e;
-  document.getElementById('sw').textContent=w;
-  document.getElementById('si').textContent=i;
-}
-
+// FIX: build log rows with DOM APIs / textContent instead of innerHTML string
+// concatenation, so no field (level, context, message, userAgent, ip) can inject
+// HTML/script into this admin page — all are attacker-influenceable via /log.
+var ALLOWED_LEVELS=['error','warn','info'];
+function safeLevel(l){return ALLOWED_LEVELS.indexOf(l)!==-1?l:'info';}
 function render(){
   var list=document.getElementById('log-list');
   list.innerHTML='';
@@ -193,36 +123,52 @@ function render(){
     if(flt==='warn')return l.level==='warn';
     return l.context&&l.context.toLowerCase().indexOf(flt.toLowerCase())!==-1;
   });
-  if(!filtered.length){document.getElementById('empty').style.display='block';list.innerHTML='';return;}
+  if(!filtered.length){document.getElementById('empty').style.display='block';return;}
   document.getElementById('empty').style.display='none';
   filtered.forEach(function(log,idx){
+    var lvl=safeLevel(log.level);
     var el=document.createElement('div');
-    el.className='le '+(log.level||'info');
+    el.className='le '+lvl;
     var ts=log.ts?new Date(log.ts).toLocaleString():'';
     var ds=log.data&&Object.keys(log.data).length?JSON.stringify(log.data,null,2):'';
-    el.innerHTML=(
-      '<div class="lh">'+
-        '<span class="lv '+(log.level||'info')+'">'+(log.level||'info')+'</span>'+
-        '<span class="lc">['+(log.context||'app')+']</span>'+
-        '<span class="lm">'+esc(log.message||'')+'</span>'+
-        '<span class="lt">'+ts+'</span>'+
-      '</div>'+
-      (log.ip?'<div class="lip">'+log.ip+' | '+(log.userAgent||'').slice(0,70)+'</div>':'')+
-      (ds?'<div class="ld" id="d'+idx+'"><pre>'+esc(ds)+'</pre></div>':'')
-    );
-    if(ds){el.onclick=function(){var d=document.getElementById('d'+idx);d.style.display=d.style.display==='block'?'none':'block';};}
+
+    var lh=document.createElement('div');lh.className='lh';
+    var lv=document.createElement('span');lv.className='lv '+lvl;lv.textContent=lvl;
+    var lc=document.createElement('span');lc.className='lc';lc.textContent='['+(log.context||'app')+']';
+    var lm=document.createElement('span');lm.className='lm';lm.textContent=log.message||'';
+    var lt=document.createElement('span');lt.className='lt';lt.textContent=ts;
+    lh.appendChild(lv);lh.appendChild(lc);lh.appendChild(lm);lh.appendChild(lt);
+    el.appendChild(lh);
+
+    if(log.ip){
+      var lip=document.createElement('div');lip.className='lip';
+      lip.textContent=log.ip+' | '+(log.userAgent||'').slice(0,70);
+      el.appendChild(lip);
+    }
+    if(ds){
+      var ld=document.createElement('div');ld.className='ld';ld.id='d'+idx;
+      var pre=document.createElement('pre');pre.textContent=ds;
+      ld.appendChild(pre);
+      el.appendChild(ld);
+      el.onclick=function(){ld.style.display=ld.style.display==='block'?'none':'block';};
+    }
     list.appendChild(el);
   });
 }
 
-function sf(f,btn){flt=f;document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render();}
+function sf(f,btn){
+  flt=f;
+  document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  render();
+}
 function clearF(){sf('all',document.querySelector('.fb'));}
 
 function clearLogs(){
   if(!confirm('Delete all logs from KV?'))return;
-  fetch(W+'logs/clear',{method:'DELETE',headers:{'X-Admin-Key':adminKey}})
+  fetch(W+'logs/clear',{method:'DELETE',headers:{'X-Admin-Key':key()}})
   .then(function(r){return r.json();})
-  .then(function(d){if(d.ok){logs=[];render();updateStats();document.getElementById('stats').style.display='none';}else{err(d.error||'Failed');}})
+  .then(function(d){if(d.ok){logs=[];render();document.getElementById('stats').style.display='none';}else{err(d.error||'Failed');}})
   .catch(function(e){err('Failed: '+e.message);});
 }
 
@@ -230,6 +176,8 @@ function toggleAuto(){
   var on=document.getElementById('ar').checked;
   if(on){timer=setInterval(load,10000);}else{clearInterval(timer);timer=null;}
 }
+
+load();
 </script>
 </body>
 </html>
