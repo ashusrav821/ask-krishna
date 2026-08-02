@@ -1127,29 +1127,32 @@ function getWisdomDate(){
   return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 }
 function askTodaysWisdom(){
+  if(loading){addMsg('assistant','Please wait for the current response to finish, then tap Today\'s Wisdom again.');return;}
+  if(!navigator.onLine){addMsg('assistant','No internet connection. Please reconnect and try Today\'s Wisdom again.');return;}
   var wb=document.getElementById('wisdom-wrap');
   if(wb)wb.style.display='none';
   suggestEl.style.display='none';
   var verse=getTodaysVerse();
   var sub=document.getElementById('hm-wisdom-sub');
-  if(sub)sub.textContent='Gita '+verse.ref+' — '+getWisdomDate();
-  var wisdomPrompt='Share today\'s wisdom from the Bhagavad Gita for '+getWisdomDate()+'.\n\nFocus on Gita '+verse.ref+': "'+verse.theme+'"\n\nShare this as today\'s daily wisdom — explain what this verse means, how it applies to modern daily life, a real-world example, and one small action the seeker can take today to live this teaching. Keep it warm, personal and uplifting.';
-  // Show typing but DON'T add a user bubble — fetch in background
+  if(sub)sub.textContent='Gita '+verse.ref+' \u2014 '+getWisdomDate();
+  var wisdomPrompt='Share today\'s wisdom from the Bhagavad Gita for '+getWisdomDate()+'.\n\nFocus on Gita '+verse.ref+': "'+verse.theme+'"\n\nShare this as today\'s daily wisdom \u2014 explain what this verse means, how it applies to modern daily life, a real-world example, and one small action the seeker can take today to live this teaching. Keep it warm, personal and uplifting.';
+  loading=true;
   showTyping();
   var apiMsgs=[{role:'user',content:wisdomPrompt}];
-  var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);
+  var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort();},30000);
   fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs}),signal:ctrl.signal})
-  .then(function(r){return r.json()})
+  .then(function(r){return r.json();})
   .then(function(data){
     clearTimeout(tout);hideTyping();
-    var reply='🌅 Today\'s wisdom from the Gita could not be loaded. Please try again.';
-    if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}
+    var reply='\uD83C\uDF05 Today\'s wisdom from the Gita could not be loaded. Please try again.';
+    if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break;}}}
     addMsg('assistant',reply);
   })
   .catch(function(err){
     clearTimeout(tout);hideTyping();
-    addMsg('assistant',err.name==='AbortError'?'Today\'s wisdom took too long to load. Please try again.':'Could not load today\'s wisdom. Please check your connection.');
-  });
+    addMsg('assistant',err.name==='AbortError'?'Today\'s wisdom took too long. Please try again.':'Could not load today\'s wisdom. Please check your connection.');
+  })
+  .finally(function(){loading=false;updateSend();});
 }
 // Update wisdom button sub text on load
 (function(){
