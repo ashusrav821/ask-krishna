@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Ask Krishna - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="noindex, nosnippet, noarchive" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Krishna</title>
@@ -163,7 +163,7 @@
     #wisdom-btn-title{font-weight:bold;font-size:13.5px;color:#fbbf24}
     #wisdom-btn-sub{font-size:11px;color:rgba(251,191,36,0.55);margin-top:2px}
     /* Auth */
-    #signin-btn{height:34px;padding:0 14px;border-radius:20px;border:1px solid rgba(249,115,22,0.45);background:rgba(249,115,22,0.12);color:#fdba74;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.2s;flex-shrink:0;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+    #signin-btn-old{height:34px;padding:0 14px;border-radius:20px;border:1px solid rgba(249,115,22,0.45);background:rgba(249,115,22,0.12);color:#fdba74;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
     #signin-btn:active{background:rgba(249,115,22,0.25)}
     #signin-btn.signed-in{background:linear-gradient(135deg,rgba(249,115,22,0.25),rgba(251,191,36,0.15));border-color:#f97316;color:#fbbf24}
     .auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(249,115,22,0.25);border-radius:12px;color:#f3f4f6;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;transition:border-color 0.2s}
@@ -283,8 +283,6 @@
       <div id="header-sub">WISDOM OF THE BHAGAVAD GITA</div>
     </div>
     <div id="header-actions">
-      <button class="hdr-btn" id="header-search-btn" title="Search" aria-label="Search messages" onclick="toggleSearch()">&#x1F50D;</button>
-      <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or create account">Sign In</button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
   </div>
@@ -330,7 +328,7 @@
     <div class="modal-box">
       <h2>&#x1F4BE; Conversation History</h2>
       <p id="history-desc">Would you like Ask Krishna to remember your conversations?</p>
-      <div class="notice">&#x1F512; <strong>Saved on this device.</strong> If you sign in, your recent chat history is also synced to the cloud so it's available on your other devices.</div>
+      <div class="notice">&#x1F512; <strong>Saved only on this device</strong> &mdash; never uploaded to any server.</div>
       <div id="hist-stats"></div>
       <div id="hist-viewer"></div>
       <div id="modal-enable-row" class="btn-row">
@@ -384,7 +382,6 @@
       <div class="auth-divider">— or sign in with email —</div>
       <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
       <div class="pw-wrap"><input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" /><button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)">&#x1F441;</button></div>
-      <button class="auth-link" style="text-align:right;margin:-6px 0 10px;font-size:12px" onclick="openForgotPassword()">Forgot password?</button>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('signin-modal')">Cancel</button>
         <button class="mbtn confirm" id="signin-submit" onclick="doSignIn()">Sign In</button>
@@ -423,33 +420,6 @@
         <button class="mbtn confirm" id="signup-submit" onclick="doSignUp()">Create Account</button>
       </div>
       <button class="auth-link" onclick="switchToSignIn()">Already have an account? Sign in</button>
-    </div>
-  </div>
-  <!-- Forgot Password Modal -->
-  <div class="modal" id="forgot-modal">
-    <div class="modal-box">
-      <h2>&#x1F511; Reset Password</h2>
-      <div class="auth-err" id="forgot-err"></div>
-      <!-- Step 1: request a code -->
-      <div id="forgot-step1">
-        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter your account email and we\u2019ll send you a 6-digit reset code.</p>
-        <input class="auth-input" id="forgot-email" type="email" placeholder="Email address" autocomplete="email" />
-        <div class="btn-row">
-          <button class="mbtn cancel" onclick="closeModal('forgot-modal');openModal('signin-modal')">Back</button>
-          <button class="mbtn confirm" id="forgot-request-submit" onclick="doForgotRequest()">Send Code</button>
-        </div>
-      </div>
-      <!-- Step 2: enter code + new password -->
-      <div id="forgot-step2" style="display:none">
-        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter the code sent to <span id="forgot-email-display" style="color:#fbbf24;font-weight:600"></span> and choose a new password.</p>
-        <input class="auth-input" id="forgot-code" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" />
-        <div class="pw-wrap"><input class="auth-input" id="forgot-newpass" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" /><button type="button" class="pw-eye" onclick="togglePw('forgot-newpass',this)">&#x1F441;</button></div>
-        <div class="btn-row">
-          <button class="mbtn cancel" onclick="backToForgotStep1()">Back</button>
-          <button class="mbtn confirm" id="forgot-reset-submit" onclick="doResetPassword()">Reset Password</button>
-        </div>
-        <button class="auth-link" onclick="doForgotRequest(true)">Didn\u2019t get a code? Resend</button>
-      </div>
     </div>
   </div>
   <!-- Profile Modal -->
@@ -546,6 +516,15 @@
           <div class="hmenu-icon">&#x1F310;</div>
           <div class="hmenu-label"><div class="hmenu-title">Language</div><div class="hmenu-sub" id="hm-lang-sub">English</div></div>
           <div class="hmenu-arrow">&#x203A;</div>
+        </div>
+        <!-- Verse Mode toggle -->
+        <div class="hmenu-item" onclick="toggleVerseMode()">
+          <div class="hmenu-icon">&#x1F4D6;</div>
+          <div class="hmenu-label">
+            <div class="hmenu-title">Verse Matching</div>
+            <div class="hmenu-sub" id="hm-verse-mode-sub">Option A: Curated verse bank</div>
+          </div>
+          <div class="hmenu-toggle" id="hm-verse-mode-toggle"></div>
         </div>
         <div class="hmenu-divider"></div>
         <!-- Today's Wisdom -->
@@ -831,19 +810,22 @@ function getUsedVerses(){
   var used=[];
   msgs.forEach(function(m){
     if(m.role!=='assistant')return;
-    if(typeof m.content!=='string')return;
     var matches=m.content.match(/\b(\d{1,2})\.(\d{1,3})\b/g)||[];
     matches.forEach(function(r){if(used.indexOf(r)===-1)used.push(r);});
   });
   return used;
 }
-// NOTE: the system prompt (BS, per-language instructions, used-verse tracking)
-// is now built server-side in the Worker's /chat route for security — clients
-// only send lang + usedVerses (validated verse refs) + messages.
+function getSys(){
+  var base=BS+'\n\n'+LC[curLang].sys;
+  if(currentUser&&currentUser.name)base+='\n\nUser name: '+currentUser.name+'. Address them warmly when natural.';
+  var used=getUsedVerses();
+  if(used.length>0)base+='\n\nALREADY CITED - DO NOT REPEAT: '+used.join(', ')+'. Choose different verses.';
+  return base;
+}
 function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
 function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
-['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','forgot-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
+['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
 document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
@@ -855,20 +837,11 @@ function updateHistBtn(){
   if(hb){if(histEn){hb.classList.add('active')}else{hb.classList.remove('active')}}
   if(histStatus){histStatus.style.display=histEn?'block':'none'}
 }
-// NOTE: saveHist, enableHistory, clearHistory, openHistFromMenu are defined once,
-// below (near the sync code), with the fuller feature set (stats, confirm dialog,
-// content filtering). The earlier duplicate definitions that used to live here
-// were removed to avoid two conflicting implementations shadowing each other.
-// saveHist is declared here as a hoisted function so saveHistAndSync (below)
-// can safely call it even if invoked during page load before the fuller
-// implementation is assigned later.
-function saveHist(){
-  if(!histEn)return;
-  var toSave=msgs.filter(function(m){return m.content&&m.content.length>0;});
-  try{localStorage.setItem(HK,JSON.stringify(toSave));}catch(e){console.warn('History save failed',e);}
-}
+function saveHist(){if(!histEn)return;try{localStorage.setItem(HK,JSON.stringify(msgs))}catch(e){}}
 function saveHistAndSync(){saveHist();if(currentUser)debouncedPush();}
 function loadHist(){try{var s=localStorage.getItem(HK);return s?JSON.parse(s):null}catch(e){return null}}
+function enableHistory(){histEn=true;localStorage.setItem(HEK,'true');saveHist();updateHistBtn();closeModal('history-modal');addMsg('assistant','Your conversations will now be saved on this device only — never in any cloud.')}
+function clearHistory(){histEn=false;localStorage.removeItem(HEK);localStorage.removeItem(HK);updateHistBtn();closeModal('history-modal');addMsg('assistant','History cleared. Each session starts fresh, like a new dawn.')}
 updateHistBtn();
 function hideTyping(){var el=document.getElementById('typing-row');if(el)el.remove()}
 function sendMessage(){
@@ -881,7 +854,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Krishna is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -973,8 +946,14 @@ function openLangFromMenu(){
   ['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===curLang)});
   openModal('lang-modal');
 }
-// NOTE: the fuller openHistFromMenu (with stats + viewer reset) is defined
-// later, near the sync code, and is used instead of this earlier duplicate.
+function openHistFromMenu(){
+  var desc=document.getElementById('history-desc');
+  var enR=document.getElementById('modal-enable-row');
+  var disR=document.getElementById('modal-disable-row');
+  if(histEn){desc.textContent='History saving is ON. Chats saved on this device only.';enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column';}
+  else{desc.textContent='Enable to save your conversations on this device only.';enR.style.display='flex';disR.style.display='none';}
+  openModal('history-modal');
+}
 function clearChatFromMenu(){
   closeHamburger();
   if(confirm('Clear this conversation and start fresh?')){
@@ -1023,8 +1002,7 @@ function playOm(){
   });
 }
 // Single click handler on Om button — no duplicate
-var omBtnEl=document.getElementById('om-btn');
-if(omBtnEl)omBtnEl.addEventListener('click',function(){
+document.getElementById('om-btn').addEventListener('click',function(){
   if(omPlaying){stopOm();}else{playOm();}
 });
 // TTS
@@ -1193,23 +1171,12 @@ function askTodaysWisdom(){
   showTyping();
   appLog('info','wisdom','Fetching from worker',{url:W,verse:verse.ref});
   var apiMsgs=[{role:'user',content:wisdomPrompt}];
-  var ctrl,tout,usedVerses;
-  try{
-    usedVerses=getUsedVerses();
-    ctrl=new AbortController();
-    tout=setTimeout(function(){
-      appLog('error','wisdom','Request aborted — 30s timeout');
-      ctrl.abort();
-    },30000);
-  }catch(buildErr){
-    appLog('error','wisdom','Failed building request',{name:buildErr.name,message:buildErr.message});
-    hideTyping();
-    loading=false;
-    updateSend();
-    addMsg('assistant','Today\'s wisdom could not be loaded. Please try again.');
-    return;
-  }
-  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:usedVerses,messages:apiMsgs}),signal:ctrl.signal})
+  var ctrl=new AbortController();
+  var tout=setTimeout(function(){
+    appLog('error','wisdom','Request aborted — 30s timeout');
+    ctrl.abort();
+  },30000);
+  fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:800,system:getSys(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal})
   .then(function(r){
     appLog('info','wisdom','HTTP response received',{status:r.status,ok:r.ok,contentType:r.headers.get('content-type')});
     if(!r.ok){
@@ -1262,7 +1229,7 @@ function askTodaysWisdom(){
   var hmSub=document.getElementById('hm-wisdom-sub');
   if(hmSub)hmSub.textContent='Gita '+verse.ref+' — '+getWisdomDate();
 })();
-var TIPS=[{icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to the timeless wisdom of the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or the green mic button to get started.'},{icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question in English, Telugu, Tamil or Hindi.',steps:'1. Tap the green mic button\n2. Speak clearly\n3. Krishna responds automatically'},{icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi!',steps:'Open ☰ menu → Language → select and tap OK'},{icon:'\uD83D\uDD09',title:'Om Sound',desc:'Tap the 🕉️ button in the header to play a calming Om sound while you reflect. Tap again to stop.',steps:'🕉️ button top right → tap to play, tap again to stop'},{icon:'\uD83D\uDD16',title:'Save Wisdom',desc:'Bookmark any Krishna response to revisit later. Tap Save 🔖 on any message.',steps:'Tap Save 🔖 on any Krishna response to bookmark it'},{icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Tap 💾 in the header to save conversations on this device. If you\'re signed in, your recent chat is also synced to the cloud automatically.',steps:'💾 button top right → Enable to save chats locally'},{icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand you better.',steps:'Answer the follow-up to go deeper into the conversation.'},{icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared this session.',steps:'Say "going back to what I said" and Krishna will remember.'},{icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install on your home screen for daily quick access.',steps:'Android: Browser menu → Add to Home Screen\niPhone: Tap Share → Add to Home Screen'},{icon:'\uD83D\uDEE1\uFE0F',title:'Safe and Respectful',desc:'Ask Krishna always responds with dignity and compassion.',steps:'Feel free to share whatever is on your mind.'}];
+var TIPS=[{icon:'\uD83E\uDD9A',title:'Welcome to Ask Krishna!',desc:'Your guide to the timeless wisdom of the Bhagavad Gita. Share any life situation — work stress, relationships, confusion, grief — and get practical advice in plain everyday language.',steps:'Tap the input box or the green mic button to get started.'},{icon:'\uD83C\uDFA4',title:'Voice Input',desc:'Speak your question in English, Telugu, Tamil or Hindi.',steps:'1. Tap the green mic button\n2. Speak clearly\n3. Krishna responds automatically'},{icon:'\uD83C\uDF10',title:'4 Languages',desc:'Ask Krishna responds in English, Telugu, Tamil or Hindi!',steps:'Open ☰ menu → Language → select and tap OK'},{icon:'\uD83D\uDD09',title:'Om Sound',desc:'Tap the 🕉️ button in the header to play a calming Om sound while you reflect. Tap again to stop.',steps:'🕉️ button top right → tap to play, tap again to stop'},{icon:'\uD83D\uDD16',title:'Save Wisdom',desc:'Bookmark any Krishna response to revisit later. Tap Save 🔖 on any message.',steps:'Tap Save 🔖 on any Krishna response to bookmark it'},{icon:'\uD83D\uDCBE',title:'Save Conversations',desc:'Tap 💾 in the header to save conversations on this device only. Never in any cloud.',steps:'💾 button top right → Enable to save chats locally'},{icon:'\uD83D\uDCAC',title:'Follow-up Questions',desc:'After every answer Krishna asks a follow-up to understand you better.',steps:'Answer the follow-up to go deeper into the conversation.'},{icon:'\uD83E\uDDE0',title:'Context Memory',desc:'Krishna remembers everything shared this session.',steps:'Say "going back to what I said" and Krishna will remember.'},{icon:'\uD83D\uDCF2',title:'Install as App',desc:'Install on your home screen for daily quick access.',steps:'Android: Browser menu → Add to Home Screen\niPhone: Tap Share → Add to Home Screen'},{icon:'\uD83D\uDEE1\uFE0F',title:'Safe and Respectful',desc:'Ask Krishna always responds with dignity and compassion.',steps:'Feel free to share whatever is on your mind.'}];
 var tipIdx=0;
 function renderTip(){var t=TIPS[tipIdx];var c=document.getElementById('tips-content');if(!c)return;c.innerHTML='<div class="tip-card"><div class="tip-icon">'+t.icon+'</div><div class="tip-title">'+t.title+'</div><div class="tip-desc">'+t.desc+'</div><div class="tip-steps">'+t.steps.replace(/\n/g,'<br>')+'</div></div>';var prog=document.getElementById('tips-progress');if(prog){prog.innerHTML='';TIPS.forEach(function(_,i){var d=document.createElement('button');d.className='tip-dot'+(i===tipIdx?' active':'');d.onclick=function(){tipIdx=i;renderTip()};prog.appendChild(d)})}var p=document.getElementById('tips-prev');var n=document.getElementById('tips-next');if(p)p.style.display=tipIdx===0?'none':'flex';if(n)n.textContent=tipIdx===TIPS.length-1?'Get Started':'Next'}
 function closeTips(){var o=document.getElementById('tips-overlay');if(o)o.classList.remove('show');localStorage.setItem(TK,'true')}
@@ -1434,80 +1401,6 @@ function doSignIn(){
   });
 }
 
-// ── Forgot Password ──────────────────────────────────────────────────────
-function openForgotPassword(){
-  closeModal('signin-modal');
-  clearAuthErr('forgot-err');
-  document.getElementById('forgot-email').value=document.getElementById('signin-email').value.trim();
-  document.getElementById('forgot-code').value='';
-  document.getElementById('forgot-newpass').value='';
-  document.getElementById('forgot-step1').style.display='block';
-  document.getElementById('forgot-step2').style.display='none';
-  openModal('forgot-modal');
-}
-function backToForgotStep1(){
-  clearAuthErr('forgot-err');
-  document.getElementById('forgot-step1').style.display='block';
-  document.getElementById('forgot-step2').style.display='none';
-}
-function doForgotRequest(isResend){
-  clearAuthErr('forgot-err');
-  var email=document.getElementById('forgot-email').value.trim().toLowerCase();
-  if(!validateEmail(email)){showAuthErr('forgot-err','Please enter a valid email address.');return;}
-  var btnId=isResend?null:'forgot-request-submit';
-  if(btnId){document.getElementById(btnId).disabled=true;document.getElementById(btnId).textContent='Sending...';}
-  fetch(W+'auth/forgot',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:email})
-  })
-  .then(function(r){return r.json();})
-  .then(function(data){
-    if(btnId){document.getElementById(btnId).disabled=false;document.getElementById(btnId).textContent='Send Code';}
-    if(data.error){showAuthErr('forgot-err',data.error);return;}
-    document.getElementById('forgot-email-display').textContent=email;
-    document.getElementById('forgot-step1').style.display='none';
-    document.getElementById('forgot-step2').style.display='block';
-    if(isResend){
-      var codeInput=document.getElementById('forgot-code');
-      if(codeInput)codeInput.value='';
-    }
-  })
-  .catch(function(){
-    if(btnId){document.getElementById(btnId).disabled=false;document.getElementById(btnId).textContent='Send Code';}
-    showAuthErr('forgot-err','Network error. Please try again.');
-  });
-}
-function doResetPassword(){
-  clearAuthErr('forgot-err');
-  var email=document.getElementById('forgot-email').value.trim().toLowerCase();
-  var code=document.getElementById('forgot-code').value.trim();
-  var newPass=document.getElementById('forgot-newpass').value;
-  if(!/^\d{6}$/.test(code)){showAuthErr('forgot-err','Please enter the 6-digit code from your email.');return;}
-  if(newPass.length<8){showAuthErr('forgot-err','Password must be at least 8 characters.');return;}
-  document.getElementById('forgot-reset-submit').disabled=true;
-  document.getElementById('forgot-reset-submit').textContent='Resetting...';
-  fetch(W+'auth/reset',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:email,code:code,newPassword:newPass})
-  })
-  .then(function(r){return r.json();})
-  .then(function(data){
-    document.getElementById('forgot-reset-submit').disabled=false;
-    document.getElementById('forgot-reset-submit').textContent='Reset Password';
-    if(data.error){showAuthErr('forgot-err',data.error);return;}
-    onSignedIn(data.token,data.user);
-    closeModal('forgot-modal');
-    addMsg('assistant','Your password has been reset and you\u2019re now signed in. Namaste, '+(data.user&&data.user.name?data.user.name:'')+'! \uD83C\uDF3C');
-  })
-  .catch(function(){
-    document.getElementById('forgot-reset-submit').disabled=false;
-    document.getElementById('forgot-reset-submit').textContent='Reset Password';
-    showAuthErr('forgot-err','Network error. Please try again.');
-  });
-}
-
 function onSignedIn(token,user){
   localStorage.setItem(JK,token);
   currentUser=user;
@@ -1530,16 +1423,7 @@ function doSignOut(){
   localStorage.removeItem(JK);
   currentUser=null;
   updateSignInBtn();
-  stopPeriodicSync();
-  // Reset to a fresh session — don't leave the signed-in user's chat
-  // visible/accessible after sign out (privacy on shared devices).
-  msgs=[];
-  messagesEl.innerHTML='<div id="wisdom-wrap"><button id="wisdom-btn" onclick="askTodaysWisdom()" aria-label="Get today\'s wisdom"><div id="wisdom-btn-icon">🌅</div><div id="wisdom-btn-text"><div id="wisdom-btn-title">Today\'s Wisdom</div><div id="wisdom-btn-sub"></div></div></button></div><div id="suggestions"></div>';
-  suggestEl=document.getElementById('suggestions');
-  var verse=getTodaysVerse();var wsub=document.getElementById('wisdom-btn-sub');if(wsub)wsub.textContent='Gita '+verse.ref+' · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
-  localStorage.removeItem(HK);
-  addMsg('assistant',LC[curLang].welcome);
+  addMsg('assistant','You have been signed out. Your local chats remain on this device. May Krishna\u2019s wisdom stay with you. \uD83C\uDF38');
 }
 
 function openProfile(){
@@ -1856,21 +1740,6 @@ var _autoSyncInterval=null;
 var _lastPullTime=0;
 var _syncInProgress=false;
 
-// Shared renderer for newly-synced messages — used by syncNow, startPeriodicSync,
-// and the visibilitychange handler so all three stay in sync (previously
-// triplicated, which risked the three copies drifting apart over edits).
-function renderSyncedMessages(newMsgs){
-  newMsgs.forEach(function(m){
-    var row=document.createElement('div');row.className='msg-row '+m.role;
-    var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
-    av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
-    var col=document.createElement('div');col.className='msg-col';
-    var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
-    bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
-  });
-  trimMsgDom();scrollBottom();
-}
-
 function syncNow(){
   closeHamburger();
   if(!currentUser){addMsg('assistant','Sign in to sync your chat across devices.');return;}
@@ -1879,69 +1748,43 @@ function syncNow(){
   setSyncStatus('syncing','Syncing now...');
   var hm=document.getElementById('hm-sync-sub');
   if(hm)hm.textContent='Syncing...';
-  var localSnapshot=msgs.slice();
-  var localCountAtStart=localSnapshot.length;
-  // FIX: pull cloud FIRST, then decide how to merge safely:
-  //  - If local is a prefix of cloud (or vice versa), keep the longer one and push.
-  //  - If they diverge (neither is a prefix of the other), do NOT auto-push —
-  //    show a conflict notice so the user can decide, instead of silently
-  //    overwriting one side's history.
-  fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
+  // Push local first then pull cloud
+  fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
   .then(function(r){return r.json();})
-  .then(function(pullData){
-    var cloudHistory=pullData.history||[];
-    var mergedNewMsgs=[];
-    var shouldPush=true;
-
-    function isPrefix(shorter,longer){
-      if(shorter.length>longer.length)return false;
-      for(var i=0;i<shorter.length;i++){if(shorter[i].content!==longer[i].content||shorter[i].role!==longer[i].role)return false;}
-      return true;
-    }
-
-    if(cloudHistory.length===0){
-      // Cloud empty — push local.
-    }else if(localCountAtStart===0){
-      // Local empty — adopt cloud.
-      mergedNewMsgs=cloudHistory.slice();
-      msgs=cloudHistory;
-    }else if(isPrefix(localSnapshot,cloudHistory)){
-      // Local is a prefix of cloud — adopt cloud, push to converge.
-      mergedNewMsgs=cloudHistory.slice(localCountAtStart);
-      msgs=cloudHistory;
-    }else if(isPrefix(cloudHistory,localSnapshot)){
-      // Cloud is a prefix of local — keep local, push to converge.
-    }else{
-      // Diverged — don't auto-push to avoid data loss.
-      shouldPush=false;
-      addMsg('assistant','Sync conflict: your local and cloud histories differ. Cloud has '+cloudHistory.length+' messages, this device has '+localCountAtStart+'. Keeping your current local view. Clear & re-enable history if you want to start fresh from cloud.');
-      setSyncStatus('error','Sync conflict — histories diverged');
-    }
-
-    if(shouldPush){
-      return fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
-        .then(function(){return mergedNewMsgs;});
-    }
-    return Promise.resolve(mergedNewMsgs);
+  .then(function(){
+    return fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()});
   })
-  .then(function(mergedNewMsgs){
+  .then(function(r){return r.json();})
+  .then(function(data){
     _syncInProgress=false;
     _lastPullTime=Date.now();
     var hm=document.getElementById('hm-sync-sub');
     var ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     if(hm)hm.textContent='Last synced at '+ts;
-    if(mergedNewMsgs&&mergedNewMsgs.length>0){
-      renderSyncedMessages(mergedNewMsgs);
-      setSyncStatus('synced','✓ '+mergedNewMsgs.length+' new message'+(mergedNewMsgs.length===1?'':'s')+' synced');
+    if(data.history&&data.history.length>msgs.length){
+      // Cloud has more messages — render the new ones
+      var newMsgs=data.history.slice(msgs.length);
+      msgs=data.history;
+      newMsgs.forEach(function(m){
+        var row=document.createElement('div');row.className='msg-row '+m.role;
+        var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+        av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+        var col=document.createElement('div');col.className='msg-col';
+        var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+        bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+      });
+      trimMsgDom();scrollBottom();
+      setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
     }else{
-      setSyncStatus('synced','✓ Already up to date');
+      setSyncStatus('synced','\u2713 Already up to date');
     }
   })
   .catch(function(){
     _syncInProgress=false;
-    setSyncStatus('error','Sync failed — check your connection');
+    setSyncStatus('error','Sync failed \u2014 check your connection');
   });
 }
+
 function startPeriodicSync(){
   if(_autoSyncInterval)clearInterval(_autoSyncInterval);
   // Pull from cloud every 60 seconds silently
@@ -1955,7 +1798,15 @@ function startPeriodicSync(){
       if(data.history&&data.history.length>msgs.length){
         var newMsgs=data.history.slice(msgs.length);
         msgs=data.history;
-        renderSyncedMessages(newMsgs);
+        newMsgs.forEach(function(m){
+          var row=document.createElement('div');row.className='msg-row '+m.role;
+          var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+          av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+          var col=document.createElement('div');col.className='msg-col';
+          var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+          bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+        });
+        trimMsgDom();scrollBottom();
         setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' from another device');
       }
     })
@@ -1981,7 +1832,15 @@ document.addEventListener('visibilitychange',function(){
         if(data.history&&data.history.length>msgs.length){
           var newMsgs=data.history.slice(msgs.length);
           msgs=data.history;
-          renderSyncedMessages(newMsgs);
+          newMsgs.forEach(function(m){
+            var row=document.createElement('div');row.className='msg-row '+m.role;
+            var av=document.createElement('div');av.className='avatar '+(m.role==='assistant'?'bot':'user');
+            av.textContent=m.role==='assistant'?'\uD83E\uDD9A':'\uD83D\uDE4F';av.setAttribute('aria-hidden','true');
+            var col=document.createElement('div');col.className='msg-col';
+            var bub=document.createElement('div');bub.className='bubble '+(m.role==='assistant'?'bot':'user');
+            bub.innerHTML=renderMarkdown(m.content);col.appendChild(bub);row.appendChild(av);row.appendChild(col);messagesEl.appendChild(row);
+          });
+          trimMsgDom();scrollBottom();
           setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' synced');
         }
       })
@@ -2078,7 +1937,7 @@ function openHistFromMenu(){
     if(stats){stats.style.display='block';stats.textContent=uq?uq+' question'+(uq===1?'':'s')+' saved on this device':'No messages saved yet -- start chatting!';}
     enR.style.display='none';disR.style.display='flex';disR.style.flexDirection='column';
   }else{
-    desc.textContent=currentUser?'Enable to also keep a copy of your conversations on this device.':'Enable to save your conversations on this device only.';
+    desc.textContent='Enable to save your conversations on this device only.';
     if(stats)stats.style.display='none';
     enR.style.display='flex';disR.style.display='none';
   }
@@ -2108,10 +1967,6 @@ enableHistory=function(){
   updateHistBtn();closeModal('history-modal');
   addMsg('assistant','Your conversations will now be saved on this device. Tap the save button anytime to view, restore or clear your history.');
 };
-// saveHist is already declared as a hoisted function near saveHistAndSync above.
-// This later assignment upgrades it in-place with the same body — no-op but
-// kept for code organization. If the implementation diverges in future edits,
-// remove this block and rely solely on the earlier declaration.
 saveHist=function(){
   if(!histEn)return;
   var toSave=msgs.filter(function(m){return m.content&&m.content.length>0;});
@@ -2438,6 +2293,8 @@ addMsg=function(role,content){
   hideEmptyState();
   _origAddMsg2(role,content);
 };
+// Update verse mode UI on init
+updateVerseModeUI();
 // Update notif sub-text if time is set
 (function(){
   var t=localStorage.getItem(NOTIF_TIME_KEY);
@@ -2557,6 +2414,24 @@ if('serviceWorker' in navigator){
       });
     });
   }).catch(function(){});
+}
+
+// ── Option B Verse Mode feature flag ─────────────────────────────────────────
+var VERSE_MODE_KEY='ak_verse_mode';
+var verseMode=localStorage.getItem(VERSE_MODE_KEY)||'A';
+
+function toggleVerseMode(){
+  verseMode=verseMode==='A'?'B':'A';
+  localStorage.setItem(VERSE_MODE_KEY,verseMode);
+  updateVerseModeUI();
+  showToast('Verse mode: '+(verseMode==='B'?'Option B (701 verses) ON':'Option A (curated) ON'));
+  appLog('info','verseMode','Switched to mode '+verseMode);
+}
+function updateVerseModeUI(){
+  var sub=document.getElementById('hm-verse-mode-sub');
+  var tog=document.getElementById('hm-verse-mode-toggle');
+  if(sub)sub.textContent=verseMode==='B'?'Option B: 701 verse matching ON':'Option A: Curated verse bank';
+  if(tog)tog.classList.toggle('on',verseMode==='B');
 }
 </script>
 </body>
