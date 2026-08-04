@@ -993,7 +993,8 @@ function playOm(){
   });
 }
 // Single click handler on Om button — no duplicate
-document.getElementById('om-btn').addEventListener('click',function(){
+var omBtnEl=document.getElementById('om-btn');
+if(omBtnEl)omBtnEl.addEventListener('click',function(){
   if(omPlaying){stopOm();}else{playOm();}
 });
 // TTS
