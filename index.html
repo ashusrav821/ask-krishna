@@ -801,6 +801,7 @@ function getUsedVerses(){
   var used=[];
   msgs.forEach(function(m){
     if(m.role!=='assistant')return;
+    if(typeof m.content!=='string')return;
     var matches=m.content.match(/\b(\d{1,2})\.(\d{1,3})\b/g)||[];
     matches.forEach(function(r){if(used.indexOf(r)===-1)used.push(r);});
   });
@@ -1161,12 +1162,23 @@ function askTodaysWisdom(){
   showTyping();
   appLog('info','wisdom','Fetching from worker',{url:W,verse:verse.ref});
   var apiMsgs=[{role:'user',content:wisdomPrompt}];
-  var ctrl=new AbortController();
-  var tout=setTimeout(function(){
-    appLog('error','wisdom','Request aborted — 30s timeout');
-    ctrl.abort();
-  },30000);
-  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs}),signal:ctrl.signal})
+  var ctrl,tout,usedVerses;
+  try{
+    usedVerses=getUsedVerses();
+    ctrl=new AbortController();
+    tout=setTimeout(function(){
+      appLog('error','wisdom','Request aborted — 30s timeout');
+      ctrl.abort();
+    },30000);
+  }catch(buildErr){
+    appLog('error','wisdom','Failed building request',{name:buildErr.name,message:buildErr.message});
+    hideTyping();
+    loading=false;
+    updateSend();
+    addMsg('assistant','Today\'s wisdom could not be loaded. Please try again.');
+    return;
+  }
+  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:usedVerses,messages:apiMsgs}),signal:ctrl.signal})
   .then(function(r){
     appLog('info','wisdom','HTTP response received',{status:r.status,ok:r.ok,contentType:r.headers.get('content-type')});
     if(!r.ok){
