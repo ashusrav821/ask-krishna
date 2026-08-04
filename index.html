@@ -1428,7 +1428,16 @@ function doSignOut(){
   localStorage.removeItem(JK);
   currentUser=null;
   updateSignInBtn();
-  addMsg('assistant','You have been signed out. Your local chats remain on this device. May Krishna\u2019s wisdom stay with you. \uD83C\uDF38');
+  stopPeriodicSync();
+  // Reset to a fresh session — don't leave the signed-in user's chat
+  // visible/accessible after sign out (privacy on shared devices).
+  msgs=[];
+  messagesEl.innerHTML='<div id="wisdom-wrap"><button id="wisdom-btn" onclick="askTodaysWisdom()" aria-label="Get today\'s wisdom"><div id="wisdom-btn-icon">🌅</div><div id="wisdom-btn-text"><div id="wisdom-btn-title">Today\'s Wisdom</div><div id="wisdom-btn-sub"></div></div></button></div><div id="suggestions"></div>';
+  suggestEl=document.getElementById('suggestions');
+  var verse=getTodaysVerse();var wsub=document.getElementById('wisdom-btn-sub');if(wsub)wsub.textContent='Gita '+verse.ref+' · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  SUGG.forEach(function(s){var btn=document.createElement('button');btn.className='suggestion-btn';btn.textContent=s;btn.onclick=function(){inputEl.value=s;updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';inputEl.focus()};suggestEl.appendChild(btn)});
+  localStorage.removeItem(HK);
+  addMsg('assistant',LC[curLang].welcome);
 }
 
 function openProfile(){
