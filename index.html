@@ -384,6 +384,7 @@
       <div class="auth-divider">— or sign in with email —</div>
       <input class="auth-input" id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
       <div class="pw-wrap"><input class="auth-input" id="signin-pass" type="password" placeholder="Password" autocomplete="current-password" /><button type="button" class="pw-eye" onclick="togglePw('signin-pass',this)">&#x1F441;</button></div>
+      <button class="auth-link" style="text-align:right;margin:-6px 0 10px;font-size:12px" onclick="openForgotPassword()">Forgot password?</button>
       <div class="btn-row">
         <button class="mbtn cancel" onclick="closeModal('signin-modal')">Cancel</button>
         <button class="mbtn confirm" id="signin-submit" onclick="doSignIn()">Sign In</button>
@@ -422,6 +423,33 @@
         <button class="mbtn confirm" id="signup-submit" onclick="doSignUp()">Create Account</button>
       </div>
       <button class="auth-link" onclick="switchToSignIn()">Already have an account? Sign in</button>
+    </div>
+  </div>
+  <!-- Forgot Password Modal -->
+  <div class="modal" id="forgot-modal">
+    <div class="modal-box">
+      <h2>&#x1F511; Reset Password</h2>
+      <div class="auth-err" id="forgot-err"></div>
+      <!-- Step 1: request a code -->
+      <div id="forgot-step1">
+        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter your account email and we\u2019ll send you a 6-digit reset code.</p>
+        <input class="auth-input" id="forgot-email" type="email" placeholder="Email address" autocomplete="email" />
+        <div class="btn-row">
+          <button class="mbtn cancel" onclick="closeModal('forgot-modal');openModal('signin-modal')">Back</button>
+          <button class="mbtn confirm" id="forgot-request-submit" onclick="doForgotRequest()">Send Code</button>
+        </div>
+      </div>
+      <!-- Step 2: enter code + new password -->
+      <div id="forgot-step2" style="display:none">
+        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter the code sent to <span id="forgot-email-display" style="color:#fbbf24;font-weight:600"></span> and choose a new password.</p>
+        <input class="auth-input" id="forgot-code" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" />
+        <div class="pw-wrap"><input class="auth-input" id="forgot-newpass" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" /><button type="button" class="pw-eye" onclick="togglePw('forgot-newpass',this)">&#x1F441;</button></div>
+        <div class="btn-row">
+          <button class="mbtn cancel" onclick="backToForgotStep1()">Back</button>
+          <button class="mbtn confirm" id="forgot-reset-submit" onclick="doResetPassword()">Reset Password</button>
+        </div>
+        <button class="auth-link" onclick="doForgotRequest(true)">Didn\u2019t get a code? Resend</button>
+      </div>
     </div>
   </div>
   <!-- Profile Modal -->
@@ -815,7 +843,7 @@ function getUsedVerses(){
 function hasBadWords(t){var l=t.toLowerCase();return BW.some(function(w){return l.indexOf(w)!==-1})}
 function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
-['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
+['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','forgot-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
 document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
@@ -1403,6 +1431,80 @@ function doSignIn(){
     document.getElementById('signin-submit').disabled=false;
     document.getElementById('signin-submit').textContent='Sign In';
     showAuthErr('signin-err','Network error. Please try again.');
+  });
+}
+
+// ── Forgot Password ──────────────────────────────────────────────────────
+function openForgotPassword(){
+  closeModal('signin-modal');
+  clearAuthErr('forgot-err');
+  document.getElementById('forgot-email').value=document.getElementById('signin-email').value.trim();
+  document.getElementById('forgot-code').value='';
+  document.getElementById('forgot-newpass').value='';
+  document.getElementById('forgot-step1').style.display='block';
+  document.getElementById('forgot-step2').style.display='none';
+  openModal('forgot-modal');
+}
+function backToForgotStep1(){
+  clearAuthErr('forgot-err');
+  document.getElementById('forgot-step1').style.display='block';
+  document.getElementById('forgot-step2').style.display='none';
+}
+function doForgotRequest(isResend){
+  clearAuthErr('forgot-err');
+  var email=document.getElementById('forgot-email').value.trim().toLowerCase();
+  if(!validateEmail(email)){showAuthErr('forgot-err','Please enter a valid email address.');return;}
+  var btnId=isResend?null:'forgot-request-submit';
+  if(btnId){document.getElementById(btnId).disabled=true;document.getElementById(btnId).textContent='Sending...';}
+  fetch(W+'auth/forgot',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:email})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(btnId){document.getElementById(btnId).disabled=false;document.getElementById(btnId).textContent='Send Code';}
+    if(data.error){showAuthErr('forgot-err',data.error);return;}
+    document.getElementById('forgot-email-display').textContent=email;
+    document.getElementById('forgot-step1').style.display='none';
+    document.getElementById('forgot-step2').style.display='block';
+    if(isResend){
+      var codeInput=document.getElementById('forgot-code');
+      if(codeInput)codeInput.value='';
+    }
+  })
+  .catch(function(){
+    if(btnId){document.getElementById(btnId).disabled=false;document.getElementById(btnId).textContent='Send Code';}
+    showAuthErr('forgot-err','Network error. Please try again.');
+  });
+}
+function doResetPassword(){
+  clearAuthErr('forgot-err');
+  var email=document.getElementById('forgot-email').value.trim().toLowerCase();
+  var code=document.getElementById('forgot-code').value.trim();
+  var newPass=document.getElementById('forgot-newpass').value;
+  if(!/^\d{6}$/.test(code)){showAuthErr('forgot-err','Please enter the 6-digit code from your email.');return;}
+  if(newPass.length<8){showAuthErr('forgot-err','Password must be at least 8 characters.');return;}
+  document.getElementById('forgot-reset-submit').disabled=true;
+  document.getElementById('forgot-reset-submit').textContent='Resetting...';
+  fetch(W+'auth/reset',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:email,code:code,newPassword:newPass})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    document.getElementById('forgot-reset-submit').disabled=false;
+    document.getElementById('forgot-reset-submit').textContent='Reset Password';
+    if(data.error){showAuthErr('forgot-err',data.error);return;}
+    onSignedIn(data.token,data.user);
+    closeModal('forgot-modal');
+    addMsg('assistant','Your password has been reset and you\u2019re now signed in. Namaste, '+(data.user&&data.user.name?data.user.name:'')+'! \uD83C\uDF3C');
+  })
+  .catch(function(){
+    document.getElementById('forgot-reset-submit').disabled=false;
+    document.getElementById('forgot-reset-submit').textContent='Reset Password';
+    showAuthErr('forgot-err','Network error. Please try again.');
   });
 }
 
