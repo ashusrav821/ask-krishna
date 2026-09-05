@@ -1,4 +1,4 @@
-var CACHE='askkeshava-v4';
+var CACHE='askkeshava-v5';
 var ASSETS=[
   '/',
   '/index.html',
@@ -118,7 +118,7 @@ self.addEventListener('message',function(e){
   if(e.data&&e.data.type==='SHOW_NOTIF'){
     // FIX: wrap in waitUntil so the SW stays alive until notification is shown
     e.waitUntil(
-      self.registration.showNotification(e.data.title||'Ask Krishna 🪷',{
+      self.registration.showNotification(e.data.title||'Ask Keshava 🪷',{
         body:e.data.body||'Your daily wisdom from the Bhagavad Gita awaits.',
         icon:'/icon-192.png',
         badge:'/icon-192.png',
