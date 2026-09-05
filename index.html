@@ -1727,11 +1727,11 @@ function showDailyNotification(){
   navigator.serviceWorker.ready.then(function(sw){
     sw.showNotification('Ask Keshava \uD83C\uDF38',{
       body:teasers[idx],
-      icon:'/ask-krishna/icon-192.png',
-      badge:'/ask-krishna/icon-192.png',
+      icon:'/icon-192.png',
+      badge:'/icon-192.png',
       tag:'daily-wisdom',
       renotify:true,
-      data:{url:location.origin+'/ask-krishna/?wisdom=1'}
+      data:{url:location.origin+'/?wisdom=1'}
     });
   });
 }
