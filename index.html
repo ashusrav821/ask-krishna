@@ -955,7 +955,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -1420,6 +1420,54 @@ var editMode=''; // 'name' | 'password'
 function b64url(str){return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}
 function decodeJwt(token){try{var p=token.split('.')[1];var pad=p.length%4?p+'='.repeat(4-p.length%4):p;return JSON.parse(atob(pad.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
 
+// ── Sliding session ─────────────────────────────────────────────────────────
+// The worker reissues a token once the current one passes its halfway point.
+// Storing it here keeps an active user signed in indefinitely; only an
+// abandoned session is allowed to lapse.
+function saveRefreshedToken(token){
+  if(!token)return;
+  var p=decodeJwt(token);
+  if(!p||!p.sub)return;                 // ignore anything malformed
+  localStorage.setItem(JK,token);
+  if(currentUser){
+    currentUser.email=p.sub;
+    currentUser.name=p.name||currentUser.name;
+    currentUser.lang=p.lang||currentUser.lang;
+  }
+  appLog('info','auth','Session extended');
+}
+// Reads the refreshed token from a response header (used by /chat).
+function captureTokenHeader(r){
+  try{
+    var t=r.headers.get('X-Refreshed-Token');
+    if(t)saveRefreshedToken(t);
+  }catch(e){}
+  return r;
+}
+function isTokenExpired(payload){
+  if(!payload||!payload.exp)return true;          // no exp -> worker rejects it
+  return payload.exp <= Math.floor(Date.now()/1000);
+}
+// True when a usable, unexpired session exists.
+function hasValidSession(){
+  var t=localStorage.getItem(JK);
+  if(!t)return false;
+  return !isTokenExpired(decodeJwt(t));
+}
+// Called when the worker returns 401: clear local state and tell the user once.
+var _sessionExpiryNotified=false;
+function handleSessionExpired(){
+  localStorage.removeItem(JK);
+  currentUser=null;
+  if(typeof stopPeriodicSync==='function')stopPeriodicSync();
+  if(typeof updateSignInBtn==='function')updateSignInBtn();
+  if(typeof updateHamburgerAuth==='function')updateHamburgerAuth();
+  if(!_sessionExpiryNotified){
+    _sessionExpiryNotified=true;
+    setSyncStatus('error','Session expired — please sign in again');
+    if(typeof showToast==='function')showToast('Your session expired. Please sign in again.',4000);
+  }
+}
 function getAuthHeaders(){
   var t=localStorage.getItem(JK);
   return t?{'Content-Type':'application/json','Authorization':'Bearer '+t}:{'Content-Type':'application/json'};
@@ -1604,6 +1652,7 @@ function doResetPassword(){
 }
 
 function onSignedIn(token,user){
+  _sessionExpiryNotified=false;  // fresh session, allow the notice again later
   localStorage.setItem(JK,token);
   currentUser=user;
   updateSignInBtn();
@@ -1780,6 +1829,15 @@ function debouncedPush(){
   if(!token)return;
   var payload=decodeJwt(token);
   if(!payload||!payload.sub){localStorage.removeItem(JK);return;}
+  // The worker rejects tokens whose exp has passed. Without this check the
+  // client would keep believing it is signed in and every background sync
+  // would fail with 401.
+  if(isTokenExpired(payload)){
+    localStorage.removeItem(JK);
+    currentUser=null;
+    appLog('info','auth','Stored session expired — signed out locally');
+    return;
+  }
   currentUser={email:payload.sub,name:payload.name||'',lang:payload.lang||'en'};
   updateSignInBtn();
   // Apply saved language
@@ -1970,6 +2028,7 @@ function syncNow(){
   track('sync');
   closeHamburger();
   if(!currentUser){addMsg('assistant','Sign in to sync your chat across devices.');return;}
+  if(!hasValidSession()){handleSessionExpired();return;}
   if(_syncInProgress){setSyncStatus('syncing','Sync already in progress...');return;}
   _syncInProgress=true;
   setSyncStatus('syncing','Syncing now...');
@@ -1996,6 +2055,7 @@ function syncNow(){
   })
   .then(function(pullData){
     if(pullData.error)throw new Error(pullData.error);
+    if(pullData.token)saveRefreshedToken(pullData.token);
     var cloudHistory=pullData.history||[];
     var mergedNewMsgs=[];
     var shouldPush=true;
@@ -2067,11 +2127,13 @@ function startPeriodicSync(){
   _autoSyncInterval=setInterval(function(){
     if(!currentUser||!navigator.onLine||_syncInProgress)return;
     if(document.hidden)return; // don't sync a backgrounded tab
+    if(!hasValidSession()){handleSessionExpired();return;}
     // Silent pull — only update if cloud has more messages
     fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
     .then(function(r){return r.json();})
     .then(function(data){
       _lastPullTime=Date.now();
+      if(data.token)saveRefreshedToken(data.token);
       if(data.history&&data.history.length>msgs.length){
         var newMsgs=data.history.slice(msgs.length);
         msgs=data.history;
@@ -2091,6 +2153,7 @@ function stopPeriodicSync(){
 document.addEventListener('visibilitychange',function(){
   if(!document.hidden&&currentUser&&navigator.onLine){
     // Only pull if last pull was more than 30 seconds ago
+    if(!hasValidSession()){handleSessionExpired();return;}
     if(Date.now()-_lastPullTime>30000){
       var sinceMs=Date.now()-_lastPullTime;
       // Silent pull on focus
@@ -2249,7 +2312,8 @@ function setSyncStatus(state,msg){
   if(state==='error')showToast(msg||'Sync failed',3500);
 }
 pushHistory=function(){
-  if(!currentUser||!localStorage.getItem(JK)||!msgs.length)return;
+  if(!currentUser||!msgs.length)return;
+  if(!hasValidSession()){handleSessionExpired();return;}
   // Background auto-push: stay silent on success so the status bar isn't noisy
   // after every message. Only surface a problem the user can act on, and
   // always log it so /logs shows the real cause.
@@ -2258,7 +2322,7 @@ pushHistory=function(){
     if(!r.ok){
       return r.json().catch(function(){return {};}).then(function(e){
         appLog('error','sync','Auto-push failed',{status:r.status,error:e.error});
-        if(r.status===401){setSyncStatus('error','Session expired — sign in again');}
+        if(r.status===401){handleSessionExpired();}
         else if(r.status===429){/* transient, ignore silently */}
         else{setSyncStatus('error','Sync failed — '+(e.error||('server '+r.status)));}
         return null;
@@ -2267,6 +2331,7 @@ pushHistory=function(){
     return r.json();
   })
   .then(function(d){
+    if(d&&d.token)saveRefreshedToken(d.token);
     if(d&&d.ok){setSyncStatus('synced','Synced across devices');}
     else if(d){appLog('warn','sync','Auto-push returned no ok flag',{data:JSON.stringify(d).slice(0,120)});}
   })
@@ -2276,7 +2341,8 @@ pushHistory=function(){
   });
 };
 pullHistory=function(){
-  if(!currentUser||!localStorage.getItem(JK))return;
+  if(!currentUser)return;
+  if(!hasValidSession()){handleSessionExpired();return;}
   setSyncStatus('syncing','Restoring history...');
   fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
   .then(function(r){
@@ -2290,6 +2356,7 @@ pullHistory=function(){
     return r.json();
   })
   .then(function(data){
+    if(data.token)saveRefreshedToken(data.token);
     if(data.history&&data.history.length){
       msgs=data.history;
       var wb=document.getElementById('wisdom-wrap');var sg=suggestEl;
