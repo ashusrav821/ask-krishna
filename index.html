@@ -402,8 +402,8 @@
   </div>
   <div class="modal" id="voice-modal">
     <div class="modal-box">
-      <h2>&#x1F399;&#xFE0F; Choose Krishna Voice</h2>
-      <p style="font-size:12px;color:rgba(249,115,22,0.7);margin-bottom:12px">Tap any voice to preview. Best: male, Indian English.</p>
+      <h2>&#x1F399;&#xFE0F; Voice</h2>
+      <p style="font-size:12px;color:rgba(253,186,116,0.55);margin-bottom:14px">Choose a language and voice</p>
       <div id="voice-list"></div>
       <div class="btn-row" style="margin-top:12px">
         <button class="mbtn cancel" onclick="closeModal('voice-modal')">Done</button>
@@ -578,7 +578,7 @@
         </div>
         <div class="hmenu-item" onclick="openVoicePicker();closeHamburger()">
           <div class="hmenu-icon">&#x1F399;&#xFE0F;</div>
-          <div class="hmenu-label"><div class="hmenu-title">Choose Voice</div><div class="hmenu-sub">Google TTS voices</div></div>
+          <div class="hmenu-label"><div class="hmenu-title">Voice</div><div class="hmenu-sub" id="hm-voice-sub">English · Keshava</div></div>
           <div class="hmenu-arrow">&#x203A;</div>
         </div>
         <!-- Text Size -->
@@ -1191,68 +1191,178 @@ function updateTtsBtn(){
 function openVoicePicker(){
   var list=document.getElementById('voice-list');
   list.innerHTML='';
-  // Chirp 3 HD voices, grouped by language. Achird and Algieba are the warmest
-  // male voices; Achernar and Leda are the warmest female ones.
-  var googleVoices=[
-    // English (India)
-    {name:'en-IN-Chirp3-HD-Achird',lang:'en-IN',label:'English — Achird (Male)',desc:'Warm, smooth, gentle · Recommended'},
-    {name:'en-IN-Chirp3-HD-Algieba',lang:'en-IN',label:'English — Algieba (Male)',desc:'Deep, calm and reassuring'},
-    {name:'en-IN-Chirp3-HD-Umbriel',lang:'en-IN',label:'English — Umbriel (Male)',desc:'Soft and measured'},
-    {name:'en-IN-Chirp3-HD-Charon',lang:'en-IN',label:'English — Charon (Male)',desc:'Rich and grounded'},
-    {name:'en-IN-Chirp3-HD-Achernar',lang:'en-IN',label:'English — Achernar (Female)',desc:'Warm and compassionate'},
-    {name:'en-IN-Chirp3-HD-Leda',lang:'en-IN',label:'English — Leda (Female)',desc:'Gentle and clear'},
-    // Hindi
-    {name:'hi-IN-Chirp3-HD-Achird',lang:'hi-IN',label:'हिन्दी — Achird (Male)',desc:'Warm and natural · Recommended'},
-    {name:'hi-IN-Chirp3-HD-Algieba',lang:'hi-IN',label:'हिन्दी — Algieba (Male)',desc:'Deep and calm'},
-    {name:'hi-IN-Chirp3-HD-Achernar',lang:'hi-IN',label:'हिन्दी — Achernar (Female)',desc:'Warm female voice'},
-    // Telugu
-    {name:'te-IN-Chirp3-HD-Achird',lang:'te-IN',label:'తెలుగు — Achird (Male)',desc:'Warm and natural · Recommended'},
-    {name:'te-IN-Chirp3-HD-Algieba',lang:'te-IN',label:'తెలుగు — Algieba (Male)',desc:'Deep and calm'},
-    {name:'te-IN-Chirp3-HD-Achernar',lang:'te-IN',label:'తెలుగు — Achernar (Female)',desc:'Warm female voice'},
-    // Tamil
-    {name:'ta-IN-Chirp3-HD-Achird',lang:'ta-IN',label:'தமிழ் — Achird (Male)',desc:'Warm and natural · Recommended'},
-    {name:'ta-IN-Chirp3-HD-Algieba',lang:'ta-IN',label:'தமிழ் — Algieba (Male)',desc:'Deep and calm'},
-    {name:'ta-IN-Chirp3-HD-Achernar',lang:'ta-IN',label:'தமிழ் — Achernar (Female)',desc:'Warm female voice'}
+
+  // Four voices per language. Achird is the warm default; the rest give a
+  // deeper, softer or female alternative without overwhelming the choice.
+  var VOICES=[
+    {lang:'en',code:'en-IN',flag:'\uD83C\uDDEC\uD83C\uDDE7',native:'English',voices:[
+      {id:'en-IN-Chirp3-HD-Achird',  name:'Keshava', tone:'Warm'},
+      {id:'en-IN-Chirp3-HD-Algieba', name:'Krishna', tone:'Deep'},
+      {id:'en-IN-Chirp3-HD-Umbriel', name:'Madhava', tone:'Soft'},
+      {id:'en-IN-Chirp3-HD-Achernar',name:'Radha',   tone:'Gentle'}
+    ]},
+    {lang:'hi',code:'hi-IN',flag:'\uD83C\uDDEE\uD83C\uDDF3',native:'\u0939\u093F\u0928\u094D\u0926\u0940',voices:[
+      {id:'hi-IN-Chirp3-HD-Achird',  name:'Keshava', tone:'Warm'},
+      {id:'hi-IN-Chirp3-HD-Algieba', name:'Krishna', tone:'Deep'},
+      {id:'hi-IN-Chirp3-HD-Umbriel', name:'Madhava', tone:'Soft'},
+      {id:'hi-IN-Chirp3-HD-Achernar',name:'Radha',   tone:'Gentle'}
+    ]},
+    {lang:'te',code:'te-IN',flag:'\uD83C\uDDEE\uD83C\uDDF3',native:'\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41',voices:[
+      {id:'te-IN-Chirp3-HD-Achird',  name:'Keshava', tone:'Warm'},
+      {id:'te-IN-Chirp3-HD-Algieba', name:'Krishna', tone:'Deep'},
+      {id:'te-IN-Chirp3-HD-Umbriel', name:'Madhava', tone:'Soft'},
+      {id:'te-IN-Chirp3-HD-Achernar',name:'Radha',   tone:'Gentle'}
+    ]},
+    {lang:'ta',code:'ta-IN',flag:'\uD83C\uDDEE\uD83C\uDDF3',native:'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD',voices:[
+      {id:'ta-IN-Chirp3-HD-Achird',  name:'Keshava', tone:'Warm'},
+      {id:'ta-IN-Chirp3-HD-Algieba', name:'Krishna', tone:'Deep'},
+      {id:'ta-IN-Chirp3-HD-Umbriel', name:'Madhava', tone:'Soft'},
+      {id:'ta-IN-Chirp3-HD-Achernar',name:'Radha',   tone:'Gentle'}
+    ]}
   ];
-  // Show only voices for the language currently in use — a mismatched pair
-  // is rejected by Google and would silently fail.
-  var curLangCode=ttsLangMap[curLang]||'en-IN';
-  googleVoices=googleVoices.filter(function(v){return v.lang===curLangCode;});
+
+  // Preview line in each language, so you hear the voice reading its own script.
+  var PREVIEW={
+    'en-IN':'Namaste. Whatever weighs on your heart today, know that it too shall pass.',
+    'hi-IN':'\u0928\u092E\u0938\u094D\u0924\u0947\u0964 \u0906\u091C \u0906\u092A\u0915\u0947 \u092E\u0928 \u092A\u0930 \u091C\u094B \u092D\u0940 \u092C\u094B\u091D \u0939\u0948, \u0935\u0939 \u092D\u0940 \u092C\u0940\u0924 \u091C\u093E\u090F\u0917\u093E\u0964',
+    'te-IN':'\u0C28\u0C2E\u0C38\u0C4D\u0C24\u0C47. \u0C08 \u0C30\u0C4B\u0C1C\u0C41 \u0C2E\u0C40 \u0C2E\u0C28\u0C38\u0C41\u0C2A\u0C48 \u0C0F \u0C2D\u0C3E\u0C30\u0C02 \u0C09\u0C28\u0C4D\u0C28\u0C3E, \u0C05\u0C26\u0C3F \u0C15\u0C42\u0C21\u0C3E \u0C17\u0C21\u0C3F\u0C2A\u0C4B\u0C24\u0C41\u0C02\u0C26\u0C3F.',
+    'ta-IN':'\u0BB5\u0BA3\u0B95\u0BCD\u0B95\u0BAE\u0BCD. \u0B87\u0BA9\u0BCD\u0BB1\u0BC1 \u0B89\u0BAE\u0BCD \u0BAE\u0BA9\u0BA4\u0BBF\u0BB2\u0BCD \u0B8E\u0BA9\u0BCD\u0BA9 \u0BAA\u0BBE\u0BB0\u0BAE\u0BCD \u0B87\u0BB0\u0BC1\u0BA8\u0BCD\u0BA4\u0BBE\u0BB2\u0BC1\u0BAE\u0BCD, \u0B85\u0BA4\u0BC1\u0BB5\u0BC1\u0BAE\u0BCD \u0B95\u0BA9\u0BBF\u0BAF\u0BC1\u0BAE\u0BCD.'
+  };
+
   var saved=localStorage.getItem(VK)||googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
-  var hdr=document.createElement('div');
-  hdr.style.cssText='font-size:11px;color:rgba(249,115,22,0.6);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-left:2px';
-  hdr.textContent='Google Cloud TTS Voices';
-  list.appendChild(hdr);
-  googleVoices.forEach(function(v){
-    var btn=document.createElement('button');
-    btn.className='v-item'+(saved===v.name?' selected':'');
-    var isRec=v.name.indexOf('Chirp3-HD-Achird')!==-1;
-    btn.innerHTML='<div style="text-align:left"><div style="font-size:13px;color:#e5e7eb;font-weight:'+(isRec?'bold':'normal')+'">'+v.label+(isRec?' &#x2B50;':'')+'</div><div style="font-size:11px;color:rgba(249,115,22,0.5);margin-top:2px">'+v.desc+'</div></div>'+(saved===v.name?'<span style="color:#f97316;font-size:12px">&#x2713;</span>':'');
-    btn.onclick=function(){
-      var previewText='Namaste. I am Ask Keshava. May the wisdom of the Bhagavad Gita guide and protect you always.';
-      fetch(W+'tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:previewText,voice:v.name,langCode:v.lang,rate:0.92})})
-      .then(function(r){return r.json()})
-      .then(function(data){
-        if(data.audioContent){
-          if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
-          ttsAudio=new Audio('data:audio/mp3;base64,'+data.audioContent);
-          ttsAudio.volume=0.95;
-          ttsAudio.play().catch(function(){});
+  var activeLang=curLang;           // language tab currently shown
+  var playingId=null;
+
+  // ── Language tabs ────────────────────────────────────────────────────────
+  var tabs=document.createElement('div');
+  tabs.style.cssText='display:flex;gap:6px;margin-bottom:14px';
+  list.appendChild(tabs);
+
+  var grid=document.createElement('div');
+  grid.style.cssText='display:flex;flex-direction:column;gap:6px';
+  list.appendChild(grid);
+
+  var note=document.createElement('div');
+  note.style.cssText='font-size:10.5px;color:rgba(253,186,116,0.4);text-align:center;margin-top:12px;line-height:1.5';
+  note.textContent='Tap any voice to hear it';
+  list.appendChild(note);
+
+  function renderTabs(){
+    tabs.innerHTML='';
+    VOICES.forEach(function(g){
+      var t=document.createElement('button');
+      var on=g.lang===activeLang;
+      t.style.cssText='flex:1;padding:7px 4px;border-radius:9px;font-family:inherit;font-size:12px;cursor:pointer;'
+        +'-webkit-tap-highlight-color:transparent;transition:all .15s;'
+        +(on?'background:rgba(249,115,22,0.22);border:1px solid rgba(249,115,22,0.5);color:#fbbf24;font-weight:bold'
+            :'background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.12);color:rgba(253,186,116,0.65)');
+      t.textContent=g.native;
+      t.onclick=function(){activeLang=g.lang;renderTabs();renderVoices();};
+      tabs.appendChild(t);
+    });
+  }
+
+  function renderVoices(){
+    grid.innerHTML='';
+    var group=VOICES.filter(function(g){return g.lang===activeLang;})[0];
+    if(!group)return;
+
+    group.voices.forEach(function(v){
+      var row=document.createElement('button');
+      var isSel=saved===v.id;
+      row.className='v-item'+(isSel?' selected':'');
+      row.style.cssText='width:100%;padding:11px 13px;border-radius:11px;cursor:pointer;font-family:inherit;'
+        +'display:flex;align-items:center;gap:11px;text-align:left;transition:all .15s;'
+        +'-webkit-tap-highlight-color:transparent;'
+        +(isSel?'background:rgba(249,115,22,0.18);border:1px solid rgba(249,115,22,0.45)'
+               :'background:rgba(249,115,22,0.04);border:1px solid rgba(249,115,22,0.12)');
+
+      var icon=document.createElement('div');
+      icon.style.cssText='width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;'
+        +'align-items:center;justify-content:center;font-size:14px;'
+        +(isSel?'background:linear-gradient(135deg,#f97316,#ea580c)':'background:rgba(249,115,22,0.12)');
+      icon.textContent=playingId===v.id?'\u23F8':'\u25B6';
+
+      var txt=document.createElement('div');
+      txt.style.cssText='flex:1;min-width:0';
+      var nm=document.createElement('div');
+      nm.style.cssText='font-size:13.5px;color:'+(isSel?'#fbbf24':'#e5e7eb')+';font-weight:'+(isSel?'600':'400');
+      nm.textContent=v.name;
+      var tn=document.createElement('div');
+      tn.style.cssText='font-size:11px;color:rgba(253,186,116,0.45);margin-top:1px';
+      tn.textContent=v.tone;
+      txt.appendChild(nm);txt.appendChild(tn);
+
+      row.appendChild(icon);row.appendChild(txt);
+
+      if(isSel){
+        var tick=document.createElement('div');
+        tick.style.cssText='color:#f97316;font-size:15px;flex-shrink:0';
+        tick.textContent='\u2713';
+        row.appendChild(tick);
+      }
+
+      row.onclick=function(){
+        // Selecting a voice also switches the app to that language, so the
+        // chosen voice and the reply language can never drift apart.
+        saved=v.id;
+        try{localStorage.setItem(VK,v.id);}catch(e){}
+        googleVoiceMap[group.lang]=v.id;
+        if(curLang!==group.lang){
+          curLang=group.lang;pendLang=group.lang;
+          try{localStorage.setItem(LK,curLang);}catch(e){}
+          var lc=LC[curLang];
+          if(lc){langInd.innerHTML=lc.ind;inputEl.placeholder=lc.ph;}
+          if(typeof updateHamburgerState==='function')updateHamburgerState();
+          if(typeof updateVerseFooter==='function')updateVerseFooter();
         }
-      }).catch(function(){});
-      localStorage.setItem(VK,v.name);
-      googleVoiceMap[curLang]=v.name;
-      list.querySelectorAll('.v-item').forEach(function(b){
-        b.classList.remove('selected');
-        var chk=b.querySelector('span');if(chk&&chk.textContent.includes('\u2713'))chk.remove();
+        var vs=document.getElementById('hm-voice-sub');
+        if(vs)vs.textContent=group.native+' \u00B7 '+v.name;
+
+        playingId=v.id;
+        renderVoices();
+        previewVoice(v.id,group.code,function(){playingId=null;renderVoices();});
+      };
+
+      grid.appendChild(row);
+    });
+  }
+
+  // Reuse the element unlocked on first tap — a fresh Audio() here would be
+  // blocked by the browser's autoplay policy.
+  function previewVoice(voiceId,langCode,done){
+    if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
+    fetch(W+'tts',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:PREVIEW[langCode]||PREVIEW['en-IN'],voice:voiceId,langCode:langCode,rate:0.92})
+    })
+    .then(function(r){
+      if(!r.ok)return r.json().catch(function(){return {};}).then(function(e){
+        throw new Error(e.error||('server '+r.status));
       });
-      btn.classList.add('selected');
-      var tick=document.createElement('span');tick.style.cssText='color:#f97316;font-size:12px';tick.innerHTML='&#x2713;';
-      btn.appendChild(tick);
-      var vs=document.getElementById('hm-voice-sub');if(vs)vs.textContent=v.label;
-    };
-    list.appendChild(btn);
-  });
+      return r.json();
+    })
+    .then(function(d){
+      if(!d.audioContent)throw new Error('no audio returned');
+      ttsAudio=ttsPlayer||new Audio();
+      ttsAudio.src='data:audio/mp3;base64,'+d.audioContent;
+      ttsAudio.volume=0.95;
+      ttsAudio.onended=done;
+      ttsAudio.play().catch(function(){
+        appLog('warn','voice','Preview blocked by autoplay policy');
+        done();
+      });
+    })
+    .catch(function(err){
+      appLog('error','voice','Preview failed',{voice:voiceId,message:err&&err.message});
+      showToast('Could not play preview');
+      done();
+    });
+  }
+
+  renderTabs();
+  renderVoices();
   openModal('voice-modal');
 }
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices()}}
@@ -2937,6 +3047,20 @@ function maybeShowIosInstall(){
   if(el)el.addEventListener('click',function(e){if(e.target===this)dismissIosInstall();});
 })();
 maybeShowIosInstall();
+
+// Show the current voice on the hamburger row at startup, so it reflects a
+// saved preference rather than always reading "English \u00B7 Achird".
+(function(){
+  try{
+    var NATIVE={en:'English',hi:'\u0939\u093F\u0928\u094D\u0926\u0940',te:'\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41',ta:'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD'};
+    var v=localStorage.getItem(VK)||googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
+    var FRIENDLY={Achird:'Keshava',Algieba:'Krishna',Umbriel:'Madhava',Achernar:'Radha'};
+    var raw=v.split('Chirp3-HD-')[1]||'Achird';
+    var short=FRIENDLY[raw]||raw;
+    var el=document.getElementById('hm-voice-sub');
+    if(el)el.textContent=(NATIVE[curLang]||'English')+' \u00B7 '+short;
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
