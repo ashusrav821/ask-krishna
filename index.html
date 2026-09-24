@@ -1983,8 +1983,19 @@ function syncNow(){
   //    show a conflict notice so the user can decide, instead of silently
   //    overwriting one side's history.
   fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
-  .then(function(r){return r.json();})
+  .then(function(r){
+    if(!r.ok){
+      return r.json().catch(function(){return {};}).then(function(e){
+        appLog('error','sync','Pull failed',{status:r.status,error:e.error});
+        throw new Error(r.status===401?'Session expired — please sign in again'
+                      :r.status===429?'Too many requests — wait a minute'
+                      :(e.error||('Server error '+r.status)));
+      });
+    }
+    return r.json();
+  })
   .then(function(pullData){
+    if(pullData.error)throw new Error(pullData.error);
     var cloudHistory=pullData.history||[];
     var mergedNewMsgs=[];
     var shouldPush=true;
@@ -2016,7 +2027,17 @@ function syncNow(){
 
     if(shouldPush){
       return fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
-        .then(function(){return mergedNewMsgs;});
+        .then(function(r){
+          if(!r.ok){
+            return r.json().catch(function(){return {};}).then(function(e){
+              appLog('error','sync','Push failed',{status:r.status,error:e.error});
+              throw new Error(r.status===401?'Session expired — please sign in again'
+                            :r.status===429?'Too many requests — wait a minute'
+                            :(e.error||('Server error '+r.status)));
+            });
+          }
+          return mergedNewMsgs;
+        });
     }
     return Promise.resolve(mergedNewMsgs);
   })
@@ -2033,9 +2054,11 @@ function syncNow(){
       setSyncStatus('synced','✓ Already up to date');
     }
   })
-  .catch(function(){
+  .catch(function(err){
     _syncInProgress=false;
-    setSyncStatus('error','Sync failed — check your connection');
+    var msg=(err&&err.message)?err.message:'check your connection';
+    appLog('error','sync','syncNow failed',{message:msg});
+    setSyncStatus('error','Sync failed — '+msg);
   });
 }
 function startPeriodicSync(){
@@ -2043,6 +2066,7 @@ function startPeriodicSync(){
   // Pull from cloud every 60 seconds silently
   _autoSyncInterval=setInterval(function(){
     if(!currentUser||!navigator.onLine||_syncInProgress)return;
+    if(document.hidden)return; // don't sync a backgrounded tab
     // Silent pull — only update if cloud has more messages
     fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
     .then(function(r){return r.json();})
@@ -2056,7 +2080,7 @@ function startPeriodicSync(){
       }
     })
     .catch(function(){});
-  },60000);
+  },120000);
 }
 
 function stopPeriodicSync(){
