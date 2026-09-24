@@ -965,13 +965,13 @@ function addMsg(role,content){
     setTimeout(function(){speakText(content)},400);
     // Offer voice inline after the first real reply. Contextual discovery
     // works far better than hoping people open the menu.
-    maybeOfferVoice(col);
+    maybeOfferVoice(col,content);
   }
 }
 
 // ── Inline voice offer ──────────────────────────────────────────────────────
 var VOICE_OFFER_KEY='ak_voice_offer_seen';
-function maybeOfferVoice(col){
+function maybeOfferVoice(col,replyText){
   try{
     if(ttsEnabled)return;                               // already on
     if(localStorage.getItem(VOICE_OFFER_KEY))return;    // already answered this offer
@@ -1000,11 +1000,35 @@ function maybeOfferVoice(col){
     try{localStorage.setItem(TTSK,'true');}catch(e){}
     if(typeof updateTtsBtn==='function')updateTtsBtn();
     card.remove();
-    showToast('Voice replies on');
     track('voice_offer_accepted');
     appLog('info','voice','Inline offer accepted');
-    // Open the picker so the choice is confirmed straight away.
-    setTimeout(function(){openVoicePicker();},350);
+
+    // Read the reply the user is looking at right now. This click is a real
+    // user gesture, so playback is allowed — waiting for the next reply would
+    // make the feature feel broken.
+    if(replyText){
+      showToast('Listening to Krishna...');
+      speakText(replyText);
+    }else{
+      showToast('Voice replies on');
+    }
+
+    // Offer the voice picker afterwards rather than covering the screen
+    // immediately, so the audio is heard first.
+    var hint=document.createElement('div');
+    hint.className='voice-offer';
+    hint.innerHTML='<div class="vo-icon">\uD83C\uDF99\uFE0F</div>'
+      +'<div class="vo-text"><div class="vo-title">Change voice or language</div>'
+      +'<div class="vo-sub">Keshava, Krishna, Madhava or Radha</div></div>';
+    var pick=document.createElement('button');
+    pick.className='vo-yes';pick.textContent='Choose';
+    pick.onclick=function(){hint.remove();openVoicePicker();};
+    var skip=document.createElement('button');
+    skip.className='vo-no';skip.setAttribute('aria-label','Dismiss');skip.innerHTML='&#x2715;';
+    skip.onclick=function(){hint.remove();};
+    hint.appendChild(pick);hint.appendChild(skip);
+    col.appendChild(hint);
+    scrollBottom();
   };
 
   var no=document.createElement('button');
@@ -1408,6 +1432,15 @@ function openVoicePicker(){
     if(window.speechSynthesis&&!ttsEnabled)window.speechSynthesis.cancel();
     if(typeof updateTtsBtn==='function')updateTtsBtn();
     paintToggle();
+    // Turning voice on from here should also read the most recent reply,
+    // so the setting is immediately audible rather than silent until next time.
+    if(ttsEnabled){
+      var last=null;
+      for(var i=msgs.length-1;i>=0;i--){
+        if(msgs[i].role==='assistant'){last=msgs[i].content;break;}
+      }
+      if(last)speakText(last);
+    }
   };
   paintToggle();
   list.appendChild(toggleRow);
