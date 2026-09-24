@@ -974,12 +974,13 @@ var VOICE_OFFER_KEY='ak_voice_offer_seen';
 function maybeOfferVoice(col){
   try{
     if(ttsEnabled)return;                               // already on
-    if(localStorage.getItem(VOICE_OFFER_KEY))return;    // already asked
-    if(localStorage.getItem(TTSK)==='false')return;     // deliberately turned off
-    // Only after a genuine exchange, not the welcome message.
+    if(localStorage.getItem(VOICE_OFFER_KEY))return;    // already answered this offer
+    // Show after the first real reply. The welcome message is msgs[0], so the
+    // first genuine answer makes this the 2nd assistant message.
     var replies=msgs.filter(function(m){return m.role==='assistant';}).length;
     if(replies<2)return;
   }catch(e){return;}
+  appLog('info','voice','Showing inline voice offer',{replies:msgs.filter(function(m){return m.role==='assistant';}).length});
 
   var card=document.createElement('div');
   card.className='voice-offer';
