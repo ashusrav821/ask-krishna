@@ -2079,7 +2079,7 @@ function startPeriodicSync(){
         setSyncStatus('synced','\u2713 '+newMsgs.length+' new message'+(newMsgs.length===1?'':'s')+' from another device');
       }
     })
-    .catch(function(){});
+    .catch(function(err){appLog('warn','sync','Background pull failed',{message:err&&err.message});});
   },120000);
 }
 
@@ -2250,17 +2250,45 @@ function setSyncStatus(state,msg){
 }
 pushHistory=function(){
   if(!currentUser||!localStorage.getItem(JK)||!msgs.length)return;
-  setSyncStatus('syncing','Syncing...');
+  // Background auto-push: stay silent on success so the status bar isn't noisy
+  // after every message. Only surface a problem the user can act on, and
+  // always log it so /logs shows the real cause.
   fetch(W+'sync/push',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({history:msgs.slice(-20)})})
-  .then(function(r){return r.json();})
-  .then(function(d){if(d&&d.ok){setSyncStatus('synced','Synced across devices');}else{setSyncStatus('error','Sync failed');}})
-  .catch(function(){setSyncStatus('error','Sync failed');});
+  .then(function(r){
+    if(!r.ok){
+      return r.json().catch(function(){return {};}).then(function(e){
+        appLog('error','sync','Auto-push failed',{status:r.status,error:e.error});
+        if(r.status===401){setSyncStatus('error','Session expired — sign in again');}
+        else if(r.status===429){/* transient, ignore silently */}
+        else{setSyncStatus('error','Sync failed — '+(e.error||('server '+r.status)));}
+        return null;
+      });
+    }
+    return r.json();
+  })
+  .then(function(d){
+    if(d&&d.ok){setSyncStatus('synced','Synced across devices');}
+    else if(d){appLog('warn','sync','Auto-push returned no ok flag',{data:JSON.stringify(d).slice(0,120)});}
+  })
+  .catch(function(err){
+    appLog('error','sync','Auto-push network error',{message:err&&err.message});
+    if(navigator.onLine)setSyncStatus('error','Sync failed — '+((err&&err.message)||'network error'));
+  });
 };
 pullHistory=function(){
   if(!currentUser||!localStorage.getItem(JK))return;
   setSyncStatus('syncing','Restoring history...');
   fetch(W+'sync/pull',{method:'POST',headers:getAuthHeaders()})
-  .then(function(r){return r.json();})
+  .then(function(r){
+    if(!r.ok){
+      return r.json().catch(function(){return {};}).then(function(e){
+        appLog('error','sync','Pull-on-login failed',{status:r.status,error:e.error});
+        throw new Error(r.status===401?'Session expired — sign in again'
+                      :r.status===429?'Too many requests':(e.error||('server '+r.status)));
+      });
+    }
+    return r.json();
+  })
   .then(function(data){
     if(data.history&&data.history.length){
       msgs=data.history;
@@ -2279,7 +2307,10 @@ pullHistory=function(){
       trimMsgDom();scrollBottom();setSyncStatus('synced','History restored from cloud');
     }else{setSyncStatus('','');}
   })
-  .catch(function(){setSyncStatus('error','Could not restore history');});
+  .catch(function(err){
+    appLog('error','sync','Pull-on-login error',{message:err&&err.message});
+    setSyncStatus('error','Could not restore history — '+((err&&err.message)||'network error'));
+  });
 };
 // Hook debouncedPush into addMsg
 (function(){
