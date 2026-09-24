@@ -10,9 +10,25 @@
   <meta name="apple-mobile-web-app-title" content="Ask Keshava" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Ask Keshava - Wisdom of the Bhagavad Gita" />
-  <meta name="robots" content="noindex, nosnippet, noarchive" />
+  <meta name="robots" content="index, follow" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev https://accounts.google.com; script-src 'unsafe-inline' https://accounts.google.com; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
   <meta name="format-detection" content="telephone=no" />
+  <!-- Link preview (WhatsApp, iMessage, Telegram, social) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Ask Keshava" />
+  <meta property="og:title" content="Ask Keshava - Wisdom of the Bhagavad Gita" />
+  <meta property="og:description" content="Whatever you're going through - stress, confusion, anger, feeling stuck - get honest, practical wisdom from the Bhagavad Gita. In English, Telugu, Tamil and Hindi." />
+  <meta property="og:url" content="https://askkeshava.com/" />
+  <meta property="og:image" content="https://askkeshava.com/icon-512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="Ask Keshava app icon" />
+  <meta property="og:locale" content="en_IN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Ask Keshava - Wisdom of the Bhagavad Gita" />
+  <meta name="twitter:description" content="A wise friend in your pocket. Ask anything, get practical Gita wisdom in English, Telugu, Tamil and Hindi." />
+  <meta name="twitter:image" content="https://askkeshava.com/icon-512.png" />
+  <link rel="canonical" href="https://askkeshava.com/" />
   <link rel="manifest" href="manifest.json" />
   <title>Ask Keshava</title>
   <style>
@@ -71,6 +87,19 @@
     #install-banner{display:none;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(249,115,22,0.12);border-bottom:1px solid rgba(249,115,22,0.2);font-size:12.5px;color:#fdba74;gap:10px;flex-shrink:0}
     #install-btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:20px;padding:5px 12px;color:white;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
     #install-close{background:transparent;border:none;padding:4px 8px;color:rgba(249,115,22,0.5);font-size:16px;cursor:pointer}
+    /* iOS install prompt */
+    #ios-install{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;padding:0 12px 12px}
+    #ios-install.show{display:flex}
+    #ios-sheet{background:#1a0800;border:1px solid rgba(249,115,22,0.35);border-radius:20px;padding:22px 20px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 -8px 40px rgba(0,0,0,0.6);animation:iosUp 0.32s cubic-bezier(0.32,0.72,0,1)}
+    @keyframes iosUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+    #ios-sheet h3{font-size:17px;color:#fbbf24;margin-bottom:6px;font-family:Georgia,serif}
+    #ios-sheet p{font-size:13px;color:rgba(253,186,116,0.75);line-height:1.6;margin-bottom:16px}
+    .ios-step{display:flex;align-items:center;gap:11px;text-align:left;padding:10px 12px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:12px;margin-bottom:8px}
+    .ios-step-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:system-ui,sans-serif}
+    .ios-step-text{font-size:13px;color:#e5e7eb;line-height:1.45}
+    .ios-step-text b{color:#fbbf24}
+    .ios-share-ico{display:inline-block;vertical-align:-3px;margin:0 2px}
+    #ios-dismiss{width:100%;margin-top:10px;padding:11px;border-radius:12px;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.25);color:#fdba74;font-size:14px;font-family:inherit;cursor:pointer}
     #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;height:100%}
     #messages::-webkit-scrollbar{display:none}
     #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
@@ -292,6 +321,28 @@
   <div id="search-bar"><input id="search-input" type="search" placeholder="Search messages..." /><span id="search-count"></span><button id="search-close" onclick="closeSearch()" aria-label="Close search">&#x2715;</button></div>
   <div id="notif-banner"><div id="notif-banner-text">&#x1F514; Get daily wisdom from the Gita every morning</div><button id="notif-allow" onclick="requestNotifPermission()">Enable</button><button id="notif-dismiss" onclick="dismissNotifBanner()" aria-label="Dismiss">&#x2715;</button></div>
   <div id="offline-banner">&#x1F534; No internet connection</div>
+  <div id="ios-install" role="dialog" aria-modal="true" aria-label="Install Ask Keshava">
+    <div id="ios-sheet">
+      <div style="font-size:34px;margin-bottom:6px">&#x1F99A;</div>
+      <h3>Add Ask Keshava to your Home Screen</h3>
+      <p>Open it like a real app, with no App Store download needed.</p>
+      <div class="ios-step">
+        <div class="ios-step-num">1</div>
+        <div class="ios-step-text">Tap the <b>Share</b> button
+          <svg class="ios-share-ico" width="15" height="19" viewBox="0 0 20 26" fill="none" aria-hidden="true"><path d="M10 1.5v14M10 1.5 5.8 5.7M10 1.5l4.2 4.2" stroke="#fbbf24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 10.5h-2v13h15v-13h-2" stroke="#fbbf24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          at the bottom of Safari</div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">2</div>
+        <div class="ios-step-text">Scroll down and tap <b>Add to Home Screen</b></div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">3</div>
+        <div class="ios-step-text">Tap <b>Add</b> in the top right corner</div>
+      </div>
+      <button id="ios-dismiss" onclick="dismissIosInstall()">Maybe later</button>
+    </div>
+  </div>
   <div id="install-banner">
     <span>&#x1F4F2; Install Ask Keshava on your home screen!</span>
     <button id="install-btn" aria-label="Install app">Install</button>
@@ -501,7 +552,7 @@
             <div id="hm-user-name2" style="font-size:13px;color:#fbbf24;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
             <div id="hm-user-email2" style="font-size:11px;color:rgba(253,186,116,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
           </div>
-          <button onclick="openProfileModal();closeHamburger()" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:8px;color:#fdba74;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">Edit</button>
+          <button onclick="openProfile();closeHamburger()" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:8px;color:#fdba74;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">Edit</button>
         </div>
       </div>
       <!-- Quick actions -->
@@ -549,7 +600,7 @@
         </div>
         <div class="hmenu-divider"></div>
         <!-- Verse Matching Mode (Option A / B) -->
-        <div class="hmenu-item" onclick="toggleVerseMode()">
+        <div class="hmenu-item" onclick="toggleVerseMode()" style="display:none">
           <div class="hmenu-icon">&#x1F4D6;</div>
           <div class="hmenu-label">
             <div class="hmenu-title">Verse Matching</div>
@@ -724,6 +775,20 @@ function appLog(level, context, message, data){
     fetch(W+'log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(function(){});
   }catch(e){}
 }
+// ── Anonymous usage tracking (counts only, no personal data) ─────────────────
+function track(event, extra){
+  try{
+    var payload={event:event};
+    if(extra&&extra.lang)payload.lang=extra.lang;
+    fetch(W+'stat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      keepalive:true
+    }).catch(function(){});
+  }catch(e){}
+}
+
 
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function openModal(id){document.getElementById(id).classList.add('show')}
@@ -854,7 +919,7 @@ function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
 ['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','forgot-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
-document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
+document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){track('install');deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
 document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
 if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches){instBanner.style.display='flex';instBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';document.getElementById('install-btn').style.display='none';}
 function selectLang(lang){pendLang=lang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===lang)})}
@@ -890,7 +955,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -1007,9 +1072,20 @@ hamburgerSheet.addEventListener('touchstart',function(e){sheetStartY=e.touches[0
 hamburgerSheet.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sheetStartY>60)closeHamburger()},{passive:true});
 // Om Sound
 var audioUnlocked=false;
+var ttsPlayer=null;
 function unlockAudio(){
   if(audioUnlocked)return;audioUnlocked=true;
+  // Unlock Web Audio API
   try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var buf=ctx.createBuffer(1,1,22050);var src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);src.start(0);ctx.resume();}catch(e){}
+  // Unlock HTML5 Audio separately — iOS/Chrome treat it as a different permission.
+  // Playing a silent clip inside this real user gesture makes the element reusable
+  // later from async callbacks (where the gesture is no longer active).
+  try{
+    ttsPlayer=new Audio();
+    ttsPlayer.src='data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA//////////////////////////////////////////////////////////////////8AAAA8TEFNRTMuOTlyAc0AAAAAAAAAABSAJAJAQgAAgAAAAnGMHkkIAAAAAAAAAAAAAAAAAAAA//sQxAADgnABGiAAQBCqgCRMAAgEAH///////////////7+n/9FTuQsQH//////2NG0jWUGlio5gLQTOtIoNglzcghWWLKpKkPBrDGqxCMy8m///////9vQu5rHSMPU9//////+UJVAAAA//sQxBUABmgB98AAAOBKgCRcAAgEAAAA//////////////////////////////////////////////////////////////////////////////////////////8=';
+    ttsPlayer.volume=0.01;
+    ttsPlayer.play().then(function(){ttsPlayer.pause();ttsPlayer.currentTime=0;}).catch(function(){});
+  }catch(e){}
   if(!omAudio){omAudio=new Audio('om.mp3');omAudio.loop=true;omAudio.volume=0.75;omAudio.load();omAudio.addEventListener('error',function(){addMsg('assistant','Could not load Om sound. Please make sure om.mp3 is in the repository.');});}
 }
 document.addEventListener('touchstart',unlockAudio,{passive:true});
@@ -1040,7 +1116,8 @@ if(omBtnEl)omBtnEl.addEventListener('click',function(){
 var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
 function speakText(text){
   if(!ttsEnabled)return;
-  if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
+  track('tts');
+  if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
   if(window.speechSynthesis)window.speechSynthesis.cancel();
   ttsSpeaking=true;
   var clean=text.replace(/[*_#]/g,'').replace(/[\n]+/g,'. ').replace(/[.]{2,}/g,'.').trim();
@@ -1057,14 +1134,21 @@ function speakText(text){
   .then(function(data){
     if(data.audioContent){
       var src='data:audio/mp3;base64,'+data.audioContent;
-      ttsAudio=new Audio(src);
+      // Reuse the element primed during the user's first tap. A fresh
+      // new Audio() would be blocked here because the gesture has expired.
+      ttsAudio=ttsPlayer||new Audio();
+      ttsAudio.src=src;
       ttsAudio.volume=0.95;
-      ttsAudio.onended=function(){ttsSpeaking=false;ttsAudio=null;};
-      ttsAudio.onerror=function(){ttsSpeaking=false;ttsAudio=null;fallbackTts(clean);};
-      ttsAudio.play().catch(function(){ttsSpeaking=false;fallbackTts(clean);});
-    }else{fallbackTts(clean);}
+      ttsAudio.onended=function(){ttsSpeaking=false;};
+      ttsAudio.onerror=function(){ttsSpeaking=false;appLog('warn','tts','Audio element error');fallbackTts(clean);};
+      ttsAudio.play().catch(function(err){
+        ttsSpeaking=false;
+        appLog('warn','tts','play() blocked',{name:err&&err.name,message:err&&err.message});
+        fallbackTts(clean);
+      });
+    }else{appLog('warn','tts','No audioContent from worker',{error:data&&data.error});fallbackTts(clean);}
   })
-  .catch(function(){fallbackTts(clean);});
+  .catch(function(err){appLog('error','tts','TTS fetch failed',{message:err&&err.message});fallbackTts(clean);});
 }
 var MPREF=['Ravi','Hemant','Mohan','Neural2-B','Wavenet-B'];
 function getBestVoice(lang){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!voices||!voices.length)return null;if(lang!=='en'){var lc=ttsLangMap[lang]||'en-IN';return voices.find(function(v){return v.lang===lc})||voices.find(function(v){return v.lang.startsWith(lc.split('-')[0])})||null;}for(var i=0;i<MPREF.length;i++){var pv=voices.find(function(v){return v.name.toLowerCase().indexOf(MPREF[i].toLowerCase())!==-1});if(pv)return pv;}return voices.find(function(v){return v.lang==='en-IN'})||voices.find(function(v){return v.lang.startsWith('en')})||voices[0]}
@@ -1074,7 +1158,7 @@ function updateTtsBtn(){
   var ttsS=document.getElementById('hm-tts-sub');
   if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
   if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
-  if(!ttsEnabled){if(ttsAudio){ttsAudio.pause();ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+  if(!ttsEnabled){if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}if(window.speechSynthesis)window.speechSynthesis.cancel();}
 }
 function openVoicePicker(){
   var list=document.getElementById('voice-list');
@@ -1193,7 +1277,7 @@ function askTodaysWisdom(){
   if(wb)wb.style.display='none';
   suggestEl.style.display='none';
   var verse=getTodaysVerse();
-  appLog('info','wisdom','Verse selected',{ref:verse.ref,theme:verse.theme});
+  appLog('info','wisdom','Verse selected',{ref:verse.ref,theme:verse.theme});track('wisdom');
   var sub=document.getElementById('hm-wisdom-sub');
   if(sub)sub.textContent='Gita '+verse.ref+' \u2014 '+getWisdomDate();
   var wisdomPrompt='Share today\'s wisdom from the Bhagavad Gita for '+getWisdomDate()+'.\n\nFocus on Gita '+verse.ref+': "'+verse.theme+'"\n\nShare this as today\'s daily wisdom \u2014 explain what this verse means, how it applies to modern daily life, a real-world example, and one small action the seeker can take today to live this teaching. Keep it warm, personal and uplifting.';
@@ -1386,6 +1470,7 @@ function switchToSignIn(){
 }
 
 function doSignUp(){
+  track('signup');
   clearAuthErr('signup-err');
   var name=document.getElementById('signup-name').value.trim();
   var email=document.getElementById('signup-email').value.trim().toLowerCase();
@@ -1416,6 +1501,7 @@ function doSignUp(){
 }
 
 function doSignIn(){
+  track('signin');
   clearAuthErr('signin-err');
   var email=document.getElementById('signin-email').value.trim().toLowerCase();
   var pass=document.getElementById('signin-pass').value;
@@ -1881,6 +1967,7 @@ function renderSyncedMessages(newMsgs){
 }
 
 function syncNow(){
+  track('sync');
   closeHamburger();
   if(!currentUser){addMsg('assistant','Sign in to sync your chat across devices.');return;}
   if(_syncInProgress){setSyncStatus('syncing','Sync already in progress...');return;}
@@ -2256,6 +2343,7 @@ document.getElementById('search-input').addEventListener('keydown',function(e){
 
 // ── Share Response ────────────────────────────────────────────────────────────
 function shareResponse(content){
+  track('share');
   var text='Krishna says:\n\n'+content+'\n\n— Ask Keshava App\nhttps://askkeshava.com/';
   if(navigator.share){
     navigator.share({title:'Wisdom from Ask Keshava',text:text}).catch(function(){});
@@ -2587,6 +2675,54 @@ function updateVerseModeUI(){
 }
 // Init verse mode UI
 updateVerseModeUI();
+
+// ── iPhone/iPad install prompt ───────────────────────────────────────────────
+var IOS_DISMISS_KEY='ak_ios_install_dismissed';
+function isIosDevice(){
+  var ua=navigator.userAgent||'';
+  var isIos=/iPad|iPhone|iPod/.test(ua);
+  // iPadOS 13+ reports as Mac — detect via touch support
+  var isIpadOs=navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
+  return isIos||isIpadOs;
+}
+function isInStandalone(){
+  return (window.navigator.standalone===true)||
+         (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
+}
+function isSafariBrowser(){
+  var ua=navigator.userAgent||'';
+  // Exclude Chrome, Firefox, Edge and in-app browsers on iOS
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/.test(ua);
+}
+function dismissIosInstall(){
+  var el=document.getElementById('ios-install');
+  if(el)el.classList.remove('show');
+  try{localStorage.setItem(IOS_DISMISS_KEY,'1');}catch(e){}
+}
+function showIosInstall(){
+  var el=document.getElementById('ios-install');
+  if(el){el.classList.add('show');track('install');}
+}
+function maybeShowIosInstall(){
+  if(!isIosDevice())return;
+  if(isInStandalone())return;
+  try{if(localStorage.getItem(IOS_DISMISS_KEY))return;}catch(e){}
+  if(!isSafariBrowser()){
+    // Non-Safari iOS browser can't install — nudge them to Safari instead
+    setTimeout(function(){
+      if(typeof showToast==='function')showToast('Open askkeshava.com in Safari to add it to your Home Screen',5000);
+    },25000);
+    return;
+  }
+  // Show after the user has had a chance to try the app
+  setTimeout(showIosInstall,35000);
+}
+// Tapping the backdrop closes the sheet
+(function(){
+  var el=document.getElementById('ios-install');
+  if(el)el.addEventListener('click',function(e){if(e.target===this)dismissIosInstall();});
+})();
+maybeShowIosInstall();
 </script>
 </body>
 </html>

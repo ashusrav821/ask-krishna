@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Ask Keshava — Usage Stats</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Georgia,'Palatino Linotype',serif;background:#0a0500;color:#e5e7eb;min-height:100vh;padding:16px}
+    h1{font-size:19px;color:#fbbf24;margin-bottom:4px}
+    .sub{font-size:12px;color:rgba(253,186,116,0.45);margin-bottom:18px}
+    #lock{position:fixed;inset:0;background:#0a0500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:99;padding:20px}
+    #lock h2{font-size:20px;color:#fbbf24}
+    .inp{background:#1a0d00;border:1px solid rgba(249,115,22,0.3);border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-family:inherit;width:100%;max-width:280px;outline:none}
+    .inp:focus{border-color:#f97316}
+    .btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:10px;padding:11px 20px;color:#fff;font-size:14px;cursor:pointer;font-family:inherit}
+    .btn.sec{background:#1a0d00;border:1px solid rgba(249,115,22,0.3);color:#fdba74}
+    #lock-err{color:#f87171;font-size:12.5px;min-height:16px;text-align:center}
+    #app{display:none}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+    #totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin-bottom:22px}
+    .card{background:linear-gradient(135deg,rgba(249,115,22,0.09),rgba(251,191,36,0.04));border:1px solid rgba(249,115,22,0.2);border-radius:14px;padding:14px}
+    .card b{display:block;font-size:26px;color:#fbbf24;margin-bottom:3px;font-family:system-ui,sans-serif}
+    .card span{font-size:11px;color:rgba(253,186,116,0.6);text-transform:capitalize}
+    h2.sec-title{font-size:14px;color:#fdba74;margin:18px 0 10px}
+    .day{background:rgba(255,255,255,0.03);border:1px solid rgba(249,115,22,0.12);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+    .day-date{font-size:13px;color:#fbbf24;margin-bottom:8px;font-weight:bold}
+    .metrics{display:flex;flex-wrap:wrap;gap:6px}
+    .metric{background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.15);border-radius:16px;padding:3px 11px;font-size:11.5px;color:#fdba74}
+    .metric b{color:#fbbf24;font-family:system-ui,sans-serif}
+    #err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:11px;color:#f87171;font-size:13px;margin-bottom:12px;display:none}
+    #empty{text-align:center;padding:50px 20px;color:rgba(253,186,116,0.3);font-size:14px}
+    .lts{font-size:11px;color:rgba(253,186,116,0.35)}
+  </style>
+</head>
+<body>
+
+<div id="lock">
+  <div style="font-size:38px">🪷</div>
+  <h2>Ask Keshava Stats</h2>
+  <input class="inp" id="akey" type="password" placeholder="Admin key..." />
+  <button class="btn" onclick="unlock()">Unlock</button>
+  <div id="lock-err"></div>
+</div>
+
+<div id="app">
+  <h1>🪷 Usage Stats</h1>
+  <div class="sub">Anonymous counts only — no personal data is collected</div>
+  <div class="controls">
+    <button class="btn" onclick="load()">🔄 Refresh</button>
+    <button class="btn sec" onclick="lock()">Lock</button>
+    <span class="lts" id="lts"></span>
+  </div>
+  <div id="err"></div>
+  <h2 class="sec-title">All time</h2>
+  <div id="totals"></div>
+  <h2 class="sec-title">Daily breakdown</h2>
+  <div id="days"></div>
+  <div id="empty" style="display:none">No data yet — stats appear once people start using the app.</div>
+</div>
+
+<script>
+var W='https://ask-krishna-api.oletyashrith.workers.dev/';
+var SK='ak_stats_key';
+var adminKey='';
+
+var LABELS={
+  question:'Questions asked', wisdom:"Today's Wisdom", signup:'Signups', signin:'Signins',
+  install:'Install prompts', tts:'Voice replies', voice_input:'Voice input',
+  bookmark:'Bookmarks', share:'Shares', sync:'Syncs',
+  'lang:en':'English', 'lang:te':'Telugu', 'lang:ta':'Tamil', 'lang:hi':'Hindi'
+};
+function label(k){return LABELS[k]||k;}
+
+function unlock(){
+  var k=document.getElementById('akey').value.trim();
+  if(!k){document.getElementById('lock-err').textContent='Please enter the admin key';return;}
+  document.getElementById('lock-err').textContent='Verifying...';
+  fetch(W+'stats',{headers:{'X-Admin-Key':k}})
+  .then(function(r){
+    if(r.status===401){document.getElementById('lock-err').textContent='Incorrect key.';return;}
+    if(!r.ok){document.getElementById('lock-err').textContent='Server error: '+r.status;return;}
+    return r.json().then(function(d){
+      adminKey=k;
+      try{sessionStorage.setItem(SK,k);}catch(e){}
+      document.getElementById('lock').style.display='none';
+      document.getElementById('app').style.display='block';
+      render(d);
+    });
+  })
+  .catch(function(e){document.getElementById('lock-err').textContent='Cannot connect: '+e.message;});
+}
+document.getElementById('akey').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
+
+function lock(){
+  try{sessionStorage.removeItem(SK);}catch(e){}
+  adminKey='';
+  document.getElementById('app').style.display='none';
+  document.getElementById('lock').style.display='flex';
+  document.getElementById('akey').value='';
+  document.getElementById('lock-err').textContent='';
+}
+
+function load(){
+  document.getElementById('err').style.display='none';
+  fetch(W+'stats',{headers:{'X-Admin-Key':adminKey}})
+  .then(function(r){
+    if(!r.ok){showErr('Server error: '+r.status);return;}
+    return r.json();
+  })
+  .then(function(d){if(d)render(d);})
+  .catch(function(e){showErr('Cannot connect: '+e.message);});
+}
+function showErr(m){var e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+
+function render(d){
+  document.getElementById('lts').textContent='Updated '+new Date().toLocaleTimeString();
+  var totals=d.totals||{}, days=d.days||[];
+
+  var tw=document.getElementById('totals');
+  tw.innerHTML='';
+  var order=['question','wisdom','signup','signin','tts','share','sync','install'];
+  var keys=order.filter(function(k){return totals[k];})
+    .concat(Object.keys(totals).filter(function(k){return order.indexOf(k)===-1;}));
+  keys.forEach(function(k){
+    var el=document.createElement('div');
+    el.className='card';
+    var b=document.createElement('b');b.textContent=totals[k];
+    var s=document.createElement('span');s.textContent=label(k);
+    el.appendChild(b);el.appendChild(s);
+    tw.appendChild(el);
+  });
+
+  var dw=document.getElementById('days');
+  dw.innerHTML='';
+  if(!days.length){document.getElementById('empty').style.display='block';return;}
+  document.getElementById('empty').style.display='none';
+  days.forEach(function(day){
+    var el=document.createElement('div');el.className='day';
+    var dt=document.createElement('div');dt.className='day-date';
+    dt.textContent=new Date(day.date+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+    el.appendChild(dt);
+    var mw=document.createElement('div');mw.className='metrics';
+    Object.keys(day.metrics).sort().forEach(function(m){
+      var chip=document.createElement('div');chip.className='metric';
+      var b=document.createElement('b');b.textContent=day.metrics[m];
+      chip.appendChild(b);
+      chip.appendChild(document.createTextNode(' '+label(m)));
+      mw.appendChild(chip);
+    });
+    el.appendChild(mw);
+    dw.appendChild(el);
+  });
+}
+
+(function(){
+  var k=null;
+  try{k=sessionStorage.getItem(SK);}catch(e){}
+  if(k){document.getElementById('akey').value=k;setTimeout(unlock,80);}
+})();
+</script>
+</body>
+</html>
