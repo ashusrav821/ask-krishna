@@ -2003,11 +2003,30 @@ function showToast(msg,dur){
   window._toastTimer=setTimeout(function(){t.classList.remove('show');},dur||2500);
 }
 function doGoogleSignIn(){
+  // Disable only — setting textContent here would delete the Google logo SVG
+  // inside the button, and it would never come back.
   var btns=document.querySelectorAll('.google-btn');
-  btns.forEach(function(b){b.textContent='Redirecting to Google...';b.disabled=true;});
-  // Build Google OAuth URL — redirect flow, works on any domain
-  var state=Math.random().toString(36).slice(2);
-  sessionStorage.setItem('gState',state);
+  btns.forEach(function(b){b.disabled=true;b.style.opacity='0.6';});
+  // Cryptographically strong state, not Math.random(), since this value is
+  // the CSRF defence for the whole OAuth exchange.
+  var state;
+  try{
+    var arr=new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    state=Array.from(arr).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  }catch(e){
+    state=Math.random().toString(36).slice(2)+Date.now().toString(36);
+  }
+  try{
+    sessionStorage.setItem('gState',state);
+  }catch(e){
+    // Private mode can block sessionStorage — without it we cannot verify
+    // state on return, so fail loudly rather than silently dropping CSRF.
+    btns.forEach(function(b){b.disabled=false;b.style.opacity='';});
+    showAuthErr('signin-err','Your browser is blocking storage. Please disable private mode or use email sign-in.');
+    return;
+  }
+  appLog('info','auth','Google sign-in started');
   var url='https://accounts.google.com/o/oauth2/v2/auth'
     +'?client_id='+encodeURIComponent(GOOGLE_CLIENT_ID)
     +'&redirect_uri='+encodeURIComponent(GOOGLE_REDIRECT)
@@ -2025,30 +2044,79 @@ function handleGoogleCallback(){
   var code=params.get('code');
   var state=params.get('state');
   var error=params.get('error');
+
+  // Google returns ?error= when the user cancels or denies consent, and that
+  // arrives with no code at all — so check it before bailing out on !code.
+  if(error){
+    window.history.replaceState({},'',window.location.pathname);
+    try{sessionStorage.removeItem('gState');}catch(e){}
+    appLog('warn','auth','Google sign-in returned error',{error:error});
+    addMsg('assistant', error==='access_denied'
+      ? 'Google sign-in was cancelled. You can try again or use email sign-in.'
+      : 'Google sign-in failed ('+error+'). Please try again.');
+    return;
+  }
   if(!code)return;
-  // Clean URL without reloading
+
   window.history.replaceState({},'',window.location.pathname);
-  if(error){addMsg('assistant','Google sign-in was cancelled.');return;}
-  if(state&&state!==sessionStorage.getItem('gState')){addMsg('assistant','Google sign-in failed — state mismatch. Please try again.');return;}
-  sessionStorage.removeItem('gState');
-  // Show loading state
+
+  // CSRF check. The previous version only compared when a state was present,
+  // so an attacker could omit it entirely and skip the check. A missing or
+  // mismatched state must both be rejected.
+  var expected=null;
+  try{expected=sessionStorage.getItem('gState');}catch(e){}
+  if(!state||!expected||state!==expected){
+    try{sessionStorage.removeItem('gState');}catch(e){}
+    appLog('error','auth','OAuth state mismatch',{hasState:!!state,hasExpected:!!expected});
+    addMsg('assistant','Google sign-in could not be verified. Please try again.');
+    return;
+  }
+  try{sessionStorage.removeItem('gState');}catch(e){}
+
   addMsg('assistant','Signing you in with Google...');
+  appLog('info','auth','Exchanging Google code');
+
+  var ctrl=new AbortController();
+  var tout=setTimeout(function(){ctrl.abort();},30000);
   fetch(W+'auth/google',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({code:code,redirectUri:GOOGLE_REDIRECT,lang:curLang})
+    body:JSON.stringify({code:code,redirectUri:GOOGLE_REDIRECT,lang:curLang}),
+    signal:ctrl.signal
   })
-  .then(function(r){return r.json();})
+  .then(function(r){
+    clearTimeout(tout);
+    if(!r.ok){
+      return r.json().catch(function(){return {};}).then(function(e){
+        appLog('error','auth','Google exchange failed',{status:r.status,error:e.error});
+        throw new Error(e.error||('Server error '+r.status));
+      });
+    }
+    return r.json();
+  })
   .then(function(data){
-    if(data.error){addMsg('assistant','Google sign-in failed: '+data.error);return;}
+    if(data.error)throw new Error(data.error);
+    if(!data.token||!data.user)throw new Error('Incomplete response from server');
+    appLog('info','auth','Google sign-in succeeded');
+    closeModal('signin-modal');
+    closeModal('signup-modal');
     onSignedIn(data.token,data.user);
   })
-  .catch(function(){addMsg('assistant','Google sign-in failed. Please try again.');});
+  .catch(function(err){
+    clearTimeout(tout);
+    var msg=(err&&err.name==='AbortError')?'the request timed out':((err&&err.message)||'unknown error');
+    appLog('error','auth','Google sign-in error',{message:msg});
+    addMsg('assistant','Google sign-in failed: '+msg+'. Please try again or use email sign-in.');
+  })
+  .finally(function(){
+    // Always restore the buttons, whatever happened.
+    document.querySelectorAll('.google-btn').forEach(function(b){
+      b.disabled=false;b.style.opacity='';
+    });
+  });
 }
 // Run callback checks on load
 handleGoogleCallback();
-
-function handleGoogleCredential(idToken){}
 
 var _autoSyncInterval=null;
 var _lastPullTime=0;
