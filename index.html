@@ -689,7 +689,10 @@
 <script>
 var W='https://ask-krishna-api.oletyashrith.workers.dev/';
 var HK='ask_krishna_history',HEK='ask_krishna_enabled',LK='ask_krishna_lang',TK='ask_krishna_tips_seen',VK='ask_krishna_voice',TTSK='ask_krishna_tts',BK='ask_krishna_bookmarks',FSK='ask_krishna_fontsize';
-var googleVoiceMap={en:'en-IN-Neural2-B',te:'te-IN-Standard-A',ta:'ta-IN-Wavenet-A',hi:'hi-IN-Neural2-B'};
+// Chirp 3 HD — Google's newest generation. Achird is a warm, smooth male
+// voice available in all four of our languages, including Telugu, which
+// previously only had a low-quality Standard voice.
+var googleVoiceMap={en:'en-IN-Chirp3-HD-Achird',te:'te-IN-Chirp3-HD-Achird',ta:'ta-IN-Chirp3-HD-Achird',hi:'hi-IN-Chirp3-HD-Achird'};
 var ttsAudio=null;
 var LC={
   en:{name:'English',ind:'',ph:'Type or tap mic to speak...',
@@ -1020,8 +1023,24 @@ function updateHamburgerState(){
   var langSub=document.getElementById('hm-lang-sub');
   if(langSub)langSub.textContent=langNames[curLang]||'English';
   // Voice sub label
-  var saved=localStorage.getItem(VK)||'en-IN-Neural2-B';
-  var voiceLabels={'en-IN-Neural2-B':'English India — Neural2 Male (Warm)','en-IN-Neural2-C':'English India — Neural2 Male (Calm)','en-IN-Wavenet-B':'English India — WaveNet Male','en-IN-Wavenet-C':'English India — WaveNet Male (Alt)','hi-IN-Neural2-B':'Hindi — Neural2 Male','hi-IN-Wavenet-B':'Hindi — WaveNet Male','te-IN-Standard-A':'Telugu — Standard Female','ta-IN-Wavenet-A':'Tamil — WaveNet Female'};
+  var saved=localStorage.getItem(VK)||googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
+  var voiceLabels={
+    'en-IN-Chirp3-HD-Achird':'English — Achird (Warm Male)',
+    'en-IN-Chirp3-HD-Algieba':'English — Algieba (Deep Male)',
+    'en-IN-Chirp3-HD-Umbriel':'English — Umbriel (Soft Male)',
+    'en-IN-Chirp3-HD-Charon':'English — Charon (Rich Male)',
+    'en-IN-Chirp3-HD-Achernar':'English — Achernar (Warm Female)',
+    'en-IN-Chirp3-HD-Leda':'English — Leda (Gentle Female)',
+    'hi-IN-Chirp3-HD-Achird':'हिन्दी — Achird (Warm Male)',
+    'hi-IN-Chirp3-HD-Algieba':'हिन्दी — Algieba (Deep Male)',
+    'hi-IN-Chirp3-HD-Achernar':'हिन्दी — Achernar (Female)',
+    'te-IN-Chirp3-HD-Achird':'తెలుగు — Achird (Warm Male)',
+    'te-IN-Chirp3-HD-Algieba':'తెలుగు — Algieba (Deep Male)',
+    'te-IN-Chirp3-HD-Achernar':'తెలుగు — Achernar (Female)',
+    'ta-IN-Chirp3-HD-Achird':'தமிழ் — Achird (Warm Male)',
+    'ta-IN-Chirp3-HD-Algieba':'தமிழ் — Algieba (Deep Male)',
+    'ta-IN-Chirp3-HD-Achernar':'தமிழ் — Achernar (Female)'
+  };
   var vs=document.getElementById('hm-voice-sub');
   if(vs)vs.textContent=voiceLabels[saved]||saved;
   // Bookmark count
@@ -1123,12 +1142,21 @@ function speakText(text){
   var clean=text.replace(/[*_#]/g,'').replace(/[\n]+/g,'. ').replace(/[.]{2,}/g,'.').trim();
   if(clean.length>4800)clean=clean.substring(0,4800)+'...';
   if(!clean){ttsSpeaking=false;return;}
-  var voice=googleVoiceMap[curLang]||'en-IN-Neural2-B';
   var lang=ttsLangMap[curLang]||'en-IN';
+  // Honour the user's chosen voice, but only when it belongs to the current
+  // language — otherwise Google rejects the mismatch. Anything on an older
+  // voice family is upgraded to the warmer Chirp 3 HD default.
+  var voice=googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
+  try{
+    var savedVoice=localStorage.getItem(VK);
+    if(savedVoice&&savedVoice.indexOf(lang+'-')===0&&savedVoice.indexOf('Chirp3-HD')!==-1){
+      voice=savedVoice;
+    }
+  }catch(e){}
   fetch(W+'tts',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:clean,voice:voice,langCode:lang,rate:0.82,pitch:-2.0})
+    body:JSON.stringify({text:clean,voice:voice,langCode:lang,rate:0.92})
   })
   .then(function(r){return r.json()})
   .then(function(data){
@@ -1163,17 +1191,34 @@ function updateTtsBtn(){
 function openVoicePicker(){
   var list=document.getElementById('voice-list');
   list.innerHTML='';
+  // Chirp 3 HD voices, grouped by language. Achird and Algieba are the warmest
+  // male voices; Achernar and Leda are the warmest female ones.
   var googleVoices=[
-    {name:'en-IN-Neural2-B',lang:'en-IN',label:'English India — Neural2 Male (Warm)',desc:'Warmest, most natural · Recommended'},
-    {name:'en-IN-Neural2-C',lang:'en-IN',label:'English India — Neural2 Male (Calm)',desc:'Calm, clear and smooth'},
-    {name:'en-IN-Wavenet-B',lang:'en-IN',label:'English India — WaveNet Male',desc:'Deep, rich tone'},
-    {name:'en-IN-Wavenet-C',lang:'en-IN',label:'English India — WaveNet Male (Alt)',desc:'Smooth and warm'},
-    {name:'hi-IN-Neural2-B',lang:'hi-IN',label:'Hindi — Neural2 Male',desc:'Best for Hindi responses'},
-    {name:'hi-IN-Wavenet-B',lang:'hi-IN',label:'Hindi — WaveNet Male',desc:'Natural Hindi male voice'},
-    {name:'te-IN-Standard-A',lang:'te-IN',label:'Telugu — Standard Female',desc:'Best available for Telugu'},
-    {name:'ta-IN-Wavenet-A',lang:'ta-IN',label:'Tamil — WaveNet Female',desc:'Natural Tamil voice'}
+    // English (India)
+    {name:'en-IN-Chirp3-HD-Achird',lang:'en-IN',label:'English — Achird (Male)',desc:'Warm, smooth, gentle · Recommended'},
+    {name:'en-IN-Chirp3-HD-Algieba',lang:'en-IN',label:'English — Algieba (Male)',desc:'Deep, calm and reassuring'},
+    {name:'en-IN-Chirp3-HD-Umbriel',lang:'en-IN',label:'English — Umbriel (Male)',desc:'Soft and measured'},
+    {name:'en-IN-Chirp3-HD-Charon',lang:'en-IN',label:'English — Charon (Male)',desc:'Rich and grounded'},
+    {name:'en-IN-Chirp3-HD-Achernar',lang:'en-IN',label:'English — Achernar (Female)',desc:'Warm and compassionate'},
+    {name:'en-IN-Chirp3-HD-Leda',lang:'en-IN',label:'English — Leda (Female)',desc:'Gentle and clear'},
+    // Hindi
+    {name:'hi-IN-Chirp3-HD-Achird',lang:'hi-IN',label:'हिन्दी — Achird (Male)',desc:'Warm and natural · Recommended'},
+    {name:'hi-IN-Chirp3-HD-Algieba',lang:'hi-IN',label:'हिन्दी — Algieba (Male)',desc:'Deep and calm'},
+    {name:'hi-IN-Chirp3-HD-Achernar',lang:'hi-IN',label:'हिन्दी — Achernar (Female)',desc:'Warm female voice'},
+    // Telugu
+    {name:'te-IN-Chirp3-HD-Achird',lang:'te-IN',label:'తెలుగు — Achird (Male)',desc:'Warm and natural · Recommended'},
+    {name:'te-IN-Chirp3-HD-Algieba',lang:'te-IN',label:'తెలుగు — Algieba (Male)',desc:'Deep and calm'},
+    {name:'te-IN-Chirp3-HD-Achernar',lang:'te-IN',label:'తెలుగు — Achernar (Female)',desc:'Warm female voice'},
+    // Tamil
+    {name:'ta-IN-Chirp3-HD-Achird',lang:'ta-IN',label:'தமிழ் — Achird (Male)',desc:'Warm and natural · Recommended'},
+    {name:'ta-IN-Chirp3-HD-Algieba',lang:'ta-IN',label:'தமிழ் — Algieba (Male)',desc:'Deep and calm'},
+    {name:'ta-IN-Chirp3-HD-Achernar',lang:'ta-IN',label:'தமிழ் — Achernar (Female)',desc:'Warm female voice'}
   ];
-  var saved=localStorage.getItem(VK)||'en-IN-Neural2-B';
+  // Show only voices for the language currently in use — a mismatched pair
+  // is rejected by Google and would silently fail.
+  var curLangCode=ttsLangMap[curLang]||'en-IN';
+  googleVoices=googleVoices.filter(function(v){return v.lang===curLangCode;});
+  var saved=localStorage.getItem(VK)||googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
   var hdr=document.createElement('div');
   hdr.style.cssText='font-size:11px;color:rgba(249,115,22,0.6);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-left:2px';
   hdr.textContent='Google Cloud TTS Voices';
@@ -1181,11 +1226,11 @@ function openVoicePicker(){
   googleVoices.forEach(function(v){
     var btn=document.createElement('button');
     btn.className='v-item'+(saved===v.name?' selected':'');
-    var isRec=v.name==='en-IN-Neural2-B';
+    var isRec=v.name.indexOf('Chirp3-HD-Achird')!==-1;
     btn.innerHTML='<div style="text-align:left"><div style="font-size:13px;color:#e5e7eb;font-weight:'+(isRec?'bold':'normal')+'">'+v.label+(isRec?' &#x2B50;':'')+'</div><div style="font-size:11px;color:rgba(249,115,22,0.5);margin-top:2px">'+v.desc+'</div></div>'+(saved===v.name?'<span style="color:#f97316;font-size:12px">&#x2713;</span>':'');
     btn.onclick=function(){
       var previewText='Namaste. I am Ask Keshava. May the wisdom of the Bhagavad Gita guide and protect you always.';
-      fetch(W+'tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:previewText,voice:v.name,langCode:v.lang,rate:0.82,pitch:-2.0})})
+      fetch(W+'tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:previewText,voice:v.name,langCode:v.lang,rate:0.92})})
       .then(function(r){return r.json()})
       .then(function(data){
         if(data.audioContent){
@@ -2593,10 +2638,10 @@ var TTS_LANG_MAP={
   'en':'en-IN','te':'te-IN','ta':'ta-IN','hi':'hi-IN'
 };
 var TTS_VOICE_NAMES={
-  'en':['en-IN-Neural2-B','en-IN-Wavenet-B','en-IN-Neural2-C'],
-  'te':['te-IN-Standard-A','te-IN-Standard-B'],
-  'ta':['ta-IN-Wavenet-A','ta-IN-Wavenet-B'],
-  'hi':['hi-IN-Neural2-B','hi-IN-Wavenet-B']
+  'en':['en-IN-Chirp3-HD-Achird','en-IN-Chirp3-HD-Algieba'],
+  'te':['te-IN-Chirp3-HD-Achird','te-IN-Chirp3-HD-Algieba'],
+  'ta':['ta-IN-Chirp3-HD-Achird','ta-IN-Chirp3-HD-Algieba'],
+  'hi':['hi-IN-Chirp3-HD-Achird','hi-IN-Chirp3-HD-Algieba']
 };
 // Language-specific Gita footer verses
 var FOOTER_VERSE={
@@ -2664,32 +2709,11 @@ addMsg=function(role,content){
   if(t&&sub)sub.textContent='Daily at '+t;
 })();
 // Update TTS speakText to use language-aware voice via worker TTS
-var _origSpeakText=speakText;
-speakText=function(text){
-  if(!ttsEnabled)return;
-  // Use Google Cloud TTS via worker for non-English
-  if(curLang!=='en'&&typeof W!=='undefined'){
-    var voices=TTS_VOICE_NAMES[curLang];
-    var voice=voices?voices[0]:'en-IN-Neural2-B';
-    var langCode=TTS_LANG_MAP[curLang]||'en-IN';
-    fetch(W+'tts',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:text.slice(0,4800),voice:voice,langCode:langCode,rate:0.82,pitch:-2.0})
-    })
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.audioContent){
-        if(window._ttsAudio){window._ttsAudio.pause();}
-        window._ttsAudio=new Audio('data:audio/mp3;base64,'+d.audioContent);
-        window._ttsAudio.play().catch(function(){});
-      }
-    })
-    .catch(function(){_origSpeakText(text);});
-  }else{
-    _origSpeakText(text);
-  }
-};
+// NOTE: a duplicate speakText override used to live here. It bypassed the
+// main implementation for non-English languages and used a stale voice
+// map, so a saved voice preference was ignored. speakText already
+// handles every language, so the override has been removed.
+
 
 
 // ── Quick row state ───────────────────────────────────────────────────────────
