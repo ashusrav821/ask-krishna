@@ -160,6 +160,8 @@
       cursor:pointer;padding:3px 5px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
     body.light .vo-title{color:#b45309!important}
     body.light .vo-sub{color:rgba(146,64,14,0.6)!important}
+    #send-btn.stopping{background:linear-gradient(135deg,#dc2626,#b91c1c)!important;
+      box-shadow:0 0 12px rgba(220,38,38,0.4)!important}
     #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;height:100%}
     #messages::-webkit-scrollbar{display:none}
     #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
@@ -806,9 +808,38 @@ TONE: Wise friend never preacher. Specific to THEIR words and situation. Plain l
 STRUCTURE: 1)Acknowledge their specific situation. 2)Gita teaching that speaks to it. 3)What that verse means for them today. 4)Real modern example. 5)Practical steps. 6)ONE follow-up question new line with emoji.
 VERSE HYGIENE: Never repeat verse already cited in this conversation. Never same analogy twice.
 GUARDRAILS: Never abusive or disrespectful. If rude calm compassion redirect. Never demean anyone. Harmful content decline warmly.`;
-var SUGG=["I feel lost in life and don't know my purpose","I feel stressed and compare myself to others","How do I deal with grief and loss?","I have a difficult decision to make"];
+// A wider pool so the app doesn't greet everyone with the same four prompts.
+// Four are drawn at random each visit, one from each theme where possible.
+var SUGG_POOL=[
+  // Purpose and direction
+  "I feel lost in life and don't know my purpose",
+  "I'm stuck between what I want and what's expected of me",
+  "How do I know if I'm on the right path?",
+  // Stress, comparison, self-worth
+  "I feel stressed and compare myself to others",
+  "I work hard but never feel good enough",
+  "How do I stop worrying about what people think?",
+  // Grief, loss, change
+  "How do I deal with grief and loss?",
+  "I'm struggling to let go of something",
+  "Everything in my life is changing at once",
+  // Decisions and conflict
+  "I have a difficult decision to make",
+  "Someone close to me has hurt me deeply",
+  "How do I stay calm when I'm angry?"
+];
+function pickSuggestions(){
+  // One from each theme block of three, so the set stays varied.
+  var out=[];
+  for(var b=0;b<4;b++){
+    var block=SUGG_POOL.slice(b*3,b*3+3);
+    out.push(block[Math.floor(Math.random()*block.length)]);
+  }
+  return out;
+}
+var SUGG=pickSuggestions();
 var BW=['fuck','shit','bitch','asshole','bastard','damn','cunt','dick','porn','rape','nude','naked','cocaine','murder','bomb','terrorist','slut'];
-var msgs=[],loading=false,isListening=false,deferredPrompt=null,ttsSpeaking=false;
+var msgs=[],loading=false,activeCtrl=null,isListening=false,deferredPrompt=null,ttsSpeaking=false;
 var RL_MAX=3,RL_WIN=60000,rlTimestamps=[];  // rate limit: 3 requests per 60s
 var MAX_INPUT=2000;
 var histEn=localStorage.getItem(HEK)==='true';
@@ -826,6 +857,10 @@ var instBanner=document.getElementById('install-banner');
 var histStatus=document.getElementById('history-status');
 var langInd=document.getElementById('lang-indicator');
 var scrollBtn=document.getElementById('scroll-btn');
+// The button rendered and toggled correctly but was never clickable.
+if(scrollBtn)scrollBtn.addEventListener('click',function(){
+  messagesEl.scrollTo({top:messagesEl.scrollHeight,behavior:'smooth'});
+});
 var MAX_DOM_MSGS=40;
 var THINKING_MSGS=['Krishna is reflecting...','Seeking wisdom from the Gita...','Consulting the eternal teachings...','Krishna contemplates your question...'];
 var thinkIdx=0;
@@ -951,6 +986,39 @@ function addMsg(role,content){
       var sub=document.getElementById('hm-bookmark-sub');
       if(sub){var c=loadBookmarks().length;sub.textContent=c?c+' saved response'+(c===1?'':'s'):'Your bookmarked responses';}
     };
+    // Per-message speaker — lets someone hear one answer without turning on
+    // voice for everything, and doubles as the discovery path for the feature.
+    var spkBtn=document.createElement('button');
+    spkBtn.className='msg-act-btn';
+    spkBtn.innerHTML='&#128266;';
+    spkBtn.title='Read aloud';
+    spkBtn.setAttribute('aria-label','Read this message aloud');
+    spkBtn.onclick=function(){
+      var isThis=ttsSpeaking&&spkBtn.dataset.playing==='1';
+      if(isThis){
+        if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
+        if(window.speechSynthesis)window.speechSynthesis.cancel();
+        ttsSpeaking=false;spkBtn.dataset.playing='0';spkBtn.innerHTML='&#128266;';
+        return;
+      }
+      document.querySelectorAll('.msg-act-btn[data-playing="1"]').forEach(function(b){
+        b.dataset.playing='0';b.innerHTML='&#128266;';
+      });
+      spkBtn.dataset.playing='1';spkBtn.innerHTML='&#9632;';
+      // Speak regardless of the global toggle — this is an explicit request.
+      var wasEnabled=ttsEnabled;
+      ttsEnabled=true;
+      speakText(content);
+      ttsEnabled=wasEnabled;
+      track('tts_single');
+      var poll=setInterval(function(){
+        if(!ttsSpeaking){
+          clearInterval(poll);
+          spkBtn.dataset.playing='0';spkBtn.innerHTML='&#128266;';
+        }
+      },400);
+    };
+    acts.appendChild(spkBtn);
     acts.appendChild(copyBtn);
     acts.appendChild(bmBtn);
     col.appendChild(acts);
@@ -1057,7 +1125,32 @@ function showTyping(){
   row.appendChild(av);row.appendChild(col);
   messagesEl.appendChild(row);scrollBottom();
 }
-function updateSend(){sendBtn.disabled=!inputEl.value.trim()||loading}
+function updateSend(){
+  if(loading){
+    // While generating, the send button becomes a stop button — people look
+    // for a way out of a long reply and there was none.
+    sendBtn.disabled=false;
+    sendBtn.innerHTML='&#9632;';
+    sendBtn.setAttribute('aria-label','Stop generating');
+    sendBtn.classList.add('stopping');
+  }else{
+    sendBtn.disabled=!inputEl.value.trim();
+    sendBtn.innerHTML='&#8593;';
+    sendBtn.setAttribute('aria-label','Send message');
+    sendBtn.classList.remove('stopping');
+  }
+}
+function stopGenerating(){
+  if(activeCtrl){
+    try{activeCtrl.abort();}catch(e){}
+    activeCtrl=null;
+  }
+  hideTyping();
+  loading=false;
+  updateSend();
+  appLog('info','chat','Generation stopped by user');
+  track('stop_generation');
+}
 function getUsedVerses(){
   var used=[];
   msgs.forEach(function(m){
@@ -1113,7 +1206,8 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;updateSend()})}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode,voiceMode:ttsEnabled}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
+var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;activeCtrl=null;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
 var charCounter=document.getElementById('char-counter');
@@ -1145,6 +1239,8 @@ document.addEventListener('visibilitychange',function(){
 inputEl.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 sendBtn.addEventListener('click',function(){
   if(navigator.vibrate)navigator.vibrate(10);
+  // Same button, two jobs: send when idle, stop while generating.
+  if(loading){stopGenerating();return;}
   sendMessage();
 });
 // Hamburger Menu
@@ -1300,13 +1396,65 @@ if(omBtnEl)omBtnEl.addEventListener('click',function(){
 });
 // TTS
 var ttsLangMap={en:'en-IN',te:'te-IN',ta:'ta-IN',hi:'hi-IN'};
+// Prepare text for speech. The old version replaced every newline with a
+// full stop, so lists were spoken as "dot dot dot" and verse refs were read
+// as bare numbers. This converts written formatting into natural speech.
+
+// ── Conversational turn-taking ──────────────────────────────────────────────
+// When voice mode is on, opening the mic after Krishna finishes speaking makes
+// the exchange feel like a conversation. Only when the user is actually
+// present and not already typing.
+var AUTO_LISTEN_KEY='ak_auto_listen';
+function maybeListenAfterSpeaking(){
+  try{
+    if(!ttsEnabled)return;
+    if(localStorage.getItem(AUTO_LISTEN_KEY)==='off')return;
+    if(isListening)return;
+    if(loading)return;
+    if(document.hidden)return;              // not looking at the app
+    if(inputEl.value.trim())return;         // already typing something
+    var micBtn=document.getElementById('mic-btn');
+    if(!micBtn||micBtn.style.display==='none')return;
+    setTimeout(function(){
+      // Re-check: conditions may have changed during the pause
+      if(!ttsEnabled||isListening||loading||document.hidden)return;
+      if(inputEl.value.trim())return;
+      micBtn.click();
+      showToast('Listening...');
+    },700);
+  }catch(e){}
+}
+function speechify(text){
+  var s=String(text||'');
+  // Verse references: "Gita 2.47" -> "the Gita, chapter two, verse forty-seven"
+  s=s.replace(/\bGita\s+(\d{1,2})\.(\d{1,3})\b/gi,function(_,ch,v){
+    return 'the Gita, chapter '+ch+', verse '+v;
+  });
+  // A bare "2.47" would otherwise be read as a decimal
+  s=s.replace(/\b(\d{1,2})\.(\d{1,3})\b/g,'chapter $1 verse $2');
+  // Strip emphasis BEFORE bullets, or a leading ** is mistaken for a bullet
+  s=s.replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
+  // Bullets become spoken clauses, not full stops
+  s=s.replace(/^[\s]*[-\u2022]\s*/gm,'');
+  s=s.replace(/^#{1,6}\s*/gm,'').replace(/[_#`]/g,'');
+  // Emoji and pictographs read aloud as nothing useful
+  s=s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'');
+  // Paragraph breaks become a pause; single breaks become a comma so
+  // consecutive lines flow instead of stopping dead.
+  s=s.replace(/\n{2,}/g,'. ').replace(/\n/g,', ');
+  // Tidy the punctuation left behind
+  s=s.replace(/\s*,\s*,+/g,', ').replace(/\.\s*\./g,'.')
+     .replace(/,\s*\./g,'.').replace(/\.\s*,/g,'.').replace(/:\s*,/g,':')
+     .replace(/\s{2,}/g,' ');
+  return s.trim();
+}
 function speakText(text){
   if(!ttsEnabled)return;
   track('tts');
   if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
   if(window.speechSynthesis)window.speechSynthesis.cancel();
   ttsSpeaking=true;
-  var clean=text.replace(/[*_#]/g,'').replace(/[\n]+/g,'. ').replace(/[.]{2,}/g,'.').trim();
+  var clean=speechify(text);
   if(clean.length>4800)clean=clean.substring(0,4800)+'...';
   if(!clean){ttsSpeaking=false;return;}
   var lang=ttsLangMap[curLang]||'en-IN';
@@ -1334,7 +1482,12 @@ function speakText(text){
       ttsAudio=ttsPlayer||new Audio();
       ttsAudio.src=src;
       ttsAudio.volume=0.95;
-      ttsAudio.onended=function(){ttsSpeaking=false;};
+      ttsAudio.onended=function(){
+        ttsSpeaking=false;
+        // Hand the turn back to the user by opening the mic, so a voice
+        // conversation stays voice end to end.
+        maybeListenAfterSpeaking();
+      };
       ttsAudio.onerror=function(){ttsSpeaking=false;appLog('warn','tts','Audio element error');fallbackTts(clean);};
       ttsAudio.play().catch(function(err){
         ttsSpeaking=false;
@@ -1432,6 +1585,7 @@ function openVoicePicker(){
     if(window.speechSynthesis&&!ttsEnabled)window.speechSynthesis.cancel();
     if(typeof updateTtsBtn==='function')updateTtsBtn();
     paintToggle();
+    if(typeof paintAuto==='function')paintAuto();
     // Turning voice on from here should also read the most recent reply,
     // so the setting is immediately audible rather than silent until next time.
     if(ttsEnabled){
@@ -1444,6 +1598,39 @@ function openVoicePicker(){
   };
   paintToggle();
   list.appendChild(toggleRow);
+
+  // Auto-listen: only meaningful while voice is on, so it's nested here.
+  var autoRow=document.createElement('button');
+  autoRow.style.cssText='width:100%;padding:9px 13px;border-radius:10px;margin:-8px 0 14px;'
+    +'display:flex;align-items:center;gap:10px;cursor:pointer;font-family:inherit;text-align:left;'
+    +'background:rgba(249,115,22,0.03);border:1px solid rgba(249,115,22,0.1);'
+    +'-webkit-tap-highlight-color:transparent';
+  function paintAuto(){
+    var on=localStorage.getItem(AUTO_LISTEN_KEY)!=='off';
+    autoRow.innerHTML='';
+    var ic=document.createElement('div');
+    ic.style.cssText='font-size:14px;flex-shrink:0;opacity:'+(on?'1':'0.4');
+    ic.textContent='\uD83C\uDFA4';
+    var tx=document.createElement('div');
+    tx.style.cssText='flex:1;font-size:12px;color:'+(on?'rgba(253,186,116,0.8)':'rgba(229,231,235,0.45)');
+    tx.textContent=on?'Mic opens after Krishna speaks':'Mic stays off after replies';
+    var sw=document.createElement('div');
+    sw.style.cssText='width:32px;height:18px;border-radius:9px;flex-shrink:0;position:relative;'
+      +'transition:all .2s;background:'+(on?'rgba(249,115,22,0.7)':'rgba(249,115,22,0.15)');
+    var kn=document.createElement('div');
+    kn.style.cssText='position:absolute;top:2px;width:14px;height:14px;border-radius:50%;'
+      +'background:#fff;transition:all .2s;left:'+(on?'16px':'2px');
+    sw.appendChild(kn);
+    autoRow.appendChild(ic);autoRow.appendChild(tx);autoRow.appendChild(sw);
+    autoRow.style.display=ttsEnabled?'flex':'none';
+  }
+  autoRow.onclick=function(){
+    var on=localStorage.getItem(AUTO_LISTEN_KEY)!=='off';
+    try{localStorage.setItem(AUTO_LISTEN_KEY,on?'off':'on');}catch(e){}
+    paintAuto();
+  };
+  paintAuto();
+  list.appendChild(autoRow);
 
   var tabs=document.createElement('div');
   tabs.style.cssText='display:flex;gap:6px;margin-bottom:14px';
@@ -1670,7 +1857,7 @@ function askTodaysWisdom(){
     addMsg('assistant','Today\'s wisdom could not be loaded. Please try again.');
     return;
   }
-  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:usedVerses,messages:apiMsgs}),signal:ctrl.signal})
+  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:usedVerses,messages:apiMsgs,voiceMode:ttsEnabled}),signal:ctrl.signal})
   .then(function(r){
     appLog('info','wisdom','HTTP response received',{status:r.status,ok:r.ok,contentType:r.headers.get('content-type')});
     if(!r.ok){
