@@ -162,6 +162,35 @@
     body.light .vo-sub{color:rgba(146,64,14,0.6)!important}
     #send-btn.stopping{background:linear-gradient(135deg,#dc2626,#b91c1c)!important;
       box-shadow:0 0 12px rgba(220,38,38,0.4)!important}
+    /* Footer: verse centred, feedback pinned right. A 3-column grid centres
+       the verse in the row itself, not in the space left over. */
+    #footer-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+      gap:8px;margin-top:7px}
+    #footer-row #verse-footer{grid-column:2;margin-top:0;min-width:0;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #feedback-link{grid-column:3;justify-self:end;background:none;border:none;
+      font-family:inherit;font-size:10.5px;color:rgba(249,115,22,0.55);cursor:pointer;
+      padding:2px 0;text-decoration:underline;text-underline-offset:2px;
+      -webkit-tap-highlight-color:transparent;white-space:nowrap}
+    #feedback-link:active{color:#f97316}
+    body.light #feedback-link{color:rgba(146,64,14,0.6)!important}
+
+    /* Feedback sheet */
+    #fb-modal .modal-box{max-width:380px}
+    #fb-rating{display:flex;gap:7px;justify-content:center;margin:4px 0 14px}
+    .fb-face{width:46px;height:46px;border-radius:50%;border:1px solid rgba(249,115,22,0.18);
+      background:rgba(249,115,22,0.05);font-size:21px;cursor:pointer;transition:all .15s;
+      -webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center}
+    .fb-face:active{transform:scale(0.92)}
+    .fb-face.on{background:rgba(249,115,22,0.22);border-color:rgba(249,115,22,0.55);transform:scale(1.08)}
+    #fb-text{width:100%;min-height:92px;resize:vertical;background:rgba(255,255,255,0.05);
+      border:1px solid rgba(249,115,22,0.22);border-radius:12px;padding:11px 13px;
+      color:#f3f4f6;font-size:16px;font-family:inherit;outline:none;line-height:1.5}
+    #fb-text:focus{border-color:rgba(249,115,22,0.5)}
+    #fb-text::placeholder{color:rgba(255,255,255,0.3)}
+    #fb-count{font-size:10px;color:rgba(253,186,116,0.35);text-align:right;margin-top:4px}
+    #fb-note{font-size:10.5px;color:rgba(253,186,116,0.4);line-height:1.5;margin-top:10px}
+    body.light #fb-text{background:rgba(249,115,22,0.05)!important;color:#1a0a00!important}
     #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;height:100%}
     #messages::-webkit-scrollbar{display:none}
     #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
@@ -483,6 +512,27 @@
       </div>
     </div>
   </div>
+  <div class="modal" id="fb-modal">
+    <div class="modal-box">
+      <h2>&#x1F4AC; Your feedback</h2>
+      <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:10px">How has Ask Keshava been for you?</p>
+      <div id="fb-rating">
+        <button class="fb-face" data-r="1" aria-label="Poor">&#x1F614;</button>
+        <button class="fb-face" data-r="2" aria-label="Fair">&#x1F610;</button>
+        <button class="fb-face" data-r="3" aria-label="Good">&#x1F642;</button>
+        <button class="fb-face" data-r="4" aria-label="Great">&#x1F60A;</button>
+        <button class="fb-face" data-r="5" aria-label="Excellent">&#x1F64F;</button>
+      </div>
+      <textarea id="fb-text" maxlength="1000" placeholder="What's working well? What could be better?"></textarea>
+      <div id="fb-count">0 / 1000</div>
+      <div class="auth-err" id="fb-err"></div>
+      <div class="btn-row">
+        <button class="mbtn cancel" onclick="closeModal('fb-modal')">Cancel</button>
+        <button class="mbtn confirm" id="fb-send" onclick="submitFeedback()">Send</button>
+      </div>
+      <div id="fb-note">Sent anonymously. Your language and settings are included so we can understand the context.</div>
+    </div>
+  </div>
   <div class="modal" id="voice-modal">
     <div class="modal-box">
       <h2>&#x1F50A; Voice &amp; Language</h2>
@@ -674,13 +724,6 @@
 
         <div class="hmenu-divider"></div>
         <!-- Verse Matching Mode (Option A / B) -->
-        <div class="hmenu-item" onclick="toggleVerseMode()" style="display:none">
-          <div class="hmenu-icon">&#x1F4D6;</div>
-          <div class="hmenu-label">
-            <div class="hmenu-title">Verse Matching</div>
-            <div class="hmenu-sub" id="hm-verse-mode-sub">Option A: Curated verse bank</div>
-          </div>
-          <div class="hmenu-toggle" id="hm-verse-mode-toggle"></div>
         </div>
         <!-- Today's Wisdom -->
         <div class="hmenu-item" onclick="askTodaysWisdom();closeHamburger()">
@@ -755,7 +798,10 @@
       <button id="send-btn" disabled>&#x2191;</button>
     </div>
     <div id="sync-indicator"></div>
-    <div id="verse-footer">&#x0964;&#x0964; कर्मण्येवाधिकारस्ते मा फलेषु कदाचन &#x0964;&#x0964; &mdash; Bhagavad Gita 2.47</div>
+    <div id="footer-row">
+      <div id="verse-footer">&#x0964;&#x0964; कर्मण्येवाधिकारस्ते मा फलेषु कदाचन &#x0964;&#x0964; &mdash; Bhagavad Gita 2.47</div>
+      <button id="feedback-link" onclick="openFeedback()" aria-label="Send feedback">Feedback</button>
+    </div>
     <div id="history-status">&#x1F4BE; Saving to device storage</div>
     <div id="lang-indicator"></div>
   </div>
@@ -1206,7 +1252,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,verseMode:verseMode,voiceMode:ttsEnabled}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,voiceMode:ttsEnabled}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
 var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;activeCtrl=null;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
@@ -3466,24 +3512,7 @@ if('serviceWorker' in navigator){
 }
 
 // ── Verse Mode (Option A / Option B) ─────────────────────────────────────────
-var VERSE_MODE_KEY='ak_verse_mode';
-var verseMode=localStorage.getItem(VERSE_MODE_KEY)||'A';
-
-function toggleVerseMode(){
-  verseMode=verseMode==='A'?'B':'A';
-  localStorage.setItem(VERSE_MODE_KEY,verseMode);
-  updateVerseModeUI();
-  showToast(verseMode==='B'?'Option B: 701-verse matching ON':'Option A: Curated verse bank ON');
-  appLog('info','verseMode','Switched to '+verseMode);
-}
-function updateVerseModeUI(){
-  var sub=document.getElementById('hm-verse-mode-sub');
-  var tog=document.getElementById('hm-verse-mode-toggle');
-  if(sub)sub.textContent=verseMode==='B'?'Option B: 701-verse matching ON':'Option A: Curated verse bank';
-  if(tog)tog.classList.toggle('on',verseMode==='B');
-}
 // Init verse mode UI
-updateVerseModeUI();
 
 // ── iPhone/iPad install prompt ───────────────────────────────────────────────
 var IOS_DISMISS_KEY='ak_ios_install_dismissed';
@@ -3655,6 +3684,87 @@ document.addEventListener('click',function(e){
   var coach=document.getElementById('lang-coach');
   if(coach&&coach.classList.contains('show'))dismissLangCoach(false);
 },{passive:true});
+
+// ── Feedback ────────────────────────────────────────────────────────────────
+var fbRating=0;
+function openFeedback(){
+  fbRating=0;
+  var t=document.getElementById('fb-text');
+  if(t)t.value='';
+  var cnt=document.getElementById('fb-count');
+  if(cnt)cnt.textContent='0 / 1000';
+  document.querySelectorAll('.fb-face').forEach(function(b){b.classList.remove('on');});
+  clearAuthErr('fb-err');
+  var send=document.getElementById('fb-send');
+  if(send){send.disabled=false;send.textContent='Send';}
+  openModal('fb-modal');
+  track('feedback_open');
+}
+
+(function(){
+  document.querySelectorAll('.fb-face').forEach(function(btn){
+    btn.onclick=function(){
+      fbRating=parseInt(btn.dataset.r,10)||0;
+      document.querySelectorAll('.fb-face').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+    };
+  });
+  var t=document.getElementById('fb-text');
+  if(t)t.addEventListener('input',function(){
+    var cnt=document.getElementById('fb-count');
+    if(cnt)cnt.textContent=t.value.length+' / 1000';
+  });
+  var m=document.getElementById('fb-modal');
+  if(m)m.addEventListener('click',function(e){if(e.target===this)closeModal('fb-modal');});
+})();
+
+function submitFeedback(){
+  var el=document.getElementById('fb-text');
+  var text=(el?el.value:'').trim();
+  if(!fbRating&&!text){
+    showAuthErr('fb-err','Please pick a rating or write a few words.');
+    return;
+  }
+  var send=document.getElementById('fb-send');
+  if(send){send.disabled=true;send.textContent='Sending...';}
+  clearAuthErr('fb-err');
+
+  // Context is what makes feedback actionable — "the voice sounds wrong" means
+  // something different from a Telugu user with voice on than an English guest.
+  fetch(W+'feedback',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      rating:fbRating,
+      text:text.slice(0,1000),
+      context:{
+        lang:curLang,
+        voiceOn:!!ttsEnabled,
+        messages:msgs.length,
+        signedIn:!!currentUser,
+        installed:(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||false
+      }
+    })
+  })
+  .then(function(r){
+    if(!r.ok)return r.json().catch(function(){return {};}).then(function(e){
+      throw new Error(e.error||('server '+r.status));
+    });
+    return r.json();
+  })
+  .then(function(d){
+    if(d.error)throw new Error(d.error);
+    closeModal('fb-modal');
+    showToast('Thank you \uD83D\uDE4F');
+    track('feedback_sent');
+    appLog('info','feedback','Feedback submitted',{rating:fbRating,length:text.length});
+  })
+  .catch(function(err){
+    if(send){send.disabled=false;send.textContent='Send';}
+    showAuthErr('fb-err','Could not send: '+((err&&err.message)||'network error'));
+    appLog('error','feedback','Submit failed',{message:err&&err.message});
+  });
+}
 </script>
 </body>
 </html>
