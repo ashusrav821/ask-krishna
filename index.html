@@ -3171,10 +3171,94 @@ function requestNotifPermission(){
 function showNotifTimePicker(){
   var time=localStorage.getItem(NOTIF_TIME_KEY)||'07:00';
   var t=prompt('What time should Krishna send daily wisdom? (e.g. 07:00)',time);
-  if(t&&/^\d{1,2}:\d{2}$/.test(t)){localStorage.setItem(NOTIF_TIME_KEY,t);showToast('Daily wisdom set for '+t);}
+  if(!t||!/^\d{1,2}:\d{2}$/.test(t))return;
+  var hh=parseInt(t.split(':')[0],10),mm=parseInt(t.split(':')[1],10);
+  if(hh<0||hh>23||mm<0||mm>59){showToast('Please use a 24-hour time like 07:00');return;}
+  var norm=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+  localStorage.setItem(NOTIF_TIME_KEY,norm);
+  // Push the new time to the server, or the reminder keeps arriving at the old one.
+  subscribeToPush().then(function(ok){
+    showToast(ok?'Daily wisdom set for '+norm:'Saved for '+norm+' (this device only)');
+  });
+  var sub=document.getElementById('hm-notif-sub');
+  if(sub)sub.textContent='Daily at '+norm;
+}
+
+// ── Web Push subscription ───────────────────────────────────────────────────
+// Replaces the old setTimeout scheduler, which only fired while a tab stayed
+// open — so a 7am reminder almost never arrived. The server now sends these.
+var VAPID_PUBLIC_KEY='BHW3LJ3BoqXpD6qbrmnbkHJIcL1ajcD7He4ofiLdFKoaTSy3CDzL6f_VAklK18Yoqs10ncrq2ibfs_g3mlbf0ak';
+
+function urlBase64ToUint8Array(base64String){
+  var padding='='.repeat((4-base64String.length%4)%4);
+  var base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  var raw=atob(base64);
+  var arr=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+
+function subscribeToPush(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    appLog('warn','push','Push not supported on this browser');
+    return Promise.resolve(false);
+  }
+  if(Notification.permission!=='granted')return Promise.resolve(false);
+
+  return navigator.serviceWorker.ready.then(function(reg){
+    return reg.pushManager.getSubscription().then(function(existing){
+      if(existing)return existing;
+      return reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    });
+  }).then(function(sub){
+    var t=(localStorage.getItem(NOTIF_TIME_KEY)||'07:00').split(':');
+    return fetch(W+'push/subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        subscription:sub.toJSON?sub.toJSON():sub,
+        hour:parseInt(t[0],10)||7,
+        minute:parseInt(t[1],10)||0,
+        // Minutes behind UTC, so the server can work out the user's local hour.
+        tzOffset:new Date().getTimezoneOffset(),
+        lang:curLang
+      })
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){appLog('info','push','Subscribed to daily wisdom');return true;}
+      appLog('error','push','Subscribe rejected',{error:d.error});
+      return false;
+    });
+  }).catch(function(err){
+    appLog('error','push','Subscribe failed',{message:err&&err.message});
+    return false;
+  });
+}
+
+function unsubscribeFromPush(){
+  if(!('serviceWorker' in navigator))return Promise.resolve();
+  return navigator.serviceWorker.ready.then(function(reg){
+    return reg.pushManager.getSubscription();
+  }).then(function(sub){
+    if(!sub)return;
+    var endpoint=sub.endpoint;
+    return sub.unsubscribe().then(function(){
+      return fetch(W+'push/unsubscribe',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({endpoint:endpoint})
+      });
+    });
+  }).catch(function(){});
 }
 function scheduleWisdomNotif(){
   if(Notification.permission!=='granted')return;
+  // Register for server-sent push, which works when the app is closed.
+  subscribeToPush();
+  // The setTimeout below stays only as a same-session fallback for browsers
+  // without PushManager; it cannot survive the tab closing.
   if(!navigator.serviceWorker||!navigator.serviceWorker.controller)return;
   var timeStr=localStorage.getItem(NOTIF_TIME_KEY)||'07:00';
   var parts=timeStr.split(':');
