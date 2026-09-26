@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Ask Keshava — Feedback</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,'Palatino Linotype',serif;background:#0a0500;color:#e5e7eb;min-height:100vh;padding:16px}
+h1{font-size:19px;color:#fbbf24;margin-bottom:16px}
+#lock{position:fixed;inset:0;background:#0a0500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:99;padding:20px}
+#lock h2{font-size:20px;color:#fbbf24}
+.inp{background:#1a0d00;border:1px solid rgba(249,115,22,0.3);border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-family:inherit;width:100%;max-width:280px;outline:none}
+.btn{background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:10px;padding:11px 20px;color:#fff;font-size:14px;cursor:pointer;font-family:inherit}
+.btn.sec{background:#1a0d00;border:1px solid rgba(249,115,22,0.3);color:#fdba74}
+#lock-err{color:#f87171;font-size:12.5px;min-height:16px;text-align:center}
+#app{display:none}
+.controls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+#summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:20px}
+.card{background:linear-gradient(135deg,rgba(249,115,22,0.09),rgba(251,191,36,0.04));border:1px solid rgba(249,115,22,0.2);border-radius:14px;padding:13px}
+.card b{display:block;font-size:24px;color:#fbbf24;margin-bottom:2px;font-family:system-ui,sans-serif}
+.card span{font-size:10.5px;color:rgba(253,186,116,0.55)}
+.item{background:rgba(255,255,255,0.03);border:1px solid rgba(249,115,22,0.12);border-radius:13px;padding:13px 15px;margin-bottom:9px}
+.ihead{display:flex;align-items:center;gap:9px;margin-bottom:7px;flex-wrap:wrap}
+.stars{font-size:14px;letter-spacing:1px}
+.ts{font-size:10.5px;color:rgba(253,186,116,0.35);margin-left:auto}
+.itext{font-size:13.5px;line-height:1.65;color:#e5e7eb;white-space:pre-wrap;word-break:break-word}
+.meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.15);border-radius:14px;padding:2px 9px;font-size:10px;color:rgba(253,186,116,0.7)}
+#empty{text-align:center;padding:50px 20px;color:rgba(253,186,116,0.3);font-size:14px}
+#err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:11px;color:#f87171;font-size:13px;margin-bottom:12px;display:none}
+.lts{font-size:11px;color:rgba(253,186,116,0.35)}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div style="font-size:38px">💬</div>
+  <h2>Feedback</h2>
+  <input class="inp" id="akey" type="password" placeholder="Admin key..." />
+  <button class="btn" onclick="unlock()">Unlock</button>
+  <div id="lock-err"></div>
+</div>
+
+<div id="app">
+  <h1>💬 Feedback</h1>
+  <div class="controls">
+    <button class="btn" onclick="load()">🔄 Refresh</button>
+    <button class="btn sec" onclick="lock()">Lock</button>
+    <span class="lts" id="lts"></span>
+  </div>
+  <div id="err"></div>
+  <div id="summary"></div>
+  <div id="items"></div>
+  <div id="empty" style="display:none">No feedback yet.</div>
+</div>
+
+<script>
+var W='https://ask-krishna-api.oletyashrith.workers.dev/';
+var SK='ak_fb_key';
+var adminKey='';
+
+function unlock(){
+  var k=document.getElementById('akey').value.trim();
+  if(!k){document.getElementById('lock-err').textContent='Please enter the admin key';return;}
+  document.getElementById('lock-err').textContent='Verifying...';
+  fetch(W+'feedback/list',{headers:{'X-Admin-Key':k}})
+  .then(function(r){
+    if(r.status===401){document.getElementById('lock-err').textContent='Incorrect key.';return;}
+    if(!r.ok){document.getElementById('lock-err').textContent='Server error: '+r.status;return;}
+    return r.json().then(function(d){
+      adminKey=k;
+      try{sessionStorage.setItem(SK,k);}catch(e){}
+      document.getElementById('lock').style.display='none';
+      document.getElementById('app').style.display='block';
+      render(d);
+    });
+  })
+  .catch(function(e){document.getElementById('lock-err').textContent='Cannot connect: '+e.message;});
+}
+document.getElementById('akey').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
+
+function lock(){
+  try{sessionStorage.removeItem(SK);}catch(e){}
+  adminKey='';
+  document.getElementById('app').style.display='none';
+  document.getElementById('lock').style.display='flex';
+  document.getElementById('akey').value='';
+}
+
+function load(){
+  document.getElementById('err').style.display='none';
+  fetch(W+'feedback/list',{headers:{'X-Admin-Key':adminKey}})
+  .then(function(r){ if(!r.ok){showErr('Server error: '+r.status);return;} return r.json(); })
+  .then(function(d){ if(d)render(d); })
+  .catch(function(e){showErr('Cannot connect: '+e.message);});
+}
+function showErr(m){var e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+
+function stars(n){ return n ? '⭐'.repeat(n) : '—'; }
+
+function render(d){
+  document.getElementById('lts').textContent='Updated '+new Date().toLocaleTimeString();
+  var items=d.items||[];
+
+  var sum=document.getElementById('summary');
+  sum.innerHTML='';
+  var counts={};
+  items.forEach(function(i){ if(i.rating) counts[i.rating]=(counts[i.rating]||0)+1; });
+  var cards=[
+    [items.length,'Total'],
+    [d.averageRating||'—','Avg rating'],
+    [items.filter(function(i){return i.text;}).length,'With comments'],
+    [(counts[5]||0)+(counts[4]||0),'Positive'],
+    [(counts[1]||0)+(counts[2]||0),'Needs work']
+  ];
+  cards.forEach(function(c){
+    var el=document.createElement('div'); el.className='card';
+    var b=document.createElement('b'); b.textContent=c[0];
+    var s=document.createElement('span'); s.textContent=c[1];
+    el.appendChild(b); el.appendChild(s); sum.appendChild(el);
+  });
+
+  var wrap=document.getElementById('items');
+  wrap.innerHTML='';
+  if(!items.length){document.getElementById('empty').style.display='block';return;}
+  document.getElementById('empty').style.display='none';
+
+  items.forEach(function(it){
+    var el=document.createElement('div'); el.className='item';
+    var h=document.createElement('div'); h.className='ihead';
+    var st=document.createElement('span'); st.className='stars'; st.textContent=stars(it.rating);
+    var ts=document.createElement('span'); ts.className='ts';
+    ts.textContent=it.ts?new Date(it.ts).toLocaleString():'';
+    h.appendChild(st); h.appendChild(ts);
+    el.appendChild(h);
+
+    if(it.text){
+      var t=document.createElement('div'); t.className='itext';
+      t.textContent=it.text;          // textContent, never innerHTML
+      el.appendChild(t);
+    }
+
+    var c=it.context||{};
+    var meta=document.createElement('div'); meta.className='meta';
+    var chips=[];
+    if(c.lang)chips.push({en:'English',hi:'Hindi',te:'Telugu',ta:'Tamil'}[c.lang]||c.lang);
+    if(c.voiceOn)chips.push('voice on');
+    if(c.messages)chips.push(c.messages+' messages');
+    chips.push(c.signedIn?'signed in':'guest');
+    if(c.installed)chips.push('installed');
+    if(it.country)chips.push(it.country);
+    chips.forEach(function(x){
+      var ch=document.createElement('span'); ch.className='chip'; ch.textContent=x;
+      meta.appendChild(ch);
+    });
+    el.appendChild(meta);
+    wrap.appendChild(el);
+  });
+}
+
+(function(){
+  var k=null;
+  try{k=sessionStorage.getItem(SK);}catch(e){}
+  if(k){document.getElementById('akey').value=k;setTimeout(unlock,80);}
+})();
+</script>
+</body>
+</html>
