@@ -191,6 +191,23 @@
     #fb-count{font-size:10px;color:rgba(253,186,116,0.35);text-align:right;margin-top:4px}
     #fb-note{font-size:10.5px;color:rgba(253,186,116,0.4);line-height:1.5;margin-top:10px}
     body.light #fb-text{background:rgba(249,115,22,0.05)!important;color:#1a0a00!important}
+    /* Header: on narrow phones every item stays, but the account button becomes
+       an avatar and the subtitle wraps, so the title is never clipped. */
+    #header-text{overflow:hidden}
+    #signin-btn .si-initial,#signin-btn .si-icon{display:none}
+    @media(max-width:400px){
+      #header{gap:7px;padding:8px 10px}
+      #logo{width:38px;height:38px;font-size:19px}
+      #header-actions{gap:5px}
+      #header-title{font-size:16px;letter-spacing:0}
+      #header-sub{font-size:7.5px;letter-spacing:0.03em;white-space:normal;line-height:1.25;overflow:visible;text-overflow:clip}
+      #lang-chip{padding:5px 7px}
+      #lang-chip-caret{display:none}
+      #signin-btn{width:34px;height:34px;padding:0;max-width:none;border-radius:50%;display:flex;align-items:center;justify-content:center}
+      #signin-btn .si-name,#signin-btn .si-text{display:none}
+      #signin-btn .si-initial,#signin-btn .si-icon{display:inline}
+      #signin-btn .si-initial{font-weight:700;font-size:14px}
+    }
     #messages{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;height:100%}
     #messages::-webkit-scrollbar{display:none}
     #suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
@@ -2379,15 +2396,23 @@ function confirmDeleteAccount(){
 function updateSignInBtn(){
   var btn=document.getElementById('signin-btn');
   if(!btn)return;
+  function span(cls,text){var s=document.createElement('span');s.className=cls;s.textContent=text;return s;}
+  while(btn.firstChild)btn.removeChild(btn.firstChild);
   if(currentUser){
     var first=currentUser.name?currentUser.name.split(' ')[0]:'';
-    btn.textContent='\uD83D\uDE4F '+first;
+    var initial=(first||currentUser.email||'?').charAt(0).toUpperCase();
+    // Wide screens show the name; narrow phones show an initial so the title keeps its room.
+    btn.appendChild(span('si-name','\uD83D\uDE4F '+first));
+    btn.appendChild(span('si-initial',initial));
     btn.classList.add('signed-in');
-    btn.setAttribute('aria-label','View profile for '+currentUser.name);
+    btn.setAttribute('aria-label','View profile for '+(currentUser.name||'your account'));
+    btn.title=currentUser.name||'';
   } else {
-    btn.textContent='Sign In';
+    btn.appendChild(span('si-text','Sign In'));
+    btn.appendChild(span('si-icon','\uD83D\uDC64'));
     btn.classList.remove('signed-in');
     btn.setAttribute('aria-label','Sign in or create account');
+    btn.title='Sign in';
   }
 }
 
