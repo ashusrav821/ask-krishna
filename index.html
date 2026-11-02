@@ -3514,11 +3514,29 @@ function applyUpdate(){
 }
 // Listen for SW update message
 if('serviceWorker' in navigator){
+  var _hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('message',function(e){
-    if(e.data&&e.data.type==='APP_UPDATED'){
+    // Ignore the first-ever install: brand-new users have nothing to update
+    if(e.data&&e.data.type==='APP_UPDATED'&&_hadController){
       showUpdateBanner();
     }
   });
+  // Automatic update check: compares the live index.html to the copy this
+  // session started with, so ANY deploy (even HTML-only) triggers the banner.
+  var _baseSig=null,_lastCheck=0;
+  function _sig(t){var h=5381,i=t.length;while(i)h=(h*33)^t.charCodeAt(--i);return t.length+':'+(h>>>0);}
+  function checkForAppUpdate(){
+    var now=Date.now(); if(now-_lastCheck<60000)return; _lastCheck=now;
+    if(_updateReg&&_updateReg.update)_updateReg.update().catch(function(){});
+    fetch('/index.html',{cache:'no-store'}).then(function(r){return r.ok?r.text():null;}).then(function(t){
+      if(!t)return; var s=_sig(t);
+      if(_baseSig===null){_baseSig=s;return;}
+      if(s!==_baseSig)showUpdateBanner();
+    }).catch(function(){});
+  }
+  window.addEventListener('load',function(){setTimeout(checkForAppUpdate,3000);});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)checkForAppUpdate();});
+  setInterval(checkForAppUpdate,30*60*1000);
   // Also detect when a new SW is waiting
   navigator.serviceWorker.register('/sw.js').then(function(reg){
     _updateReg=reg;
