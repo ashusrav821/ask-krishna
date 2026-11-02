@@ -1,4 +1,4 @@
-var CACHE='askkeshava-v6';
+var CACHE='askkeshava-v7';
 var ASSETS=[
   '/',
   '/index.html',
@@ -17,7 +17,12 @@ self.addEventListener('install',function(e){
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       // allSettled so a missing file doesn't abort the whole install
-      return Promise.allSettled(ASSETS.map(function(a){return c.add(a)}));
+      return Promise.allSettled(ASSETS.map(function(a){
+        return fetch(a,{cache:'reload'}).then(function(r){
+          if(!r.ok)throw new Error(a+' '+r.status);
+          return c.put(a,r);
+        });
+      }));
     }).then(function(){return self.skipWaiting()})
   );
 });
@@ -30,7 +35,7 @@ self.addEventListener('activate',function(e){
     }).then(function(){return self.clients.claim()}).then(function(){
       // Notify all open tabs of update
       return self.clients.matchAll({type:'window'}).then(function(clients){
-        clients.forEach(function(c){c.postMessage({type:'APP_UPDATED',version:'v6'});});
+        clients.forEach(function(c){c.postMessage({type:'APP_UPDATED',version:'v7'});});
       });
     })
   );
@@ -44,12 +49,28 @@ self.addEventListener('fetch',function(e){
   var isNavigation=e.request.mode==='navigate';
   var hasQuery=url.search!=='';
   var isCacheableAsset=RUNTIME_CACHEABLE.test(url.pathname);
-  if(isNavigation&&hasQuery){
-    // Always fetch fresh — never cache OAuth/callback URLs
-    e.respondWith(fetch(e.request).catch(function(){
-      // Fallback to cached index.html if network fails
-      return caches.match('/index.html');
-    }));
+  if(isNavigation){
+    // Page loads go to the network FIRST. They used to be served from cache, and
+    // the fresh copy was never stored, so a redeployed index.html did not reach
+    // anyone until sw.js itself changed. Cache is now only the offline fallback.
+    e.respondWith((function(){
+      var nctrl=new AbortController();
+      var ntout=setTimeout(function(){nctrl.abort();},5000);
+      return fetch(e.request,{signal:nctrl.signal,cache:'no-cache'}).then(function(resp){
+        clearTimeout(ntout);
+        // Keep the latest page for offline use — but never an OAuth/callback URL.
+        if(resp&&resp.status===200&&resp.type==='basic'&&!hasQuery){
+          var nclone=resp.clone();
+          caches.open(CACHE).then(function(c){c.put('/index.html',nclone)});
+        }
+        return resp;
+      }).catch(function(){
+        clearTimeout(ntout);
+        return caches.match('/index.html').then(function(fb){
+          return fb||new Response('Offline',{status:504,statusText:'Gateway Timeout'});
+        });
+      });
+    })());
     return;
   }
   e.respondWith(
@@ -83,48 +104,6 @@ self.addEventListener('fetch',function(e){
         return new Response('Offline',{status:504,statusText:'Gateway Timeout'});
       });
     })
-  );
-});
-
-// ── Push notifications ───────────────────────────────────────────────────
-// Fired by the server even when the app is closed. The old setTimeout
-// approach only worked while a tab stayed open, so daily reminders almost
-// never arrived.
-self.addEventListener('push',function(e){
-  var data={};
-  try{ data=e.data?e.data.json():{}; }catch(err){
-    try{ data={body:e.data?e.data.text():''}; }catch(e2){ data={}; }
-  }
-  var title=data.title||'Ask Keshava \uD83E\uDD9A';
-  var opts={
-    body:data.body||'Your daily wisdom from the Bhagavad Gita awaits.',
-    icon:'/icon-192.png',
-    badge:'/icon-192.png',
-    tag:data.tag||'daily-wisdom',
-    renotify:true,
-    requireInteraction:false,
-    data:{url:data.url||'/?wisdom=1'}
-  };
-  e.waitUntil(self.registration.showNotification(title,opts));
-});
-
-// Browsers rotate push subscriptions periodically. Without this the
-// subscription silently dies and notifications stop arriving.
-self.addEventListener('pushsubscriptionchange',function(e){
-  e.waitUntil(
-    self.registration.pushManager.subscribe({
-      userVisibleOnly:true,
-      applicationServerKey:e.oldSubscription?e.oldSubscription.options.applicationServerKey:null
-    }).then(function(sub){
-      return fetch('https://ask-krishna-api.oletyashrith.workers.dev/push/resubscribe',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          oldEndpoint:e.oldSubscription?e.oldSubscription.endpoint:null,
-          subscription:sub
-        })
-      });
-    }).catch(function(){})
   );
 });
 // ── Notification click → open/focus the app ──────────────────────────────
