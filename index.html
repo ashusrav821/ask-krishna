@@ -1093,7 +1093,7 @@ function addMsg(role,content){
   scrollBottom();
   saveHistAndSync();
   if(role==='assistant'){
-    setTimeout(function(){speakText(content)},400);
+    if(_skipAutoSpeak){_skipAutoSpeak=false;}else setTimeout(function(){speakText(content)},400);
     // Offer voice inline after the first real reply. Contextual discovery
     // works far better than hoping people open the menu.
     maybeOfferVoice(col,content);
@@ -1209,6 +1209,7 @@ function stopGenerating(){
     activeCtrl=null;
   }
   hideTyping();
+  vqStop();ttsSpeaking=false;
   loading=false;
   updateSend();
   appLog('info','chat','Generation stopped by user');
@@ -1269,7 +1270,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,voiceMode:ttsEnabled}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);var useStream=!!(ttsEnabled&&window.ReadableStream&&window.TextDecoder);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,voiceMode:ttsEnabled,stream:useStream}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){if(useStream&&r.ok&&/event-stream/.test(r.headers.get('content-type')||''))return readVoiceStream(r);return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}if(data._streamed)_skipAutoSpeak=true;addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();vqStop();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
 var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;activeCtrl=null;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
@@ -1484,7 +1485,7 @@ function maybeListenAfterSpeaking(){
       if(inputEl.value.trim())return;
       micBtn.click();
       showToast('Listening...');
-    },700);
+    },350);
   }catch(e){}
 }
 function speechify(text){
@@ -1511,8 +1512,108 @@ function speechify(text){
      .replace(/\s{2,}/g,' ');
   return s.trim();
 }
+// ── Streaming voice pipeline ────────────────────────────────────────────────
+// Voice replies used to wait for the whole answer, then synthesise the whole
+// answer, then play. Now the reply streams in, each sentence is sent to TTS the
+// moment it is complete (in parallel), and playback starts on the first one.
+var _skipAutoSpeak=false;
+var vq={items:[],playing:false,done:false,gen:0};
+function vqStop(){
+  vq.gen++;vq.items=[];vq.playing=false;vq.done=false;
+  if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+}
+function vqStart(){vqStop();ttsSpeaking=true;track('tts');}
+function vqVoice(){
+  var lang=ttsLangMap[curLang]||'en-IN';
+  var voice=googleVoiceMap[curLang]||'en-IN-Chirp3-HD-Achird';
+  try{var sv=localStorage.getItem(VK);if(sv&&sv.indexOf(lang+'-')===0&&sv.indexOf('Chirp3-HD')!==-1)voice=sv;}catch(e){}
+  return {lang:lang,voice:voice};
+}
+function vqFetch(text){
+  var clean=speechify(text);
+  if(!clean)return Promise.resolve({skip:true});
+  var v=vqVoice();
+  return fetch(W+'tts',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:clean,voice:v.voice,langCode:v.lang,rate:0.92})})
+  .then(function(r){return r.json();})
+  .then(function(d){return d&&d.audioContent?{src:'data:audio/mp3;base64,'+d.audioContent}:{fb:clean};})
+  .catch(function(){return {fb:clean};});
+}
+function vqEnqueue(sentence){
+  if(!sentence||!sentence.trim())return;
+  vq.items.push(vqFetch(sentence));
+  vqPump();
+}
+function vqEnd(){vq.done=true;vqPump();}
+function vqPump(){
+  if(vq.playing)return;
+  var g=vq.gen;
+  var next=vq.items.shift();
+  if(!next){
+    if(vq.done){ttsSpeaking=false;vq.done=false;setTimeout(maybeListenAfterSpeaking,120);}
+    return;
+  }
+  vq.playing=true;
+  function advance(){if(g!==vq.gen)return;vq.playing=false;vqPump();}
+  next.then(function(res){
+    if(g!==vq.gen)return;
+    if(res.skip){advance();return;}
+    if(res.src){
+      ttsAudio=ttsPlayer||new Audio();
+      ttsAudio.src=res.src;ttsAudio.volume=0.95;
+      ttsAudio.onended=advance;
+      ttsAudio.onerror=function(){appLog('warn','tts','Audio element error (stream)');advance();};
+      ttsAudio.play().catch(function(err){appLog('warn','tts','play() blocked (stream)',{name:err&&err.name});advance();});
+      return;
+    }
+    if(window.speechSynthesis&&res.fb){
+      var u=new SpeechSynthesisUtterance(res.fb);u.lang=ttsLangMap[curLang]||'en-IN';u.rate=0.9;
+      u.onend=advance;u.onerror=advance;window.speechSynthesis.speak(u);
+    }else advance();
+  });
+}
+// Cut the next speakable sentence (at least ~25 chars) off the front of a buffer
+function cutSentence(p){
+  var re=/[.!?\u0964]["')\]]*\s+|\n+/g,m;
+  while((m=re.exec(p))){
+    var end=m.index+m[0].length;
+    if(m.index>=25)return {sentence:p.slice(0,end),rest:p.slice(end)};
+  }
+  return null;
+}
+function readVoiceStream(r){
+  vqStart();
+  var reader=r.body.getReader(),dec=new TextDecoder(),buf='',acc='',pend='';
+  function feed(t){
+    acc+=t;pend+=t;
+    var m;while((m=cutSentence(pend))){pend=m.rest;vqEnqueue(m.sentence);}
+  }
+  function handleLine(line){
+    if(line.indexOf('data:')!==0)return;
+    var j;try{j=JSON.parse(line.slice(5));}catch(e){return;}
+    if(j.type==='content_block_delta'&&j.delta&&j.delta.type==='text_delta')feed(j.delta.text||'');
+    else if(j.type==='error')throw new Error((j.error&&j.error.message)||'stream error');
+  }
+  function pump(){
+    return reader.read().then(function(x){
+      if(x.done){
+        if(buf.trim())handleLine(buf.trim());
+        if(pend.trim())vqEnqueue(pend);
+        vqEnd();
+        return acc.trim()?{content:[{type:'text',text:acc}],_streamed:true}:{content:[]};
+      }
+      buf+=dec.decode(x.value,{stream:true});
+      var parts=buf.split('\n');buf=parts.pop();
+      parts.forEach(function(l){handleLine(l.trim());});
+      return pump();
+    });
+  }
+  return pump();
+}
 function speakText(text){
   if(!ttsEnabled)return;
+  vqStop();
   track('tts');
   if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}
   if(window.speechSynthesis)window.speechSynthesis.cancel();
@@ -1569,7 +1670,7 @@ function updateTtsBtn(){
   var ttsS=document.getElementById('hm-tts-sub');
   if(ttsT)ttsT.classList.toggle('on',ttsEnabled);
   if(ttsS)ttsS.textContent=ttsEnabled?'On — Krishna speaks answers':'Off — tap to enable';
-  if(!ttsEnabled){if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+  if(!ttsEnabled){vqStop();if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;}catch(e){}}if(window.speechSynthesis)window.speechSynthesis.cancel();}
 }
 function openVoicePicker(){
   var list=document.getElementById('voice-list');
@@ -1830,7 +1931,7 @@ function openVoicePicker(){
 }
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices()}}
 // Voice Input
-if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-US'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="#ef4444"/><circle cx="20" cy="20" r="7" fill="white"/></svg>'};
+if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var rec=new SR();rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;function getLangCode(){return curLang==='te'?'te-IN':curLang==='ta'?'ta-IN':curLang==='hi'?'hi-IN':'en-IN'}rec.onstart=function(){isListening=true;micBtn.classList.add('listening');micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="#ef4444"/><circle cx="20" cy="20" r="7" fill="white"/></svg>'};
 rec.onspeechstart=function(){micBtn.style.transform='scale(1.1)'};
 rec.onspeechend=function(){micBtn.style.transform='scale(1)'};
 rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};
