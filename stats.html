@@ -69,6 +69,9 @@ var LABELS={
   question:'Questions asked', wisdom:"Today's Wisdom", signup:'Signups', signin:'Signins',
   install:'Install prompts', tts:'Voice replies', voice_input:'Voice input',
   bookmark:'Bookmarks', share:'Shares', sync:'Syncs',
+  voice_ttfa:'Voice replies timed', voice_stt_error:'Mic errors', voice_stt_empty:'Mic heard nothing', tts_fallback:'Voice fell back to phone voice',
+  cache_hit:'Prompt cache hits', cache_write:'Prompt cache writes', cache_none:'Not cached',
+  voice_ttfa_lt1s:'Voice <1s', voice_ttfa_1to2s:'Voice 1-2s', voice_ttfa_2to3s:'Voice 2-3s', voice_ttfa_3to5s:'Voice 3-5s', voice_ttfa_gt5s:'Voice >5s',
   'lang:en':'English', 'lang:te':'Telugu', 'lang:ta':'Tamil', 'lang:hi':'Hindi'
 };
 function label(k){return LABELS[k]||k;}
@@ -122,7 +125,18 @@ function render(d){
   tw.innerHTML='';
   var order=['question','wisdom','signup','signin','tts','share','sync','install'];
   var keys=order.filter(function(k){return totals[k];})
-    .concat(Object.keys(totals).filter(function(k){return order.indexOf(k)===-1;}));
+    .concat(Object.keys(totals).filter(function(k){return order.indexOf(k)===-1&&k!=='voice_ttfa_ms';}));
+  // Derived headline numbers
+  var derived=[];
+  if(totals.voice_ttfa&&totals.voice_ttfa_ms)derived.push([(totals.voice_ttfa_ms/totals.voice_ttfa/1000).toFixed(1)+'s','Avg time to first voice']);
+  var ct=(totals.cache_hit||0)+(totals.cache_write||0)+(totals.cache_none||0);
+  if(ct)derived.push([Math.round((totals.cache_hit||0)/ct*100)+'%','Prompt cache hit rate']);
+  derived.forEach(function(p){
+    var el=document.createElement('div');el.className='card';
+    var b=document.createElement('b');b.textContent=p[0];
+    var sp=document.createElement('span');sp.textContent=p[1];
+    el.appendChild(b);el.appendChild(sp);tw.appendChild(el);
+  });
   keys.forEach(function(k){
     var el=document.createElement('div');
     el.className='card';
@@ -143,6 +157,7 @@ function render(d){
     el.appendChild(dt);
     var mw=document.createElement('div');mw.className='metrics';
     Object.keys(day.metrics).sort().forEach(function(m){
+      if(m==='voice_ttfa_ms')return;
       var chip=document.createElement('div');chip.className='metric';
       var b=document.createElement('b');b.textContent=day.metrics[m];
       chip.appendChild(b);
