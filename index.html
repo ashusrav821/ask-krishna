@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Ask Keshava - Wisdom of the Bhagavad Gita" />
   <meta name="robots" content="index, follow" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev https://accounts.google.com; script-src 'unsafe-inline' https://accounts.google.com; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ask-krishna-api.oletyashrith.workers.dev https://accounts.google.com; script-src 'unsafe-inline' https://accounts.google.com; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://ask-krishna-api.oletyashrith.workers.dev https://texttospeech.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; media-src blob: data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'none';" />
   <meta name="format-detection" content="telephone=no" />
   <!-- Link preview (WhatsApp, iMessage, Telegram, social) -->
   <meta property="og:type" content="website" />
@@ -410,6 +410,14 @@
       #header #signin-btn .si-initial,#header #signin-btn .si-icon{display:inline}
       #header #signin-btn .si-initial{font-weight:700;font-size:14px}
     }
+@media(max-width:340px){
+  #header{gap:5px;padding:8px 8px}
+  #header #logo{width:32px;height:32px;font-size:16px}
+  #header #header-title{font-size:14px}
+  #header #header-actions{gap:4px}
+  #header #lang-chip{padding:4px 5px}
+  #header #signin-btn{width:32px;height:32px}
+}
 </style>
 </head>
 <body oncontextmenu="return false">
@@ -444,7 +452,7 @@
         <span id="lang-chip-globe">&#x1F310;</span><span id="lang-chip-code">EN</span><span id="lang-chip-caret">&#x25BE;</span>
       </button>
       <button class="hdr-btn" id="header-search-btn" title="Search" aria-label="Search messages" onclick="toggleSearch()">&#x1F50D;</button>
-      <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or create account">Sign In</button>
+      <button id="signin-btn" onclick="openAuthModal()" aria-label="Sign in or create account"><span class="si-text">Sign In</span><span class="si-icon">&#x1F464;</span></button>
       <button class="hdr-btn" id="menu-btn" title="Menu" aria-label="Open menu" onclick="openHamburger()">&#x2630;</button>
     </div>
   </div>
@@ -953,6 +961,7 @@ function track(event, extra){
   try{
     var payload={event:event};
     if(extra&&extra.lang)payload.lang=extra.lang;
+    if(extra&&typeof extra.ms==='number')payload.ms=extra.ms;
     fetch(W+'stat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -1093,7 +1102,11 @@ function addMsg(role,content){
   scrollBottom();
   saveHistAndSync();
   if(role==='assistant'){
-    if(_skipAutoSpeak){_skipAutoSpeak=false;}else setTimeout(function(){speakText(content)},400);
+    if(_skipAutoSpeak){_skipAutoSpeak=false;}else setTimeout(function(){
+      // A delayed auto-speak must never cut off a reply that is already being spoken
+      if(loading||vq.playing||vq.items.length)return;
+      speakText(content);
+    },400);
     // Offer voice inline after the first real reply. Contextual discovery
     // works far better than hoping people open the menu.
     maybeOfferVoice(col,content);
@@ -1209,7 +1222,7 @@ function stopGenerating(){
     activeCtrl=null;
   }
   hideTyping();
-  vqStop();ttsSpeaking=false;
+  vqStop();ttsSpeaking=false;_voiceT0=0;
   loading=false;
   updateSend();
   appLog('info','chat','Generation stopped by user');
@@ -1270,7 +1283,7 @@ function sendMessage(){
   rlTimestamps=rlTimestamps.filter(function(t){return now-t<RL_WIN});
   if(rlTimestamps.length>=RL_MAX){addMsg('assistant','Please wait a moment before sending another message. Krishna reflects deeply on each question \uD83D\uDE4F');return;}
   rlTimestamps.push(now);
-  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);var useStream=!!(ttsEnabled&&window.ReadableStream&&window.TextDecoder);fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,voiceMode:ttsEnabled,stream:useStream}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){if(useStream&&r.ok&&/event-stream/.test(r.headers.get('content-type')||''))return readVoiceStream(r);return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}if(data._streamed)_skipAutoSpeak=true;addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();vqStop();appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
+  if(!navigator.onLine){addMsg('assistant','Dear seeker, I need internet to share Krishna\'s wisdom. Please check your connection.');return}if(hasBadWords(text)){inputEl.value='';inputEl.style.height='auto';updateSend();addMsg('assistant','Dear seeker, Ask Keshava is a space of peace and compassion. Please share your thoughts respectfully. As Krishna teaches in Chapter 16, our words reflect the nature we cultivate within. What is truly weighing on your heart?');return}loading=true;inputEl.value='';inputEl.style.height='auto';updateSend();suggestEl.style.display='none';var wb=document.getElementById('wisdom-wrap');if(wb)wb.style.display='none';addMsg('user',text);track('question',{lang:curLang});showTyping();var recentMsgs=msgs.length>8?[msgs[0]].concat(msgs.slice(-7)):msgs;var apiMsgs=recentMsgs.map(function(m){return{role:m.role,content:m.content}});var ctrl=new AbortController();activeCtrl=ctrl;var tout=setTimeout(function(){ctrl.abort()},30000);var useStream=!!(ttsEnabled&&window.ReadableStream&&window.TextDecoder);_voiceT0=ttsEnabled?Date.now():0;fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:getUsedVerses(),messages:apiMsgs,voiceMode:ttsEnabled,stream:useStream}),signal:ctrl.signal}).then(captureTokenHeader).then(function(r){if(useStream&&r.ok&&/event-stream/.test(r.headers.get('content-type')||''))return readVoiceStream(r);return r.json()}).then(function(data){clearTimeout(tout);hideTyping();var reply='I am here. Please ask again.';if(data.content){for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text'){reply=data.content[i].text;break}}}if(data._streamed)_skipAutoSpeak=true;addMsg('assistant',reply)}).catch(function(err){clearTimeout(tout);hideTyping();vqStop();_voiceT0=0;appLog('error','sendMessage','Fetch failed',{name:err.name,message:err.message,text:text.slice(0,100)});if(err.name==='AbortError'&&!activeCtrl){return;}
 var errTxt=err.name==='AbortError'?'Response timed out after 30 seconds.':navigator.onLine?'Something went wrong reaching Krishna.':'No internet connection.';addRetryMsg(errTxt,text);}).finally(function(){loading=false;activeCtrl=null;updateSend()})}
 // Debounced textarea input
 var inputDebounce=null;
@@ -1517,6 +1530,9 @@ function speechify(text){
 // answer, then play. Now the reply streams in, each sentence is sent to TTS the
 // moment it is complete (in parallel), and playback starts on the first one.
 var _skipAutoSpeak=false;
+// Time from pressing send to the first audible word (voice-mode latency)
+var _voiceT0=0;
+function markFirstAudio(){if(_voiceT0){var ms=Date.now()-_voiceT0;_voiceT0=0;track('voice_ttfa',{ms:ms});}}
 var vq={items:[],playing:false,done:false,gen:0};
 function vqStop(){
   vq.gen++;vq.items=[];vq.playing=false;vq.done=false;
@@ -1563,10 +1579,12 @@ function vqPump(){
       ttsAudio=ttsPlayer||new Audio();
       ttsAudio.src=res.src;ttsAudio.volume=0.95;
       ttsAudio.onended=advance;
+      ttsAudio.onplaying=markFirstAudio;
       ttsAudio.onerror=function(){appLog('warn','tts','Audio element error (stream)');advance();};
       ttsAudio.play().catch(function(err){appLog('warn','tts','play() blocked (stream)',{name:err&&err.name});advance();});
       return;
     }
+    if(res.fb)track('tts_fallback');
     if(window.speechSynthesis&&res.fb){
       var u=new SpeechSynthesisUtterance(res.fb);u.lang=ttsLangMap[curLang]||'en-IN';u.rate=0.9;
       u.onend=advance;u.onerror=advance;window.speechSynthesis.speak(u);
@@ -1646,6 +1664,7 @@ function speakText(text){
       ttsAudio=ttsPlayer||new Audio();
       ttsAudio.src=src;
       ttsAudio.volume=0.95;
+      ttsAudio.onplaying=markFirstAudio;
       ttsAudio.onended=function(){
         ttsSpeaking=false;
         // Hand the turn back to the user by opening the mic, so a voice
@@ -1664,7 +1683,7 @@ function speakText(text){
 }
 var MPREF=['Ravi','Hemant','Mohan','Neural2-B','Wavenet-B'];
 function getBestVoice(lang){var voices=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!voices||!voices.length)return null;if(lang!=='en'){var lc=ttsLangMap[lang]||'en-IN';return voices.find(function(v){return v.lang===lc})||voices.find(function(v){return v.lang.startsWith(lc.split('-')[0])})||null;}for(var i=0;i<MPREF.length;i++){var pv=voices.find(function(v){return v.name.toLowerCase().indexOf(MPREF[i].toLowerCase())!==-1});if(pv)return pv;}return voices.find(function(v){return v.lang==='en-IN'})||voices.find(function(v){return v.lang.startsWith('en')})||voices[0]}
-function fallbackTts(text){if(!window.speechSynthesis){ttsSpeaking=false;return;}var utt=new SpeechSynthesisUtterance(text);utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;var v=getBestVoice(curLang);if(v){utt.voice=v;utt.lang=v.lang;}else{utt.lang=ttsLangMap[curLang]||'en-IN';}utt.onend=function(){ttsSpeaking=false};utt.onerror=function(){ttsSpeaking=false};window.speechSynthesis.speak(utt)}
+function fallbackTts(text){track('tts_fallback');if(!window.speechSynthesis){ttsSpeaking=false;return;}var utt=new SpeechSynthesisUtterance(text);utt.rate=0.82;utt.pitch=0.85;utt.volume=0.92;var v=getBestVoice(curLang);if(v){utt.voice=v;utt.lang=v.lang;}else{utt.lang=ttsLangMap[curLang]||'en-IN';}utt.onend=function(){ttsSpeaking=false};utt.onerror=function(){ttsSpeaking=false};window.speechSynthesis.speak(utt)}
 function updateTtsBtn(){
   var ttsT=document.getElementById('hm-tts-toggle');
   var ttsS=document.getElementById('hm-tts-sub');
@@ -1937,7 +1956,7 @@ rec.onspeechend=function(){micBtn.style.transform='scale(1)'};
 rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++){t+=e.results[i][0].transcript}inputEl.value=t;inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px';updateSend()};
 function resetMicBtn(){isListening=false;micBtn.classList.remove('listening');micBtn.style.transform='scale(1)';micBtn.innerHTML='<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="40" height="40" rx="11" fill="url(#mg2)"/><defs><linearGradient id="mg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f97316"/></linearGradient></defs><rect x="15" y="8" width="10" height="14" rx="5" fill="rgba(255,255,255,0.92)"/><path d="M12 21 Q12 30 20 30 Q28 30 28 21" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/><line x1="20" y1="30" x2="20" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/><line x1="15" y1="34" x2="25" y2="34" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round"/></svg>'}
 rec.onend=function(){resetMicBtn();if(inputEl.value.trim())sendMessage()};
-rec.onerror=function(e){resetMicBtn();if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please allow microphone access in browser settings.')}else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet.')}else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone.')}};micBtn.addEventListener('click',function(){if(isListening){rec.stop();return}rec.lang=getLangCode();if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){stream.getTracks().forEach(function(t){t.stop()});inputEl.value='';try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}}).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings.')})}else{inputEl.value='';try{rec.start()}catch(e){}}})}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
+rec.onerror=function(e){resetMicBtn();track(e.error==='no-speech'||e.error==='aborted'?'voice_stt_empty':'voice_stt_error');if(e.error==='not-allowed'||e.error==='permission-denied'){addMsg('assistant','Microphone permission denied. Please allow microphone access in browser settings.')}else if(e.error==='network'){addMsg('assistant','Voice recognition needs internet.')}else if(e.error==='audio-capture'){addMsg('assistant','No microphone found. Please check your microphone.')}};micBtn.addEventListener('click',function(){if(isListening){rec.stop();return}rec.lang=getLangCode();if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){stream.getTracks().forEach(function(t){t.stop()});inputEl.value='';try{rec.start()}catch(err){setTimeout(function(){try{rec.start()}catch(e2){}},300)}}).catch(function(){addMsg('assistant','Microphone access blocked. Please allow microphone in browser settings.')})}else{inputEl.value='';try{rec.start()}catch(e){}}})}else{micBtn.style.display='none';inputEl.placeholder='Type your question here...'}
 // Today's Wisdom
 var DAILY_VERSES=[
   {ref:'2.47',theme:'Do your duty without attachment to results'},
@@ -1980,6 +1999,15 @@ function getWisdomDate(){
   var d=new Date();
   return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 }
+// Today's Wisdom arrives as schema-validated JSON; turn it into the card text.
+// Falls back to the raw text if it is ever not JSON, so nothing is lost.
+function renderWisdomJson(text){
+  try{
+    var j=JSON.parse(text);
+    if(!j||!j.meaning||!j.verse_ref)return text;
+    return '**Gita '+j.verse_ref+'** \u2014 '+j.headline+'\n\n'+j.meaning+'\n\n'+j.modern_example+'\n\n**Try today:** '+j.practice+'\n\n\uD83C\uDF3F '+j.reflection_question;
+  }catch(e){return text;}
+}
 function askTodaysWisdom(){
   appLog('info','wisdom','Today\'s Wisdom tapped',{loading:loading,online:navigator.onLine});
   if(loading){
@@ -2021,7 +2049,7 @@ function askTodaysWisdom(){
     addMsg('assistant','Today\'s wisdom could not be loaded. Please try again.');
     return;
   }
-  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:800,lang:curLang,usedVerses:usedVerses,messages:apiMsgs,voiceMode:ttsEnabled}),signal:ctrl.signal})
+  fetch(W+'chat',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({max_tokens:900,lang:curLang,usedVerses:usedVerses,messages:apiMsgs,voiceMode:false,format:'wisdom'}),signal:ctrl.signal})
   .then(function(r){
     appLog('info','wisdom','HTTP response received',{status:r.status,ok:r.ok,contentType:r.headers.get('content-type')});
     if(!r.ok){
@@ -2053,7 +2081,7 @@ function askTodaysWisdom(){
     }else{
       appLog('info','wisdom','Reply received successfully',{length:reply.length});
     }
-    addMsg('assistant',reply);
+    addMsg('assistant',renderWisdomJson(reply));
   })
   .catch(function(err){
     clearTimeout(tout);
