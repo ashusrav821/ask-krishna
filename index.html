@@ -3,7 +3,7 @@
   
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0500" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,7 +15,7 @@
   <meta name="format-detection" content="telephone=no" />
   <!-- Icons: browser tab, iPhone home screen / share sheet, Android -->
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
-  <link rel="apple-touch-icon" href="/icon-192.png?v=2" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
   <!-- Link preview (WhatsApp, iMessage, Telegram, social) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Ask Keshava" />
@@ -472,7 +472,7 @@
         <div class="ios-step-num">1</div>
         <div class="ios-step-text">Tap the <b>Share</b> button
           <svg class="ios-share-ico" width="15" height="19" viewBox="0 0 20 26" fill="none" aria-hidden="true"><path d="M10 1.5v14M10 1.5 5.8 5.7M10 1.5l4.2 4.2" stroke="#fbbf24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 10.5h-2v13h15v-13h-2" stroke="#fbbf24" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          at the bottom of Safari</div>
+          <span id="ios-share-where">at the bottom of Safari</span></div>
       </div>
       <div class="ios-step">
         <div class="ios-step-num">2</div>
@@ -482,6 +482,7 @@
         <div class="ios-step-num">3</div>
         <div class="ios-step-text">Tap <b>Add</b> in the top right corner</div>
       </div>
+      <p id="ios-note" style="display:none;margin:12px 0 0;font-size:12px"></p>
       <button id="ios-dismiss" onclick="dismissIosInstall()">Maybe later</button>
     </div>
   </div>
@@ -646,7 +647,7 @@
       <div class="auth-err" id="forgot-err"></div>
       <!-- Step 1: request a code -->
       <div id="forgot-step1">
-        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter your account email and we\u2019ll send you a 6-digit reset code.</p>
+        <p style="font-size:12.5px;color:rgba(253,186,116,0.6);margin-bottom:16px">Enter your account email and we&rsquo;ll send you a 6-digit reset code.</p>
         <input class="auth-input" id="forgot-email" type="email" placeholder="Email address" autocomplete="email" />
         <div class="btn-row">
           <button class="mbtn cancel" onclick="closeModal('forgot-modal');openModal('signin-modal')">Back</button>
@@ -662,7 +663,7 @@
           <button class="mbtn cancel" onclick="backToForgotStep1()">Back</button>
           <button class="mbtn confirm" id="forgot-reset-submit" onclick="doResetPassword()">Reset Password</button>
         </div>
-        <button class="auth-link" onclick="doForgotRequest(true)">Didn\u2019t get a code? Resend</button>
+        <button class="auth-link" onclick="doForgotRequest(true)">Didn&rsquo;t get a code? Resend</button>
       </div>
     </div>
   </div>
@@ -1249,9 +1250,8 @@ function checkOnline(){offBanner.style.display=navigator.onLine?'none':'flex'}
 window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
 ['lang-modal','history-modal','bookmarks-modal','voice-modal','signin-modal','signup-modal','forgot-modal','profile-modal','edit-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;instBanner.style.display='flex'});
-document.getElementById('install-btn').addEventListener('click',function(){if(deferredPrompt){track('install');deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
-document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none'});
-if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches){instBanner.style.display='flex';instBanner.querySelector('span').textContent='Tap Share then Add to Home Screen to install!';document.getElementById('install-btn').style.display='none';}
+document.getElementById('install-btn').addEventListener('click',function(){if(window._iosInstallMode){showIosInstall();return;}if(deferredPrompt){track('install');deferredPrompt.prompt();deferredPrompt=null;instBanner.style.display='none'}});
+document.getElementById('install-close').addEventListener('click',function(){instBanner.style.display='none';if(window._iosInstallMode){try{localStorage.setItem(IOS_BANNER_KEY,String(Date.now()));}catch(e){}}});
 function selectLang(lang){pendLang=lang;['en','te','ta','hi'].forEach(function(l){var el=document.getElementById('lang-'+l);if(el)el.classList.toggle('selected',l===lang)})}
 function confirmLang(){curLang=pendLang;localStorage.setItem(LK,curLang);var c=LC[curLang];langInd.innerHTML=c.ind;inputEl.placeholder=c.ph;closeModal('lang-modal');addMsg('assistant',c.sw);updateHamburgerState();
   if(typeof updateLangChip==='function')updateLangChip();}
@@ -3702,33 +3702,54 @@ function isInStandalone(){
   return (window.navigator.standalone===true)||
          (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
 }
+function isInAppBrowser(){
+  // Facebook, Instagram, Line, Twitter, Snapchat, WeChat, Google app: no Add to Home Screen here
+  return /FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|Snapchat|MicroMessenger|GSA\//.test(navigator.userAgent||'');
+}
 function isSafariBrowser(){
-  var ua=navigator.userAgent||'';
-  // Exclude Chrome, Firefox, Edge and in-app browsers on iOS
-  return !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/.test(ua);
+  // Chrome, Firefox, Edge, Opera on iOS also work (iOS 16.4+) but word the steps differently
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/.test(navigator.userAgent||'');
+}
+var IOS_BANNER_KEY='ak_ios_banner_snooze';
+var IOS_SNOOZE_MS=14*24*60*60*1000;
+function iosSnoozed(key,ms){
+  try{var t=parseInt(localStorage.getItem(key)||'0',10);return t>1e12&&(Date.now()-t)<ms;}catch(e){return false;}
 }
 function dismissIosInstall(){
   var el=document.getElementById('ios-install');
   if(el)el.classList.remove('show');
-  try{localStorage.setItem(IOS_DISMISS_KEY,'1');}catch(e){}
+  try{localStorage.setItem(IOS_DISMISS_KEY,String(Date.now()));}catch(e){}
 }
 function showIosInstall(){
   var el=document.getElementById('ios-install');
-  if(el){el.classList.add('show');track('install');}
+  if(!el)return;
+  var where=document.getElementById('ios-share-where'),note=document.getElementById('ios-note');
+  if(isInAppBrowser()){
+    if(where)where.textContent='in the browser menu';
+    if(note){note.style.display='block';note.textContent='You are inside another app\u2019s browser. Tap the \u22EF or compass icon and choose \u201COpen in Safari\u201D first, then follow these steps.';}
+  }else if(!isSafariBrowser()){
+    if(where)where.textContent='next to the address bar';
+    if(note){note.style.display='block';note.textContent='If you do not see \u201CAdd to Home Screen\u201D, open askkeshava.com in Safari instead.';}
+  }else{
+    if(where)where.textContent='at the bottom of Safari';
+    if(note)note.style.display='none';
+  }
+  el.classList.add('show');track('install');
 }
 function maybeShowIosInstall(){
   if(!isIosDevice())return;
   if(isInStandalone())return;
-  try{if(localStorage.getItem(IOS_DISMISS_KEY))return;}catch(e){}
-  if(!isSafariBrowser()){
-    // Non-Safari iOS browser can't install — nudge them to Safari instead
-    setTimeout(function(){
-      if(typeof showToast==='function')showToast('Open askkeshava.com in Safari to add it to your Home Screen',5000);
-    },25000);
-    return;
+  window._iosInstallMode=true;
+  // Banner with a real button, like Android's Install button (hidden for 7 days after closing)
+  if(!iosSnoozed(IOS_BANNER_KEY,7*24*60*60*1000)){
+    instBanner.querySelector('span').textContent='\uD83D\uDCF2 Add Ask Keshava to your Home Screen';
+    document.getElementById('install-btn').textContent='How?';
+    instBanner.style.display='flex';
   }
-  // Show after the user has had a chance to try the app
-  setTimeout(showIosInstall,35000);
+  // Auto-open the step-by-step sheet once the person has tried the app (not in in-app browsers)
+  if(iosSnoozed(IOS_DISMISS_KEY,IOS_SNOOZE_MS))return;
+  if(isInAppBrowser())return;
+  setTimeout(function(){if(!iosSnoozed(IOS_DISMISS_KEY,IOS_SNOOZE_MS)&&!isInStandalone())showIosInstall();},35000);
 }
 // Tapping the backdrop closes the sheet
 (function(){
